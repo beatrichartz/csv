@@ -19,18 +19,23 @@ Do this to decode:
 
 	File.stream!("data.csv") |> CSV.decode
 
-And you'll get a stream of rows.
+And you'll get a stream of rows. So, this is upcasing the text in each cell of a tab separated file because someone is angry:
+
+	File.stream!("data.csv") |>
+	CSV.decode(separator: "\t") |>
+	Enum.map fn row ->
+	  Enum.each(row, &String.upcase/1)
+	end
 
 Do this to encode a table (two-dimensional array):
 
 	table_data |> CSV.encode
 
-Writing to a file:
+And you'll get a stream of lines ready to be written to an IO.
+So, this is writing to a file:
 
 	file = File.open!("test.csv")
 	table_data |> CSV.encode |> Enum.each(&IO.write(file, &1))
-
-And you'll get a stream of lines ready to be written to an IO.
 
 ## I have this file, but it's tab-separated :interrobang:
 
