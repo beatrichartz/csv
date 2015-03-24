@@ -1,5 +1,10 @@
 defmodule CSV do
 
+  @moduledoc ~S"""
+  RFC 4180 compliant CSV parsing and encoding for Elixir. Allows to specify other separators,
+  so it could also be named: TSV, but it isn't.
+  """
+
   @doc """
   Decode a stream of comma-separated lines into a table.
   If the number of parallel operations (set via the option `:num_pipes` and defaulting to 8)

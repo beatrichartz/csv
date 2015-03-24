@@ -26,7 +26,8 @@ defmodule CSV.Mixfile do
   defp deps do
     [
         {:ex_doc, "~> 0.7.1", only: :docs},
-        {:inch_ex, only: :docs}
+        {:inch_ex, only: :docs},
+        {:earmark, only: :docs}
     ]
   end
 
