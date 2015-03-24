@@ -21,9 +21,14 @@ Do this to decode:
 
 And you'll get a stream of rows.
 
-Do this to encode:
+Do this to encode a table (two-dimensional array):
 
 	table_data |> CSV.encode
+
+Writing to a file:
+
+	file = File.open!("test.csv")
+	table_data |> CSV.encode |> Enum.each(&IO.write(file, &1))
 
 And you'll get a stream of lines ready to be written to an IO.
 

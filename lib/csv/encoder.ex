@@ -56,10 +56,17 @@ defmodule CSV.Encoder do
     cond do
       String.contains?(cell, [separator, delimiter, @carriage_return, @newline]) ->
         @double_quote <>
-        String.replace(cell, @double_quote, @double_quote <> @double_quote) <>
+        (cell |> escape |> String.replace(@double_quote, @double_quote <> @double_quote)) <>
         @double_quote
       true ->
-        cell
+        cell |> escape
     end
+  end
+
+  def escape(cell) do
+    cell |>
+      String.replace(@newline, "\\n") |>
+      String.replace(@carriage_return, "\\r") |>
+      String.replace("\t", "\\t")
   end
 end
