@@ -63,7 +63,7 @@ defmodule CSV.Encoder do
     end
   end
 
-  def escape(cell) do
+  defp escape(cell) do
     cell |>
       String.replace(@newline, "\\n") |>
       String.replace(@carriage_return, "\\r") |>
