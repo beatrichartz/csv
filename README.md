@@ -17,7 +17,7 @@ Now.
 
 Do this to decode:
 
-	File.stream!(\"data.csv\") |> CSV.decode
+	File.stream!("data.csv") |> CSV.decode
 
 And you'll get a stream of rows.
 
@@ -31,7 +31,7 @@ And you'll get a stream of lines ready to be written to an IO.
 
 Pass in another separator to the decoder:
 
-	File.stream!(\"data.csv\") |> CSV.decode(separator: "\t")
+	File.stream!("data.csv") |> CSV.decode(separator: "\t")
 
 If you want to take revenge on whoever did this to you, encode with semicolons like this:
 
