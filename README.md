@@ -55,3 +55,5 @@ Sunny
 ## Mood
 
 Good
+
+## Contributions & Bugfixes are most welcome!
