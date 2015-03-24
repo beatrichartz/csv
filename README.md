@@ -17,35 +17,47 @@ Now.
 
 Do this to decode:
 
-	File.stream!("data.csv") |> CSV.decode
+````elixir
+File.stream!("data.csv") |> CSV.decode
+````
 
 And you'll get a stream of rows. So, this is upcasing the text in each cell of a tab separated file because someone is angry:
 
-	File.stream!("data.csv") |>
-	CSV.decode(separator: "\t") |>
-	Enum.map fn row ->
-	  Enum.each(row, &String.upcase/1)
-	end
+````elixir
+File.stream!("data.csv") |>
+CSV.decode(separator: "\t") |>
+Enum.map fn row ->
+  Enum.each(row, &String.upcase/1)
+end
+````
 
 Do this to encode a table (two-dimensional array):
 
-	table_data |> CSV.encode
+````elixir
+table_data |> CSV.encode
+````
 
 And you'll get a stream of lines ready to be written to an IO.
 So, this is writing to a file:
 
-	file = File.open!("test.csv")
-	table_data |> CSV.encode |> Enum.each(&IO.write(file, &1))
+````elixir
+file = File.open!("test.csv")
+table_data |> CSV.encode |> Enum.each(&IO.write(file, &1))
+````
 
 ## I have this file, but it's tab-separated :interrobang:
 
 Pass in another separator to the decoder:
 
-	File.stream!("data.csv") |> CSV.decode(separator: "\t")
+````elixir
+File.stream!("data.csv") |> CSV.decode(separator: "\t")
+````
 
 If you want to take revenge on whoever did this to you, encode with semicolons like this:
 
-	your_data |> CSV.encode(separator: ";")
+````elixir
+your_data |> CSV.encode(separator: ";")
+````
 
 There are more options - [Check the doc](http://hexdocs.pm/csv/0.1.0/)
 
