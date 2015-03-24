@@ -5,7 +5,7 @@
 
 It parses files which contain lines separated by either commas or other separators.
 
-If that's not enough reason to absolutely :heart: :green_heart: :two_hearts: :revolving_heart: :sparkling_heart: it, it also parses a CSV file in order about 1.3x times as fast as a normal stream based implementation, and if you don't care about the order of rows in your stream, it can deliver about 3x - 4x the speeds depending on your hardware. :rocket:
+If that's not enough reason to absolutely :heart: :green_heart: :two_hearts: :heart: :revolving_hearts: :sparkling_heart: it, it also parses a CSV file in order about 1.3x times as fast as a normal stream based implementation, and if you don't care about the order of rows in your stream, it can deliver about 3x - 4x the speeds depending on your hardware. :rocket:
 
 `CSV` does not care about order by default, which makes it blazing fast while hogging down your CPU. Pass `num_pipes: 1` to make it process rows in order they're given in the file, and make it use less of your available processing power.
 
@@ -23,7 +23,7 @@ And you'll get a stream of rows.
 
 Do this to encode:
 
-   table_data |> CSV.encode
+	table_data |> CSV.encode
 
 And you'll get a stream of lines ready to be written to an IO.
 
