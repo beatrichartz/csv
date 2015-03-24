@@ -15,7 +15,7 @@ defmodule CSV.Mixfile do
     [
         contributors: ["Beat Richartz"],
         licenses: ["MIT"],
-        links: [ { "GitHub", "https://github.com/beatrichartz/csv" } ]
+        links: [ %{ "GitHub" => "https://github.com/beatrichartz/csv" } ]
     ]
   end
 end
