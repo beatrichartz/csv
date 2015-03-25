@@ -59,7 +59,21 @@ If you want to take revenge on whoever did this to you, encode with semicolons l
 your_data |> CSV.encode(separator: ";")
 ````
 
-There are more options - [Check the doc](http://hexdocs.pm/csv/)
+## Polymorphic encoding
+
+Make sure your data gets encoded the way you want - implement the `CSV.Encode` protocol for whatever strange you wish to encode:
+
+````elixir
+defimpl CSV.Encode for: MyData do
+  def encode(%MyData{has: fun}, env \\ [])
+	"so much #{fun}" |> CSV.Encode.encode(env)
+  end
+end
+````
+
+Or similar.
+
+There is more to know about everything :tm: - [Check the doc](http://hexdocs.pm/csv/)
 
 ## License
 
