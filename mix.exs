@@ -4,7 +4,7 @@ defmodule CSV.Mixfile do
   def project do
     [
         app: :csv,
-        version: "0.1.0",
+        version: "0.1.1",
         elixir: "~> 1.0.2 or ~> 1.1-dev",
         deps: deps,
         package: package,
