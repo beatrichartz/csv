@@ -59,7 +59,7 @@ If you want to take revenge on whoever did this to you, encode with semicolons l
 your_data |> CSV.encode(separator: ";")
 ````
 
-There are more options - [Check the doc](http://hexdocs.pm/csv/0.1.0/)
+There are more options - [Check the doc](http://hexdocs.pm/csv/)
 
 ## License
 
