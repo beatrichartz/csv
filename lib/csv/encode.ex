@@ -1,7 +1,11 @@
 defprotocol CSV.Encode do
   @fallback_to_any true
+  @moduledoc """
+  Implement encoding for your data types.
+  """
+
   @doc """
-  Implement encoding for your data types. Gets passed the data along with an env that contains
+  The encode function to implement, gets passed the data and env as a keyword list containing
   the currently used separator and delimiter.
   """
   def encode(data, env \\ [])
