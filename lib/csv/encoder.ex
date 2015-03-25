@@ -1,14 +1,10 @@
 defmodule CSV.Encoder do
+  use CSV.Defaults
+
   @moduledoc ~S"""
   The Encoder CSV module takes a table stream and transforms it into RFC 4180 compliant
   stream of lines for writing to a CSV File or other IO.
   """
-
-  @separator       ","
-  @newline         "\n"
-  @carriage_return "\r"
-  @double_quote    "\""
-
 
   @doc """
   Encode a table stream into a stream of RFC 4180 compliant CSV lines for writing to a file
@@ -40,8 +36,7 @@ defmodule CSV.Encoder do
 
   def encode(stream, options \\ []) do
     separator = options |> Keyword.get(:separator, @separator)
-    delimiter = options |> Keyword.get(:delimiter, @carriage_return <> @newline)
-
+    delimiter = options |> Keyword.get(:delimiter, @delimiter)
 
     stream |> Stream.transform 0, fn row, acc ->
       {[ encode_row(row, separator, delimiter) <> delimiter ], acc + 1}
@@ -53,24 +48,7 @@ defmodule CSV.Encoder do
   end
 
   defp encode_cell(cell, separator, delimiter) do
-    cond do
-      !is_bitstring(cell) and !is_list(cell) ->
-        @double_quote <>
-        to_string(cell) <>
-        @double_quote
-      String.contains?(cell, [separator, delimiter, @carriage_return, @newline]) ->
-        @double_quote <>
-        (cell |> escape |> String.replace(@double_quote, @double_quote <> @double_quote)) <>
-        @double_quote
-      true ->
-        cell |> escape
-    end
+    CSV.Encode.encode(cell, separator: separator, delimiter: delimiter)
   end
 
-  defp escape(cell) do
-    cell |>
-      String.replace(@newline, "\\n") |>
-      String.replace(@carriage_return, "\\r") |>
-      String.replace("\t", "\\t")
-  end
 end

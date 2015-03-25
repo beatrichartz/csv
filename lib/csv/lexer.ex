@@ -1,13 +1,9 @@
 defmodule CSV.Lexer do
+  use CSV.Defaults
 
   @moduledoc ~S"""
   RFC 4180 compatible CSV lexer. Lexes tokens and sends them to the parser process.
   """
-
-  @separator       ","
-  @newline         "\n"
-  @carriage_return "\r"
-  @double_quote    "\""
 
   @doc """
   Lexes strings received from a sender (the decoder) and sends the resulting tokens to

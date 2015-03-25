@@ -1,0 +1,48 @@
+defprotocol CSV.Encode do
+  @fallback_to_any true
+  @doc """
+  Implement encoding for your data types. Gets passed the data along with an env that contains
+  the currently used separator and delimiter.
+  """
+  def encode(data, env \\ [])
+end
+
+defimpl CSV.Encode, for: Any do
+  @doc """
+  Default encoding implementation, uses the string protocol and feeds into the string encode
+  implementation
+  """
+
+  def encode(data, env \\ []) do
+    to_string(data) |> CSV.Encode.encode(env)
+  end
+end
+
+defimpl CSV.Encode, for: BitString do
+  use CSV.Defaults
+
+  @doc """
+  Standard string encoding implementation, escaping cells with double quotes where necessary.
+  """
+
+  def encode(data, env \\ []) do
+    separator = env |> Keyword.get(:separator, @separator)
+    delimiter = env |> Keyword.get(:delimiter, @delimiter)
+
+    cond do
+      String.contains?(data, [separator, delimiter, @carriage_return, @newline]) ->
+        @double_quote <>
+      (data |> escape |> String.replace(@double_quote, @double_quote <> @double_quote)) <>
+        @double_quote
+      true ->
+        data |> escape
+    end
+  end
+
+  defp escape(cell) do
+    cell |>
+      String.replace(@newline, "\\n") |>
+      String.replace(@carriage_return, "\\r") |>
+      String.replace("\t", "\\t")
+  end
+end
