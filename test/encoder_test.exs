@@ -17,6 +17,11 @@ defmodule EncoderTest do
     assert result == ["\"a,\",\"b\\re\"\r\n", "\"c,f\"\"\",dg\r\n"]
   end
 
+  test "encodes streams of integers to csv strings and escapes them" do
+    result = Encoder.encode([[:atom, 1], ["c,f\"", "dg"]]) |> Enum.take(2)
+    assert result == ["\"atom\",\"1\"\r\n", "\"c,f\"\"\",dg\r\n"]
+  end
+
   test "allows custom separators and delimiters and escapes them" do
     result = Encoder.encode([["a\t", "b\re"], ["c\tf\"", "dg"]], separator: "\t", delimiter: "\n") |> Enum.take(2)
     assert result == ["\"a\\t\"\t\"b\\re\"\n", "\"c\\tf\"\"\"\tdg\n"]
