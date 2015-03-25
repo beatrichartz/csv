@@ -54,6 +54,10 @@ defmodule CSV.Encoder do
 
   defp encode_cell(cell, separator, delimiter) do
     cond do
+      !is_bitstring(cell) and !is_list(cell) ->
+        @double_quote <>
+        to_string(cell) <>
+        @double_quote
       String.contains?(cell, [separator, delimiter, @carriage_return, @newline]) ->
         @double_quote <>
         (cell |> escape |> String.replace(@double_quote, @double_quote <> @double_quote)) <>
