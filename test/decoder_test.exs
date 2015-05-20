@@ -57,4 +57,11 @@ defmodule DecoderTest do
     end
   end
 
+  test "parses strings that contain multi-byte unicode characters" do
+    stream = Stream.map(["a,b", "c,ಠ_ಠ"], &(&1))
+    result = Decoder.decode(stream) |> Enum.into([]) |> Enum.sort
+
+    assert result == [["a", "b"], ["c", "ಠ_ಠ"]]
+  end
+
 end

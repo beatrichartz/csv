@@ -6,7 +6,7 @@ defmodule EncodeTest do
   end
 
   defimpl CSV.Encode, for: Data do
-    def encode(%Data{a: a, b: b}, env \\ []) do
+    def encode(%Data{a: a, b: b}, _env \\ []) do
       "#{a} or #{b}"
     end
   end
