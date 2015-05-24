@@ -15,7 +15,8 @@ defmodule CSV do
 
   These are the options:
 
-    * `:separator`   – The separator token to use, defaults to `\",\"`. Can only be a single token.
+    * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + (your separator)).
+    * `:delimiter`   – The delimiter token to use, defaults to `\r\n`. Must be a string.
     * `:strip_cells` – When set to true, will strip whitespace from cells. Defaults to false.
     * `:num_pipes`   – The number of parallel operations to run when producing the stream.
       If set to 1, the stream will produce the CSV lines in order at the
@@ -47,7 +48,7 @@ defmodule CSV do
 
       iex> [\"a;b\",\"c;d\", \"e;f\"] |>
       iex> Stream.map(&(&1)) |>
-      iex> CSV.decode(separator: \";\", headers: true) |>
+      iex> CSV.decode(separator: ?;, headers: true) |>
       iex> Enum.take(2)
       [%{\"a\" => \"c\", \"b\" => \"d\"}, %{\"a\" => \"e\", \"b\" => \"f\"}]
 
@@ -55,7 +56,7 @@ defmodule CSV do
 
       iex> [\"a;b\",\"c;d\", \"e;f\"] |>
       iex> Stream.map(&(&1)) |>
-      iex> CSV.decode(separator: \";\", headers: [:x, :y]) |>
+      iex> CSV.decode(separator: ?;, headers: [:x, :y]) |>
       iex> Enum.take(2)
       [%{:x => \"a\", :y => \"b\"}, %{:x => \"c\", :y => \"d\"}]
   """
@@ -73,8 +74,8 @@ defmodule CSV do
 
   These are the options:
 
-    * `:separator`   – The separator token to use, defaults to `\",\"`. Can only be a single token.
-    * `:delimiter`   – The delimiter token to use, defaults to `\"\\r\\n\"`.
+    * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + (your separator)).
+    * `:delimiter`   – The delimiter token to use, defaults to `\r\n`. Must be a string.
 
   ## Examples
 
@@ -88,7 +89,7 @@ defmodule CSV do
   Convert a stream of rows with cells with escape sequences into a stream of lines:
 
       iex> [[\"a\\nb\", \"\\tc\"], [\"de\", \"\\tf\\\"\"]] |>
-      iex> CSV.encode(separator: \"\\t\", delimiter: \"\\n\") |>
+      iex> CSV.encode(separator: ?\t, delimiter: \"\\n\") |>
       iex> Enum.take(2)
       [\"\\\"a\\nb\\\"\\t\\\"\\tc\\\"\\n\", \"de\\t\\\"\\tf\\\"\\\"\\\"\\n\"]
   """

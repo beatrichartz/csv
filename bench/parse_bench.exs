@@ -6,18 +6,18 @@ defmodule ParseBench do
   end
 
   bench "csv unordered" do
-    path |> File.stream! |> CSV.decode(separator: "\t") |> Enum.count
+    path |> File.stream! |> CSV.decode(separator: ?\t) |> Enum.count
   end
 
   bench "csv ordered" do
     path |> File.stream! |> CSV.decode(
-      separator: "\t",
+      separator: ?\t,
       num_pipes: 1
     ) |> Enum.count
   end
 
   bench "ex_csv" do
-    path |> File.read! |> ExCsv.parse!(delimiter: '\t')
+    path |> File.read! |> ExCsv.parse!(delimiter: '\t') |> Enum.count
   end
 
   def path do

@@ -11,7 +11,7 @@ defmodule DecoderTest do
 
   test "parses strings separated by custom separators into a list of token tuples and emits them" do
     stream = Stream.map(["a;be", "c;d"], &(&1))
-    result = Decoder.decode(stream, separator: ";") |> Enum.into([]) |> Enum.sort
+    result = Decoder.decode(stream, separator: ?;) |> Enum.into([]) |> Enum.sort
 
     assert result == [~w(a be), ~w(c d)]
   end
@@ -59,7 +59,7 @@ defmodule DecoderTest do
 
   test "parses strings that contain multi-byte unicode characters" do
     stream = Stream.map(["a,b", "c,ಠ_ಠ"], &(&1))
-    result = Decoder.decode(stream) |> Enum.into([]) |> Enum.sort
+    result = CSV.decode(stream) |> Enum.into([]) |> Enum.sort
 
     assert result == [["a", "b"], ["c", "ಠ_ಠ"]]
   end

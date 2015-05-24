@@ -22,7 +22,8 @@ defmodule CSV.Decoder do
 
   These are the options:
 
-    * `:separator`   – The separator token to use, defaults to `\",\"`. Can only be a single token.
+    * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + (your separator)).
+    * `:delimiter`   – The delimiter token to use, defaults to `\r\n`. Must be a string.
     * `:strip_cells` – When set to true, will strip whitespace from cells. Defaults to false.
     * `:num_pipes`   – The number of parallel operations to run when producing the stream.
       If set to 1, the stream will produce the CSV lines in order at the
@@ -54,7 +55,7 @@ defmodule CSV.Decoder do
 
       iex> [\"a;b\",\"c;d\", \"e;f\"] |>
       iex> Stream.map(&(&1)) |>
-      iex> CSV.Decoder.decode(separator: \";\", headers: true) |>
+      iex> CSV.Decoder.decode(separator: ?;, headers: true) |>
       iex> Enum.take(2)
       [%{\"a\" => \"c\", \"b\" => \"d\"}, %{\"a\" => \"e\", \"b\" => \"f\"}]
 
@@ -62,7 +63,7 @@ defmodule CSV.Decoder do
 
       iex> [\"a;b\",\"c;d\", \"e;f\"] |>
       iex> Stream.map(&(&1)) |>
-      iex> CSV.Decoder.decode(separator: \";\", headers: [:x, :y]) |>
+      iex> CSV.Decoder.decode(separator: ?;, headers: [:x, :y]) |>
       iex> Enum.take(2)
       [%{:x => \"a\", :y => \"b\"}, %{:x => \"c\", :y => \"d\"}]
   """

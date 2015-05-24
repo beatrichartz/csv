@@ -14,7 +14,7 @@ defmodule CSV.Encoder do
 
   These are the options:
 
-    * `:separator`   – The separator token to use, defaults to `\",\"`. Can only be a single token.
+    * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + your separator token).
     * `:delimiter`   – The delimiter token to use, defaults to `\"\\r\\n\"`.
 
   ## Examples
@@ -29,7 +29,7 @@ defmodule CSV.Encoder do
   Convert a stream of rows with cells with escape sequences into a stream of lines:
 
       iex> [[\"a\\nb\", \"\\tc\"], [\"de\", \"\\tf\\\"\"]] |>
-      iex> CSV.Encoder.encode(separator: \"\\t\", delimiter: \"\\n\") |>
+      iex> CSV.Encoder.encode(separator: ?\t, delimiter: \"\\n\") |>
       iex> Enum.take(2)
       [\"\\\"a\\nb\\\"\\t\\\"\\tc\\\"\\n\", \"de\\t\\\"\\tf\\\"\\\"\\\"\\n\"]
   """
@@ -44,7 +44,7 @@ defmodule CSV.Encoder do
   end
 
   defp encode_row(row, separator, delimiter) do
-    row |> Enum.map(&encode_cell(&1, separator, delimiter)) |> Enum.join(separator)
+    row |> Enum.map(&encode_cell(&1, separator, delimiter)) |> Enum.join(<< separator :: utf8 >>)
   end
 
   defp encode_cell(cell, separator, delimiter) do

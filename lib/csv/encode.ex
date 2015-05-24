@@ -32,12 +32,19 @@ defimpl CSV.Encode, for: BitString do
   def encode(data, env \\ []) do
     separator = env |> Keyword.get(:separator, @separator)
     delimiter = env |> Keyword.get(:delimiter, @delimiter)
-
+    
     cond do
-      String.contains?(data, [separator, delimiter, @carriage_return, @newline]) ->
-        @double_quote <>
-      (data |> escape |> String.replace(@double_quote, @double_quote <> @double_quote)) <>
-        @double_quote
+      String.contains?(data, [
+        << separator :: utf8 >>,
+        delimiter,
+        << @carriage_return :: utf8 >>,
+        << @newline :: utf8 >>
+      ]) ->
+        << @double_quote :: utf8 >> <>
+      (data |> escape |> String.replace(
+        << @double_quote :: utf8 >>,
+        << @double_quote :: utf8 >> <> << @double_quote :: utf8 >>)) <>
+        << @double_quote :: utf8 >>
       true ->
         data |> escape
     end
@@ -45,8 +52,8 @@ defimpl CSV.Encode, for: BitString do
 
   defp escape(cell) do
     cell |>
-      String.replace(@newline, "\\n") |>
-      String.replace(@carriage_return, "\\r") |>
+      String.replace(<< @newline :: utf8 >>, "\\n") |>
+      String.replace(<< @carriage_return :: utf8 >>, "\\r") |>
       String.replace("\t", "\\t")
   end
 end

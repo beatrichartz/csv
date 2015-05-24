@@ -13,7 +13,7 @@ defmodule CSV.Lexer do
 
   Options get transferred from the decoder. They are:
 
-    * `:separator`   – The separator token to use, defaults to ",". Can only be a single token.
+    * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint.
   """
 
   def lex_into(receiver, options \\ []) do
@@ -32,34 +32,34 @@ defmodule CSV.Lexer do
     lex(index, string, receiver, {:start, index}, separator)
   end
 
-  defp lex(index, @newline <> tail, receiver, current_token, separator) do
+  defp lex(index, << @newline :: utf8 >> <> tail, receiver, current_token, separator) do
     case current_token do
-      {:delimiter, value} -> lex(index, tail, receiver, {:delimiter, value <> @newline}, separator)
+      {:delimiter, value} -> lex(index, tail, receiver, {:delimiter, value <> << @newline :: utf8 >>}, separator)
       _ ->
         emit_token!(current_token, receiver)
-        lex(index, tail, receiver, {:delimiter, @newline}, separator)
+        lex(index, tail, receiver, {:delimiter, << @newline :: utf8 >>}, separator)
     end
   end
 
-  defp lex(index, @carriage_return <> tail, receiver, current_token, separator) do
+  defp lex(index, << @carriage_return :: utf8 >> <> tail, receiver, current_token, separator) do
     case current_token do
-      {:delimiter, value} -> lex(index, tail, {:delimiter, receiver, value <> @carriage_return}, separator)
+      {:delimiter, value} -> lex(index, tail, {:delimiter, receiver, value <> << @carriage_return :: utf8 >>}, separator)
       _ ->
         emit_token!(current_token, receiver)
-        lex(index, tail, receiver, {:delimiter, @carriage_return}, separator)
+        lex(index, tail, receiver, {:delimiter, << @carriage_return :: utf8 >>}, separator)
     end
   end
 
-  defp lex(index, @double_quote <> tail, receiver, current_token, separator) do
+  defp lex(index, << @double_quote :: utf8 >> <> tail, receiver, current_token, separator) do
     emit_token!(current_token, receiver)
-    lex(index, tail, receiver, {:double_quote, @double_quote}, separator)
+    lex(index, tail, receiver, {:double_quote, << @double_quote :: utf8 >>}, separator)
   end
 
   defp lex(index, << head :: utf8 >> <> tail, receiver, current_token, separator) do
-    case << head :: utf8 >> do
+    case head do
       ^separator ->
         emit_token!(current_token, receiver)
-        lex(index, tail, receiver, {:separator, separator}, separator)
+        lex(index, tail, receiver, {:separator, << separator :: utf8 >>}, separator)
 
       _ -> case current_token do
              {:content, value} ->

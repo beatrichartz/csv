@@ -3,15 +3,22 @@
 
 ## Why do we want it?
 
-It parses files which contain lines separated by either commas or other separators.
+It parses files which contain rows (in utf-8) separated by either commas or other separators.
 
-If that's not enough reason to absolutely :heart: :green_heart: :two_hearts: :heart: :revolving_hearts: :sparkling_heart: it, it also parses a CSV file in order about 1.3x times as fast as a normal stream based implementation, and if you don't care about the order of rows in your stream, it can deliver about 3x - 4x the speeds depending on your hardware. :rocket:
+If that's not enough reason to absolutely :heart: :green_heart: :two_hearts: :heart: :revolving_hearts: :sparkling_heart: it, it also parses a CSV file in order about 2x times as fast as an unparallelized stream implementation, and if you don't care about the order of rows in your stream, it can deliver about 3x - 4x the speeds depending on your hardware. :rocket:
 
 `CSV` does not care about order by default, which makes it blazing fast while hogging down your CPU. Pass `num_pipes: 1` to make it process rows in order they're given in the file, and make it use less of your available processing power.
 
 ## When do we want it?
 
 Now.
+
+## How do I get it?
+Add
+```elixir
+[{:csv, "~> 1.0.0"}]
+```
+to your deps in `mix.exs`
 
 ## Great! How do I use it right now?
 
@@ -25,7 +32,7 @@ And you'll get a stream of rows. So, this is upcasing the text in each cell of a
 
 ````elixir
 File.stream!("data.csv") |>
-CSV.decode(separator: "\t") |>
+CSV.decode(separator: ?\t) |>
 Enum.map fn row ->
   Enum.each(row, &String.upcase/1)
 end
@@ -50,13 +57,13 @@ table_data |> CSV.encode |> Enum.each(&IO.write(file, &1))
 Pass in another separator to the decoder:
 
 ````elixir
-File.stream!("data.csv") |> CSV.decode(separator: "\t")
+File.stream!("data.csv") |> CSV.decode(separator: ?\t)
 ````
 
 If you want to take revenge on whoever did this to you, encode with semicolons like this:
 
 ````elixir
-your_data |> CSV.encode(separator: ";")
+your_data |> CSV.encode(separator: ?;)
 ````
 
 ## Polymorphic encoding
