@@ -21,7 +21,7 @@ defmodule CSV.Lexer do
       { :halt, value } ->
         send receiver, {:halt, value}
       { index, line } ->
-        lex(index, String.codepoints(line), receiver, options)
+        lex(index, line, receiver, options)
         lex_into(receiver, options)
     end
   end
@@ -32,7 +32,7 @@ defmodule CSV.Lexer do
     lex(index, string, receiver, {:start, index}, separator)
   end
 
-  defp lex(index, [@newline | tail], receiver, current_token, separator) do
+  defp lex(index, @newline <> tail, receiver, current_token, separator) do
     case current_token do
       {:delimiter, value} -> lex(index, tail, receiver, {:delimiter, value <> @newline}, separator)
       _ ->
@@ -41,7 +41,7 @@ defmodule CSV.Lexer do
     end
   end
 
-  defp lex(index, [@carriage_return | tail], receiver, current_token, separator) do
+  defp lex(index, @carriage_return <> tail, receiver, current_token, separator) do
     case current_token do
       {:delimiter, value} -> lex(index, tail, {:delimiter, receiver, value <> @carriage_return}, separator)
       _ ->
@@ -50,28 +50,28 @@ defmodule CSV.Lexer do
     end
   end
 
-  defp lex(index, [@double_quote | tail], receiver, current_token, separator) do
+  defp lex(index, @double_quote <> tail, receiver, current_token, separator) do
     emit_token!(current_token, receiver)
     lex(index, tail, receiver, {:double_quote, @double_quote}, separator)
   end
 
-  defp lex(index, [head | tail], receiver, current_token, separator) do
-    case head do
+  defp lex(index, << head :: utf8 >> <> tail, receiver, current_token, separator) do
+    case << head :: utf8 >> do
       ^separator ->
         emit_token!(current_token, receiver)
         lex(index, tail, receiver, {:separator, separator}, separator)
 
       _ -> case current_token do
              {:content, value} ->
-              lex(index, tail, receiver, {:content, value ++ [head]}, separator)
+              lex(index, tail, receiver, {:content, value <> << head :: utf8 >>}, separator)
              _ ->
                emit_token!(current_token, receiver)
-               lex(index, tail, receiver, {:content, [head]}, separator)
+               lex(index, tail, receiver, {:content, << head :: utf8 >>}, separator)
            end
     end
   end
 
-  defp lex(index, [], receiver, current_token, _) do
+  defp lex(index, "", receiver, current_token, _) do
     emit_token!(current_token, receiver)
     emit_token!({:end, index}, receiver)
   end
@@ -83,11 +83,7 @@ defmodule CSV.Lexer do
   end
 
   defp emit_token!(token, receiver) do
-    case token do
-      {:content, value} ->
-        send receiver, {:content, Enum.join(value, "")}
-      _ -> send receiver, token
-    end
+    send receiver, token
   end
 
 end
