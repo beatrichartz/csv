@@ -80,11 +80,12 @@ end
 
 Or similar.
 
-## Fallback to Any on encode and performance
+## Ensure performant encoding
 
-If you want to use the fallback encoding for some types like Integers, where a simple call to `to_string` will provide
-unambiguous results, make sure you [have `consolidate_protocols: true`](http://blog.plataformatec.com.br/2015/04/build-embedded-and-start-permanent-in-elixir-1-0-4/)
-in your mix.exs or you consolidate protocols manually for production in order to get good performance.
+The encoding protocol implements a fallback to Any for types where a simple call to `to_string` will provide
+unambiguous results. Protocol dispatch for the fallback to Any is *very* slow when protocols are not consolidated,
+so make sure you [have `consolidate_protocols: true`](http://blog.plataformatec.com.br/2015/04/build-embedded-and-start-permanent-in-elixir-1-0-4/)
+in your `mix.exs` or you consolidate protocols manually for production in order to get good performance.
 
 There is more to know about everything :tm: - [Check the doc](http://hexdocs.pm/csv/)
 
