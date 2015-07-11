@@ -27,7 +27,7 @@ defmodule DecoderTest do
     stream = Stream.map(["a,be", "c,d", "e,f"], &(&1))
     result = Decoder.decode(stream, headers: true) |> Enum.into([]) |> Enum.sort
 
-    assert result == [
+    assert result |> Enum.sort == [
       %{"a" => "c", "be" => "d"},
       %{"a" => "e", "be" => "f"}
     ]

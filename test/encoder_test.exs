@@ -17,7 +17,7 @@ defmodule EncoderTest do
     assert result == ["\"a,\",\"b\\re\"\r\n", "\"c,f\"\"\",dg\r\n"]
   end
 
-  test "encodes streams of integers to csv strings and escapes them" do
+  test "encodes streams of various content to csv strings and escapes them" do
     result = Encoder.encode([[:atom, 1], [["a", "b"], "dg"]]) |> Enum.take(2)
     assert result == ["atom,1\r\n", "ab,dg\r\n"]
   end

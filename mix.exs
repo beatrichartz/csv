@@ -10,6 +10,7 @@ defmodule CSV.Mixfile do
         package: package,
         docs: &docs/0,
         name: "CSV",
+        consolidate_protocols: true,
         source_url: "https://github.com/beatrichartz/csv",
         description: "CSV Decoding and Encoding for Elixir"
     ]

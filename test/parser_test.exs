@@ -28,8 +28,8 @@ defmodule ParserTest do
       send(context[:parser_pid], token)
     end
 
-    assert_receive {:row, {1, ~w(a b)}}, 1
-    assert_receive {:row, {2, ~w(c d)}}, 1
+    assert_receive {:row, {1, ~w(a b)}}, 10
+    assert_receive {:row, {2, ~w(c d)}}, 10
   end
 
   test "turns a sequence of tokens with escape sequences into a csv matrix", context do
@@ -54,8 +54,8 @@ defmodule ParserTest do
       send(context[:parser_pid], token)
     end
 
-    assert_receive {:row, {1, ["a", "b\r\nc,"]}}, 1
-    assert_receive {:row, {2, ["c", "d"]}}, 1
+    assert_receive {:row, {1, ["a", "b\r\nc,"]}}, 10
+    assert_receive {:row, {2, ["c", "d"]}}, 10
   end
 
   test "manages escaped double quotes inside double quoted fields according to RFC 4180", context do
@@ -81,8 +81,8 @@ defmodule ParserTest do
       send(context[:parser_pid], token)
     end
 
-    assert_receive {:row, {1, ["a", "b\"c,"]}}, 1
-    assert_receive {:row, {2, ["c", "d"]}}, 1
+    assert_receive {:row, {1, ["a", "b\"c,"]}}, 10
+    assert_receive {:row, {2, ["c", "d"]}}, 10
   end
 
   test "raises a syntax error when given an invalid sequence of tokens", context do
@@ -109,7 +109,7 @@ defmodule ParserTest do
       send(context[:parser_pid], token)
     end
 
-    assert_receive {:error, {2, "Unterminated escape sequence on line 2."}}, 1
+    assert_receive {:error, {2, "Unterminated escape sequence on line 2."}}, 10
   end
 
 
