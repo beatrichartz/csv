@@ -80,7 +80,9 @@ end
 
 Or similar.
 
-*Important* if you want to use the fallback encoding for some types like Integers, where a simple call to `to_string` will provide
+## Fallback to Any on encode and performance
+
+If you want to use the fallback encoding for some types like Integers, where a simple call to `to_string` will provide
 unambiguous results, make sure you [have `consolidate_protocols: true`](http://blog.plataformatec.com.br/2015/04/build-embedded-and-start-permanent-in-elixir-1-0-4/)
 in your mix.exs or you consolidate protocols manually for production in order to get good performance.
 
