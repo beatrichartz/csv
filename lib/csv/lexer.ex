@@ -21,8 +21,13 @@ defmodule CSV.Lexer do
       { :halt, value } ->
         send receiver, {:halt, value}
       { index, line } ->
-        lex(index, line, receiver, options)
-        lex_into(receiver, options)
+        case String.valid?(line) do
+          true -> 
+            lex(index, line, receiver, options)
+            lex_into(receiver, options)
+          false ->
+            send receiver, {:error, { index, "Invalid encoding for utf-8."}}
+        end
     end
   end
 

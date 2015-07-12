@@ -64,4 +64,11 @@ defmodule DecoderTest do
     assert result == [["a", "b"], ["c", "ಠ_ಠ"]]
   end
 
+  test "produces meaningful errors for non-unicode files" do
+    stream = "./fixtures/broken-encoding.csv" |> Path.expand(__DIR__) |> File.stream!
+    assert_raise CSV.Lexer.EncodingError, fn ->
+      result = CSV.decode(stream) |> Enum.into([]) |> Enum.sort
+    end
+  end
+
 end

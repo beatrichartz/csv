@@ -98,6 +98,8 @@ defmodule CSV.Decoder do
         { [build_row(row, headers)], { next_producer, index + 1, num_pipes, headers } }
       { :error, { index, message } } ->
         raise Parser.SyntaxError, line: index, message: message
+      { :lexer_error, { index, message } } ->
+        raise Lexer.EncodingError, line: index, message: message
       { :halt, _ } when num_pipes > 1 ->
         { [], { producer, index, num_pipes - 1, headers } }
       { :halt, _ } ->
