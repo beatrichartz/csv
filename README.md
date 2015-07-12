@@ -16,7 +16,7 @@ Now.
 ## How do I get it?
 Add
 ```elixir
-[{:csv, "~> 1.0.4"}]
+[{:csv, "~> 1.1.0"}]
 ```
 to your deps in `mix.exs`
 
