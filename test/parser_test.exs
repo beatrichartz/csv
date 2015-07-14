@@ -109,7 +109,7 @@ defmodule ParserTest do
       send(context[:parser_pid], token)
     end
 
-    assert_receive {:error, {2, "Unterminated escape sequence."}}, 10
+    assert_receive {:syntax_error, {2, "Unterminated escape sequence."}}, 10
   end
 
 

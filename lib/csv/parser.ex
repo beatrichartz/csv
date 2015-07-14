@@ -33,9 +33,11 @@ defmodule CSV.Parser do
       {:double_quote, _} ->
         parse(row, receiver, not quoted, true, strip_cells)
       {:end, index} ->
-        send receiver, {:error, {index, "Unterminated escape sequence." }}
+        send receiver, {:syntax_error, {index, "Unterminated escape sequence." }}
       {:halt, index} ->
-        send receiver, {:error, {index, "Stream halted with unterminated escape sequence." }}
+        send receiver, {:syntax_error, {index, "Stream halted with unterminated escape sequence." }}
+      {:stream_error, content } ->
+        send receiver, {:stream_error, content }
     end
   end
 
@@ -63,7 +65,9 @@ defmodule CSV.Parser do
         parse([], receiver, false, false, strip_cells)
       {:halt, index } ->
         send receiver, {:halt, index}
-      {:error, content } ->
+      {:stream_error, content } ->
+        send receiver, {:stream_error, content }
+      {:lexer_error, content } ->
         send receiver, {:lexer_error, content }
     end
   end

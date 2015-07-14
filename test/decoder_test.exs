@@ -71,4 +71,20 @@ defmodule DecoderTest do
     end
   end
 
+  def encode_decode_loop(l) do
+    l |> CSV.encode |> CSV.decode(num_pipes: 1) |> Enum.to_list
+  end
+  test "does not get corrupted after an error" do
+    assert_raise CSV.Decoder.StreamError, fn ->
+      ~w(a) |> encode_decode_loop
+    end
+    result_a = [~w(b)] |> encode_decode_loop
+    result_b = [~w(b)] |> encode_decode_loop
+    result_c = [~w(b)] |> encode_decode_loop
+
+    assert result_a == [~w(b)]
+    assert result_b == [~w(b)]
+    assert result_c == [~w(b)]
+  end
+
 end
