@@ -16,10 +16,17 @@ Now.
 ## How do I get it?
 Add
 ```elixir
-[{:csv, "~> 1.1.0"}]
+{:csv, "~> 1.1.0"}
 ```
-to your deps in `mix.exs`
+to your deps in `mix.exs` like so:
 
+```elixir
+defp deps do
+  [
+    {:csv, "~> 1.1.0"}
+  ]
+end
+```
 ## Great! How do I use it right now?
 
 Do this to decode:
