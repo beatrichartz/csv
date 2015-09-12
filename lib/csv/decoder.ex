@@ -95,7 +95,7 @@ defmodule CSV.Decoder do
   end
 
   defp build_consumer!(producer, relay, num_pipes, headers) when is_boolean(headers) and headers do
-    headers_list = build_consumer!(producer, relay, num_pipes, false) |>
+    headers_list = build_header_consumer!(producer, relay, num_pipes) |>
                    Enum.take(1) |> List.first
     next_producer = producer |> Enum.drop(1)
 
@@ -115,7 +115,7 @@ defmodule CSV.Decoder do
     send relay, :next
 
     receive do
-      { :row, { _, row } } ->
+      { :row, { i, row } } ->
         { [build_row(row, headers)], { next_producer, relay, index + 1, num_pipes, headers } }
       { :syntax_error, { index, message } } ->
         raise Parser.SyntaxError, line: index, message: message
@@ -128,6 +128,37 @@ defmodule CSV.Decoder do
       { :halt, _ } ->
         send relay, :halt
         { :halt, { next_producer, relay, index, 0, headers } }
+    end
+  end
+
+  defp build_header_consumer!(producer, relay, num_pipes) do
+    Stream.resource fn ->
+      { producer, relay, 0, num_pipes }
+    end, &consume_header/1,
+    fn _ ->
+    end
+  end
+
+  defp consume_header({ producer, relay, index, num_pipes }) do
+    next_producer = producer |> Enum.drop(1)
+    send relay, :next
+
+    receive do
+      { :row, { 0, row } } ->
+        { [build_row(row, nil)], { next_producer, relay, index + 1, num_pipes } }
+      { :row, { i, row } } ->
+        consume_header({ producer, relay, index, num_pipes })
+      { :syntax_error, { index, message } } ->
+        raise Parser.SyntaxError, line: index, message: message
+      { :lexer_error, { index, message } } ->
+        raise Lexer.EncodingError, line: index, message: message
+      { :stream_error, { value, message } } ->
+        raise CSV.Decoder.StreamError, value: value, message: message
+      { :halt, _ } when num_pipes > 1 ->
+        { [], { producer, relay, index, num_pipes - 1 } }
+      { :halt, _ } ->
+        send relay, :halt
+        { :halt, { next_producer, relay, index, 0 } }
     end
   end
 
