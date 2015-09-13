@@ -2,6 +2,8 @@ defmodule DecoderTest do
   use ExUnit.Case
   alias CSV.Decoder, as: Decoder
 
+  @moduletag timeout: 1000
+
   test "parses strings into a list of token tuples and emits them" do
     stream = Stream.map(["a,be", "c,d"], &(&1))
     result = Decoder.decode(stream) |> Enum.into([]) |> Enum.sort
@@ -67,7 +69,7 @@ defmodule DecoderTest do
   test "produces meaningful errors for non-unicode files" do
     stream = "./fixtures/broken-encoding.csv" |> Path.expand(__DIR__) |> File.stream!
     assert_raise CSV.Lexer.EncodingError, fn ->
-      result = CSV.decode(stream) |> Enum.into([]) |> Enum.sort
+      CSV.decode(stream) |> Enum.into([]) |> Enum.sort
     end
   end
 

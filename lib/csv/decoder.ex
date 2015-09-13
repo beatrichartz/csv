@@ -77,8 +77,11 @@ defmodule CSV.Decoder do
       row_receiver |> relay_listen
     end
 
-    build_producer!(stream, relay, num_pipes, options) |> 
-    build_consumer!(relay, num_pipes, headers)
+    headers_list = get_headers!(headers, stream, options)
+
+    get_producer_stream!(stream, headers) |>
+    build_producer!(relay, num_pipes, options) |> 
+    build_consumer!(relay, num_pipes, headers_list)
   end
 
   defp relay_listen(row_receiver) do
@@ -94,12 +97,30 @@ defmodule CSV.Decoder do
     end
   end
 
-  defp build_consumer!(producer, relay, num_pipes, headers) when is_boolean(headers) and headers do
-    headers_list = build_header_consumer!(producer, relay, num_pipes) |>
-                   Enum.take(1) |> List.first
-    next_producer = producer |> Enum.drop(1)
+  defp get_headers!(headers, stream, options) do
+    case headers do
+      true ->
+        first_element = { 0, stream |> Enum.drop(-1) |> List.first }
+        header_pipe = self |> build_pipe!(options)
+        header_pipe |> send first_element
+        header_pipe |> send { :halt, 0 }
 
-    build_consumer!(next_producer, relay, num_pipes, headers_list)
+        headers_list = receive_header!
+        receive do
+          { :halt, 0 } -> nil
+        end
+
+        headers_list
+      false -> nil
+      headers_list -> headers_list
+    end
+  end
+
+  defp get_producer_stream!(stream, headers) do
+    case headers do
+      true -> stream |> Stream.drop(1)
+      _ -> stream
+    end
   end
 
   defp build_consumer!(producer, relay, num_pipes, headers) do
@@ -115,7 +136,7 @@ defmodule CSV.Decoder do
     send relay, :next
 
     receive do
-      { :row, { i, row } } ->
+      { :row, { _, row } } ->
         { [build_row(row, headers)], { next_producer, relay, index + 1, num_pipes, headers } }
       { :syntax_error, { index, message } } ->
         raise Parser.SyntaxError, line: index, message: message
@@ -131,34 +152,14 @@ defmodule CSV.Decoder do
     end
   end
 
-  defp build_header_consumer!(producer, relay, num_pipes) do
-    Stream.resource fn ->
-      { producer, relay, 0, num_pipes }
-    end, &consume_header/1,
-    fn _ ->
-    end
-  end
-
-  defp consume_header({ producer, relay, index, num_pipes }) do
-    next_producer = producer |> Enum.drop(1)
-    send relay, :next
-
+  defp receive_header! do
     receive do
-      { :row, { 0, row } } ->
-        { [build_row(row, nil)], { next_producer, relay, index + 1, num_pipes } }
-      { :row, { i, row } } ->
-        consume_header({ producer, relay, index, num_pipes })
+      { :row, { _, row } } ->
+        row
       { :syntax_error, { index, message } } ->
         raise Parser.SyntaxError, line: index, message: message
       { :lexer_error, { index, message } } ->
         raise Lexer.EncodingError, line: index, message: message
-      { :stream_error, { value, message } } ->
-        raise CSV.Decoder.StreamError, value: value, message: message
-      { :halt, _ } when num_pipes > 1 ->
-        { [], { producer, relay, index, num_pipes - 1 } }
-      { :halt, _ } ->
-        send relay, :halt
-        { :halt, { next_producer, relay, index, 0 } }
     end
   end
 
