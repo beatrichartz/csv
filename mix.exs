@@ -18,7 +18,7 @@ defmodule CSV.Mixfile do
 
   defp package do
     [
-        contributors: ["Beat Richartz"],
+        maintainers: ["Beat Richartz"],
         licenses: ["MIT"],
         links: %{github: "https://github.com/beatrichartz/csv" }
     ]
