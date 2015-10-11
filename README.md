@@ -16,17 +16,20 @@ Now.
 ## How do I get it?
 Add
 ```elixir
-{:csv, "~> 1.1.0"}
+{:csv, "~> 1.2.0"}
 ```
 to your deps in `mix.exs` like so:
 
 ```elixir
 defp deps do
   [
-    {:csv, "~> 1.1.0"}
+    {:csv, "~> 1.2.0"}
   ]
 end
 ```
+
+Note: elixir 1.1.0 is required for all versions above 1.1.5.
+
 ## Great! How do I use it right now?
 
 Do this to decode:
