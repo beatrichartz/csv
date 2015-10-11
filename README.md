@@ -78,9 +78,9 @@ your_data |> CSV.encode(separator: ?;)
 Make sure your data gets encoded the way you want - implement the `CSV.Encode` protocol for whatever strange you wish to encode:
 
 ````elixir
-defimpl CSV.Encode for: MyData do
-  def encode(%MyData{has: fun}, env \\ [])
-	"so much #{fun}" |> CSV.Encode.encode(env)
+defimpl CSV.Encode, for: MyData do
+  def encode(%MyData{has: fun}, env \\ []) do
+    "so much #{fun}" |> CSV.Encode.encode(env)
   end
 end
 ````
