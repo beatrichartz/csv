@@ -6,6 +6,7 @@
 
 - Decoder refactor from `Stream.resource/3` to `Stream.transform/3` in order to
   get more predictable stream behaviour
+- Rows now get processed in order
 - Fix a bug where stream would get evaluated before being decoded
 
 ## 1.1.4
