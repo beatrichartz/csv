@@ -94,12 +94,17 @@ defmodule CSV.Decoder do
   defp build_producer!(stream, pipes) do
     num_pipes = pipes |> Enum.count
 
-    Stream.transform stream, 0, fn line, index ->
+    Stream.transform stream, fn -> 0 end, fn line, index ->
       pipe_index = index |> rem(num_pipes)
       { line_receiver, relay } = pipes |> Enum.fetch!(pipe_index)
       line_receiver |> send({ index, line })
 
       { [{ relay, index }], index + 1 }
+    end, fn index -> 
+      pipes |> Enum.each fn { line_receiver, relay } ->
+        relay |> send :halt
+        line_receiver |> send { :halt, index }
+      end
     end
   end
 
