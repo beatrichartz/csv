@@ -7,5 +7,6 @@ mix.lock
 /docs
 /doc
 *.csv
+.envrc
 *.hist
 *.ez

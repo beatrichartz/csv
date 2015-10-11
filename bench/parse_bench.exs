@@ -2,7 +2,7 @@ defmodule ParseBench do
   use Benchfella
 
   setup_all do
-    if System.get_env("OBSERVER") do
+    if System.get_env("CSV_BENCH_OBSERVER") do
       :observer.start()
     end
 
@@ -12,25 +12,39 @@ defmodule ParseBench do
   bench "cesso" do
     path
     |> File.stream!
-    |> Cesso.decode(separator: "\t")
+    |> Cesso.decode(separator: separator)
     |> Stream.run
   end
 
   bench "csv" do
+    sep = case separator do
+      "\\t" -> ?\t
+      <<s::utf8>> -> s
+    end
+
     path
     |> File.stream!
-    |> CSV.decode(separator: ?\t)
+    |> CSV.decode(separator: sep)
     |> Stream.run
   end
 
   bench "ex_csv" do
     path
     |> File.read!
-    |> ExCsv.parse!(delimiter: '\t')
+    |> ExCsv.parse!(delimiter: String.to_char_list(separator))
     |> Stream.run
   end
 
+  def separator do
+    System.get_env("CSV_BENCH_SEPARATOR") || ","
+  end
+
   def path do
-    Path.expand("./files/articles.csv", __DIR__) 
+    case System.get_env("CSV_BENCH_FILE_PATH") do
+      nil ->
+        Path.expand("./files/benchfile.csv", __DIR__) 
+      p ->
+        p
+    end
   end
 end
