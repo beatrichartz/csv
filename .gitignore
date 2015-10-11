@@ -1,5 +1,11 @@
 /_build
 /deps
 /bench/files
+/bench/snapshots
 erl_crash.dump
+mix.lock
+/docs
+/doc
+*.csv
+*.hist
 *.ez

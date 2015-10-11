@@ -18,6 +18,13 @@ defmodule DecoderTest do
     assert result == [~w(a be), ~w(c d)]
   end
 
+  test "parses strings separated by custom tab separators into a list of token tuples and emits them" do
+    stream = Stream.map(["a\tbe", "c\td"], &(&1))
+    result = Decoder.decode(stream, separator: ?\t) |> Enum.into([]) |> Enum.sort
+
+    assert result == [~w(a be), ~w(c d)]
+  end
+
   test "parses strings and strips cells when given the option" do
     stream = Stream.map(["  a , be", "c,    d\t"], &(&1))
     result = Decoder.decode(stream, strip_cells: true) |> Enum.into([]) |> Enum.sort
@@ -101,7 +108,7 @@ defmodule DecoderTest do
     l |> CSV.encode |> CSV.decode(num_pipes: 1) |> Enum.to_list
   end
   test "does not get corrupted after an error" do
-    assert_raise CSV.Decoder.StreamError, fn ->
+    assert_raise Protocol.UndefinedError, fn ->
       ~w(a) |> encode_decode_loop
     end
     result_a = [~w(b)] |> encode_decode_loop

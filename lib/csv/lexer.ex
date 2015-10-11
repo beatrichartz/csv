@@ -20,8 +20,6 @@ defmodule CSV.Lexer do
     receive do
       { :halt, value } ->
         send receiver, {:halt, value}
-      { :stream_error, message } ->
-        send receiver, {:stream_error, message}
       { index, line } ->
         case String.valid?(line) do
           true -> 

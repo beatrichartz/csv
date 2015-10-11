@@ -8,9 +8,9 @@ defmodule CSV.Decoder do
   """
   alias CSV.Parser, as: Parser
   alias CSV.Lexer, as: Lexer
+  alias CSV.Relay, as: Relay
 
   @num_pipes 8
-
 
   @doc """
   Decode a stream of comma-separated lines into a table.
@@ -69,149 +69,73 @@ defmodule CSV.Decoder do
   """
 
   def decode(stream, options \\ []) do
-    headers = options |> Keyword.get(:headers, false)
+    { headers, stream } = options |> Keyword.get(:headers, false) |> get_headers!(stream, options)
     num_pipes = options |> Keyword.get(:num_pipes, @num_pipes)
+    pipes = num_pipes |> build_pipes!(options)
 
-    row_receiver = self
-    { :ok, relay } = Task.start_link fn -> 
-      row_receiver |> relay_listen
-    end
+    producer = stream |> build_producer!(pipes) 
+    consumer = producer |> build_consumer!(headers)
 
-    headers_list = get_headers!(headers, stream, options)
-
-    get_producer_stream!(stream, headers) |>
-    build_producer!(relay, num_pipes, options) |> 
-    build_consumer!(relay, num_pipes, headers_list)
+    consumer
   end
 
-  defp relay_listen(row_receiver) do
-    receive do
-      :next ->
-        receive do
-          row ->
-            send row_receiver, row
-            row_receiver |> relay_listen
-        end
-      :halt ->
-        # do nothing
-    end
+  defp get_headers!(headers, stream, options) when is_list(headers) do
+    { headers, stream }
+  end
+  defp get_headers!(headers, stream, options) when headers do
+    producer = stream |> build_producer!([self |> build_pipe!(options)]) 
+    consumer = producer |> build_consumer!(false)
+    { consumer |> Enum.drop(-1) |> List.first, stream |> Stream.drop(1) }
+  end
+  defp get_headers!(_, stream, _) do
+    { false, stream }
   end
 
-  defp get_headers!(headers, stream, options) do
-    case headers do
-      true ->
-        first_element = { 0, stream |> Enum.drop(-1) |> List.first }
-        header_pipe = self |> build_pipe!(options)
-        header_pipe |> send first_element
-        header_pipe |> send { :halt, 0 }
+  defp build_producer!(stream, pipes) do
+    num_pipes = pipes |> Enum.count
 
-        headers_list = receive_header!
-        receive do
-          { :halt, 0 } -> nil
-        end
+    Stream.transform stream, 0, fn line, index ->
+      pipe_index = index |> rem(num_pipes)
+      { line_receiver, relay } = pipes |> Enum.fetch!(pipe_index)
+      line_receiver |> send({ index, line })
 
-        headers_list
-      false -> nil
-      headers_list -> headers_list
+      { [{ relay, index }], index + 1 }
     end
   end
 
-  defp get_producer_stream!(stream, headers) do
-    case headers do
-      true -> stream |> Stream.drop(1)
-      _ -> stream
-    end
-  end
-
-  defp build_consumer!(producer, relay, num_pipes, headers) do
-    Stream.resource fn ->
-      { producer, relay, 0, num_pipes, headers }
-    end, &consume/1,
-    fn _ ->
-    end
-  end
-
-  defp consume({ producer, relay, index, num_pipes, headers }) do
-    next_producer = producer |> Enum.drop(1)
-    send relay, :next
-
-    receive do
-      { :row, { _, row } } ->
-        { [build_row(row, headers)], { next_producer, relay, index + 1, num_pipes, headers } }
-      { :syntax_error, { index, message } } ->
-        raise Parser.SyntaxError, line: index, message: message
-      { :lexer_error, { index, message } } ->
-        raise Lexer.EncodingError, line: index, message: message
-      { :stream_error, { value, message } } ->
-        raise CSV.Decoder.StreamError, value: value, message: message
-      { :halt, _ } when num_pipes > 1 ->
-        { [], { producer, relay, index, num_pipes - 1, headers } }
-      { :halt, _ } ->
-        send relay, :halt
-        { :halt, { next_producer, relay, index, 0, headers } }
-    end
-  end
-
-  defp receive_header! do
-    receive do
-      { :row, { _, row } } ->
-        row
-      { :syntax_error, { index, message } } ->
-        raise Parser.SyntaxError, line: index, message: message
-      { :lexer_error, { index, message } } ->
-        raise Lexer.EncodingError, line: index, message: message
-    end
-  end
-
-  defp build_producer!(stream, relay, num_pipes, options) do
-    Stream.resource fn ->
-      { stream, 0, build_pipes!(relay, num_pipes, options) }
-    end, &produce(&1, num_pipes), fn { reason, index, pipes } ->
-      case reason do
-        { :error, message } ->
-          pipes |> Enum.each(&send(&1, {:stream_error, message }))
-        _ ->
-          pipes |> Enum.each(&send(&1, {:halt, index}))
+  defp build_consumer!(stream, headers) do
+    Stream.transform stream, 0, fn { relay, index }, acc ->
+      relay |> send :next
+      receive do
+        { ^relay, { :row, { ^index, row } } } ->
+          { [build_row(row, headers)], acc + 1 }
+        { ^relay, { :syntax_error, { index, message } } } ->
+          raise Parser.SyntaxError, line: index, message: message
+        { ^relay, { :lexer_error, { index, message } } } ->
+          raise Lexer.EncodingError, line: index, message: message
       end
     end
   end
 
-  defp produce({ stream, index, pipes }, num_pipes) do
-    try do
-      stream |> Enum.take(1) |> produce_element({ stream, index, pipes }, num_pipes)
-    rescue e ->
-      { :halt, { { :error, { e.value, "Stream #{e.value} can not be decoded" } }, index + 1, pipes } }
-    end
-  end
-
-  defp produce_element(elements, { stream, index, pipes }, num_pipes) do
-    element = elements |> List.first
-    pipe_index = index |> rem(num_pipes)
-    pipes |> Enum.fetch!(pipe_index) |> send({ index, element })
-
-    if stream |> Enum.drop(1) |> Enum.empty? do
-      { :halt, { stream |> Enum.drop(1), index + 1, pipes } }
-    else
-      { [element], { stream |> Enum.drop(1), index + 1, pipes } }
-    end
-  end
-
-  defp build_pipes!(receiver, num_pipes, options) do
+  defp build_pipes!(num_pipes, options) do
     1..num_pipes |> Enum.map fn _ ->
-      receiver |> build_pipe!(options)
+      self |> build_pipe!(options)
     end
   end
 
   defp build_pipe!(receiver, options) do
+    { :ok, relay } = Task.start_link fn ->
+      Relay.listen(receiver) 
+    end
     { :ok, line_receiver } = Task.start_link fn ->
       { :ok, token_receiver } = Task.start_link fn ->
-        Parser.parse_into(receiver, options)
+        Parser.parse_into(relay, options)
       end
 
       Lexer.lex_into(token_receiver, options)
     end
 
-    line_receiver
+    { line_receiver, relay }
   end
 
   defp build_row(data, headers) when is_list(headers) do

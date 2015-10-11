@@ -1,23 +1,33 @@
 defmodule ParseBench do
   use Benchfella
 
+  setup_all do
+    if System.get_env("OBSERVER") do
+      :observer.start()
+    end
+
+    { :ok, nil }
+  end
+
   bench "cesso" do
-    path |> File.stream! |> Cesso.decode(separator: "\t") |> Enum.count
+    path
+    |> File.stream!
+    |> Cesso.decode(separator: "\t")
+    |> Stream.run
   end
 
-  bench "csv unordered" do
-    path |> File.stream! |> CSV.decode(separator: ?\t) |> Enum.count
-  end
-
-  bench "csv ordered" do
-    path |> File.stream! |> CSV.decode(
-      separator: ?\t,
-      num_pipes: 1
-    ) |> Enum.count
+  bench "csv" do
+    path
+    |> File.stream!
+    |> CSV.decode(separator: ?\t)
+    |> Stream.run
   end
 
   bench "ex_csv" do
-    path |> File.read! |> ExCsv.parse!(delimiter: '\t') |> Enum.count
+    path
+    |> File.read!
+    |> ExCsv.parse!(delimiter: '\t')
+    |> Stream.run
   end
 
   def path do
