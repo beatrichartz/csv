@@ -82,30 +82,58 @@ defmodule DecoderTest do
 
   test "discards any state in the current message queues when halted" do
     stream = Stream.map(["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"], &(&1))
-    result = Decoder.decode(stream, num_pipes: 1) |> Enum.take(2)
+    result = Decoder.decode(stream) |> Enum.take(2)
 
     assert result == [~w(a be), ~w(c d)]
 
-    next_result = Decoder.decode(stream, num_pipes: 1) |> Enum.take(2)
+    next_result = Decoder.decode(stream) |> Enum.take(2)
     assert next_result == [~w(a be), ~w(c d)]
   end
 
   test "delivers the correct number of rows" do
     stream = Stream.map(["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"], &(&1))
-    result = Decoder.decode(stream, num_pipes: 1) |> Enum.count
+    result = Decoder.decode(stream) |> Enum.count
 
     assert result ==  6
   end
 
-  test "delivers correctly ordered rows with num_pipes 1" do
-    stream = Stream.map(["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"], &(&1))
-    result = Decoder.decode(stream, num_pipes: 1) |> Enum.into([])
+  test "delivers correctly ordered rows" do
+    stream = Stream.map([
+      "a,be",
+      "c,d",
+      "e,f",
+      "g,h",
+      "i,j",
+      "k,l",
+      "m,n",
+      "o,p",
+      "q,r",
+      "s,t",
+      "u,v",
+      "w,x",
+      "y,z"
+    ], &(&1))
+    result = Decoder.decode(stream) |> Enum.into([])
 
-    assert result ==  [~w(a be), ~w(c d), ~w(e f), ~w(g h), ~w(i j), ~w(k l)]
+    assert result ==  [
+      ~w(a be),
+      ~w(c d),
+      ~w(e f),
+      ~w(g h),
+      ~w(i j),
+      ~w(k l),
+      ~w(m n),
+      ~w(o p),
+      ~w(q r),
+      ~w(s t),
+      ~w(u v),
+      ~w(w x),
+      ~w(y z),
+    ]
   end
 
   def encode_decode_loop(l) do
-    l |> CSV.encode |> CSV.decode(num_pipes: 1) |> Enum.to_list
+    l |> CSV.encode |> CSV.decode |> Enum.to_list
   end
   test "does not get corrupted after an error" do
     assert_raise Protocol.UndefinedError, fn ->
