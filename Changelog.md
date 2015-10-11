@@ -1,10 +1,10 @@
 ## 1.2.0
 
-- Use `Stream.transform/4` - incompatible with elixir < 1.1.0
+- Use `Stream.transform/4` - incompatible with Elixir < `1.1.0`
 
 ## 1.1.5
 
-- Decider refactor from `Stream.resource/3` to `Stream.transform/3` in order to
+- Decoder refactor from `Stream.resource/3` to `Stream.transform/3` in order to
   get more predictable stream behaviour
 - Fix a bug where stream would get evaluated before being decoded
 
