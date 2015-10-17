@@ -10,7 +10,7 @@ defmodule CSV.Decoder do
   alias CSV.Lexer, as: Lexer
   alias CSV.Relay, as: Relay
 
-  @num_pipes 8
+  @num_pipes :erlang.system_info(:schedulers) * 3
 
   @doc """
   Decode a stream of comma-separated lines into a table.
@@ -26,8 +26,6 @@ defmodule CSV.Decoder do
     * `:delimiter`   – The delimiter token to use, defaults to `\r\n`. Must be a string.
     * `:strip_cells` – When set to true, will strip whitespace from cells. Defaults to false.
     * `:num_pipes`   – The number of parallel operations to run when producing the stream.
-      If set to 1, the stream will produce the CSV lines in order at the
-      cost of performance. Defaults to `8`.
     * `:headers`     – When set to `true`, will take the first row of the csv and use it as
       header values.
       When set to a list, will use the given list as header values.
@@ -41,13 +39,6 @@ defmodule CSV.Decoder do
 
       iex> File.stream!(\"data.csv\") |>
       iex> CSV.Decoder.decode |>
-      iex> Enum.take(2)
-      [[\"a\",\"b\",\"c\"], [\"d\",\"e\",\"f\"]]
-
-  Convert a filestream into a stream of rows in order of the given stream:
-
-      iex> File.stream!(\"data.csv\") |>
-      iex> CSV.Decoder.decode(num_pipes: 1) |>
       iex> Enum.take(2)
       [[\"a\",\"b\",\"c\"], [\"d\",\"e\",\"f\"]]
 
@@ -94,12 +85,18 @@ defmodule CSV.Decoder do
   defp build_producer!(stream, pipes) do
     num_pipes = pipes |> Enum.count
 
-    Stream.transform stream, fn -> 0 end, fn line, index ->
-      pipe_index = index |> rem(num_pipes)
-      { line_receiver, relay } = pipes |> Enum.fetch!(pipe_index)
-      line_receiver |> send({ index, line })
+    stream
+     |> Stream.chunk(num_pipes, num_pipes, [])
+     |> Stream.transform fn -> 0 end, fn lines, index ->
+       mapped = lines |> Stream.with_index |> Enum.map fn { line, i } ->
+        pipe_index = (index + i) |> rem(num_pipes)
+        { line_receiver, relay } = pipes |> Enum.fetch!(pipe_index)
+        line_receiver |> send({ index + i, line })
 
-      { [{ relay, index }], index + 1 }
+        { relay, index + i }
+       end
+
+      { [mapped], index + num_pipes }
     end, fn index -> 
       pipes |> Enum.each fn { line_receiver, relay } ->
         relay |> send :halt
@@ -109,16 +106,20 @@ defmodule CSV.Decoder do
   end
 
   defp build_consumer!(stream, headers) do
-    Stream.transform stream, 0, fn { relay, index }, acc ->
-      relay |> send :next
-      receive do
-        { ^relay, { :row, { ^index, row } } } ->
-          { [build_row(row, headers)], acc + 1 }
-        { ^relay, { :syntax_error, { index, message } } } ->
-          raise Parser.SyntaxError, line: index, message: message
-        { ^relay, { :lexer_error, { index, message } } } ->
-          raise Lexer.EncodingError, line: index, message: message
+    Stream.transform stream, 0, fn items, acc ->
+      mapped = items |> Enum.map fn { relay, index } ->
+        relay |> send :next
+        receive do
+          { ^relay, { :row, { ^index, row } } } ->
+            build_row(row, headers)
+          { ^relay, { :syntax_error, { index, message } } } ->
+            raise Parser.SyntaxError, line: index, message: message
+          { ^relay, { :lexer_error, { index, message } } } ->
+            raise Lexer.EncodingError, line: index, message: message
+        end
       end
+
+      { mapped, acc + 1 }
     end
   end
 
