@@ -113,7 +113,7 @@ defmodule DecoderTest do
       "w,x",
       "y,z"
     ], &(&1))
-    result = Decoder.decode(stream) |> Enum.into([])
+    result = Decoder.decode(stream, num_pipes: 3) |> Enum.into([])
 
     assert result ==  [
       ~w(a be),
