@@ -7,10 +7,7 @@ defmodule CSV do
 
   @doc """
   Decode a stream of comma-separated lines into a table.
-  If the number of parallel operations (set via the option `:num_pipes` and defaulting to 8)
-  is greater than 1, this will produce the rows of the file out of order. If parallel operations
-  are set to one, lexing and parsing are still parallelised, which results in better performance.
-
+  
   ## Options
 
   These are the options:
@@ -19,8 +16,7 @@ defmodule CSV do
     * `:delimiter`   – The delimiter token to use, defaults to `\r\n`. Must be a string.
     * `:strip_cells` – When set to true, will strip whitespace from cells. Defaults to false.
     * `:num_pipes`   – The number of parallel operations to run when producing the stream.
-      If set to 1, the stream will produce the CSV lines in order at the
-      cost of performance. Defaults to `8`.
+      Defaults to number of erlang schedulers times 3 
     * `:headers`     – When set to `true`, will take the first row of the csv and use it as
       header values.
       When set to a list, will use the given list as header values.

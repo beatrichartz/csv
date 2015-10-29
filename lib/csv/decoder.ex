@@ -4,7 +4,7 @@ defmodule CSV.Decoder do
   The Decoder CSV module sends lines of delimited values from a stream to the parser and converts
   rows coming from the CSV parser module to a consumable stream.
   In setup, it parallelises lexing and parsing, as well as different lexer/parser pairs as pipes.
-  The number of pipes can be controlled via options and influences the order of the stream.
+  The number of pipes can be controlled via options.
   """
   alias CSV.Parser, as: Parser
   alias CSV.Lexer, as: Lexer
@@ -14,9 +14,8 @@ defmodule CSV.Decoder do
 
   @doc """
   Decode a stream of comma-separated lines into a table.
-  If the number of parallel operations (set via the option `:num_pipes` and defaulting to 8)
-  is greater than 1, this will produce the rows of the file out of order. If parallel operations
-  are set to one, lexing and parsing are still parallelised, which results in better performance.
+  You can control the number of parallel operations via the option `:num_pipes` - 
+  default is the number of erlang schedulers times 3.
 
   ## Options
 
