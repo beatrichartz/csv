@@ -51,7 +51,7 @@ Enum.map fn row ->
 end
 ````
 
-Do this to encode a table (two-dimensional array):
+Do this to encode a table (two-dimensional list):
 
 ````elixir
 table_data |> CSV.encode
