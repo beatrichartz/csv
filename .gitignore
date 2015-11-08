@@ -6,7 +6,6 @@ erl_crash.dump
 mix.lock
 /docs
 /doc
-*.csv
 .envrc
 *.hist
 *.ez
