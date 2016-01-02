@@ -38,9 +38,9 @@ defmodule CSV.Encoder do
     separator = options |> Keyword.get(:separator, @separator)
     delimiter = options |> Keyword.get(:delimiter, @delimiter)
 
-    stream |> Stream.transform 0, fn row, acc ->
+    stream |> Stream.transform(0, fn row, acc ->
       {[ encode_row(row, separator, delimiter) <> delimiter ], acc + 1}
-    end
+    end)
   end
 
   defp encode_row(row, separator, delimiter) do

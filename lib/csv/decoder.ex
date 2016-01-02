@@ -67,7 +67,7 @@ defmodule CSV.Decoder do
     consumer
   end
 
-  defp get_headers!(headers, stream, options) when is_list(headers) do
+  defp get_headers!(headers, stream, _) when is_list(headers) do
     { headers, stream }
   end
   defp get_headers!(headers, stream, options) when headers do
@@ -84,28 +84,28 @@ defmodule CSV.Decoder do
 
     stream
      |> Stream.chunk(num_pipes, num_pipes, [])
-     |> Stream.transform fn -> 0 end, fn lines, index ->
-       mapped = lines |> Stream.with_index |> Enum.map fn { line, i } ->
+     |> Stream.transform(fn -> 0 end, fn lines, index ->
+       mapped = lines |> Stream.with_index |> Enum.map(fn { line, i } ->
         pipe_index = (index + i) |> rem(num_pipes)
         { line_receiver, relay } = pipes |> Enum.fetch!(pipe_index)
         line_receiver |> send({ index + i, line })
 
         { relay, index + i }
-       end
+       end)
 
       { [mapped], index + num_pipes }
-    end, fn index -> 
-      pipes |> Enum.each fn { line_receiver, relay } ->
-        relay |> send :halt
-        line_receiver |> send { :halt, index }
-      end
-    end
+     end, fn index -> 
+      pipes |> Enum.each(fn { line_receiver, relay } ->
+        relay |> send(:halt)
+        line_receiver |> send({ :halt, index })
+      end)
+     end)
   end
 
   defp build_consumer!(stream, headers) do
     Stream.transform stream, 0, fn items, acc ->
-      mapped = items |> Enum.map fn { relay, index } ->
-        relay |> send :next
+      mapped = items |> Enum.map(fn { relay, index } ->
+        relay |> send(:next)
         receive do
           { ^relay, { :row, { ^index, row } } } ->
             build_row(row, headers)
@@ -114,16 +114,16 @@ defmodule CSV.Decoder do
           { ^relay, { :lexer_error, { index, message } } } ->
             raise Lexer.EncodingError, line: index, message: message
         end
-      end
+      end)
 
       { mapped, acc + 1 }
     end
   end
 
   defp build_pipes!(num_pipes, options) do
-    1..num_pipes |> Enum.map fn _ ->
+    1..num_pipes |> Enum.map(fn _ ->
       self |> build_pipe!(options)
-    end
+    end)
   end
 
   defp build_pipe!(receiver, options) do

@@ -5,7 +5,7 @@ defmodule CSV.Mixfile do
     [
         app: :csv,
         version: "1.2.1",
-        elixir: "~> 1.1.0",
+        elixir: "~> 1.1",
         deps: deps,
         package: package,
         docs: &docs/0,
@@ -30,7 +30,7 @@ defmodule CSV.Mixfile do
       {:ex_csv, only: :bench},
       {:csvlixir, only: :bench},
       {:cesso, only: :bench},
-      {:ex_doc, only: :docs},
+      {:ex_doc, "0.9.0", only: :docs},
       {:inch_ex, only: :docs},
       {:earmark, only: :docs}
     ]

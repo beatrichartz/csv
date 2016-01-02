@@ -7,8 +7,7 @@ defmodule CSV.Relay do
             send receiver, { self, row }
             receiver |> listen
         end
-      :halt ->
-
+      :halt -> :halt
     end
   end
 end
