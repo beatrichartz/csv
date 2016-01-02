@@ -10,8 +10,6 @@ defmodule CSV.Decoder do
   alias CSV.Lexer, as: Lexer
   alias CSV.Relay, as: Relay
 
-  @num_pipes :erlang.system_info(:schedulers) * 3
-
   @doc """
   Decode a stream of comma-separated lines into a table.
   You can control the number of parallel operations via the option `:num_pipes` - 
@@ -60,7 +58,7 @@ defmodule CSV.Decoder do
 
   def decode(stream, options \\ []) do
     { headers, stream } = options |> Keyword.get(:headers, false) |> get_headers!(stream, options)
-    num_pipes = options |> Keyword.get(:num_pipes, @num_pipes)
+    num_pipes = options |> Keyword.get(:num_pipes, default_num_pipes)
     pipes = num_pipes |> build_pipes!(options)
 
     producer = stream |> build_producer!(pipes) 
@@ -149,6 +147,10 @@ defmodule CSV.Decoder do
 
   defp build_row(data, _) do
     data
+  end
+
+  defp default_num_pipes do
+    :erlang.system_info(:schedulers) * 3
   end
 
 end
