@@ -73,7 +73,7 @@ defmodule CSV.Decoder do
   defp get_headers!(headers, stream, options) when headers do
     producer = stream |> build_producer!([self |> build_pipe!(options)]) 
     consumer = producer |> build_consumer!(false)
-    { consumer |> Enum.drop(-1) |> List.first, stream |> Stream.drop(1) }
+    { consumer |> Enum.take(1) |> List.first, stream |> Stream.drop(1) }
   end
   defp get_headers!(_, stream, _) do
     { false, stream }
