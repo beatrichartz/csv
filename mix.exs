@@ -32,7 +32,7 @@ defmodule CSV.Mixfile do
       {:cesso, only: :bench},
       {:ex_doc, "0.9.0", only: :docs},
       {:inch_ex, only: :docs},
-      {:earmark, only: :docs}
+      {:earmark, "0.1.19", only: :docs}
     ]
   end
 
