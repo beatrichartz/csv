@@ -38,7 +38,8 @@ defimpl CSV.Encode, for: BitString do
         << separator :: utf8 >>,
         delimiter,
         << @carriage_return :: utf8 >>,
-        << @newline :: utf8 >>
+        << @newline :: utf8 >>,
+        << @double_quote :: utf8 >>
       ]) ->
         << @double_quote :: utf8 >> <>
       (data |> escape |> String.replace(
