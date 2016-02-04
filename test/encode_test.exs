@@ -5,6 +5,10 @@ defmodule EncodeTest do
     assert CSV.Encode.encode(",this") == "\",this\""
   end
 
+  test "it correctly escapes double quotes" do
+    assert CSV.Encode.encode("a\"b") == "\"a\"\"b\""
+  end
+
   test "it falls back to to_string for integers" do
     assert CSV.Encode.encode(1) == "1"
   end
