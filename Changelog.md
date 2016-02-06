@@ -1,3 +1,21 @@
+## 1.2.4
+
+- Fix encoding of double quotes
+
+## 1.2.3
+
+- Fix a condition where headers: true would enumerate the whole file once before parsing
+
+## 1.2.2
+
+- Fix default num_pipes argument to evaluate num_pipes dependent on scheduler at runtime
+- Test utf-8 files with BOM
+- Syntax and mix updates for elixir 1.2
+
+## 1.2.1
+
+- Decoder performance optimisations
+
 ## 1.2.0
 
 - Use `Stream.transform/4` - incompatible with Elixir < `1.1.0`
