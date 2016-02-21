@@ -12,7 +12,9 @@ defmodule CSV.Mixfile do
         name: "CSV",
         consolidate_protocols: true,
         source_url: "https://github.com/beatrichartz/csv",
-        description: "CSV Decoding and Encoding for Elixir"
+        description: "CSV Decoding and Encoding for Elixir",
+        test_coverage: [tool: ExCoveralls],
+        preferred_cli_env: ["coveralls": :test, "coveralls.detail": :test, "coveralls.post": :test]
     ]
   end
 
@@ -26,6 +28,7 @@ defmodule CSV.Mixfile do
 
   defp deps do
     [
+      {:excoveralls, "~> 0.5", only: :test},
       {:benchfella, only: :bench},
       {:ex_csv, only: :bench},
       {:csvlixir, only: :bench},
