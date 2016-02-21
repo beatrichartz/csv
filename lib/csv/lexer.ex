@@ -47,12 +47,8 @@ defmodule CSV.Lexer do
   end
 
   defp lex(index, << @carriage_return :: utf8 >> <> tail, receiver, current_token, separator) do
-    case current_token do
-      {:delimiter, value} -> lex(index, tail, {:delimiter, receiver, value <> << @carriage_return :: utf8 >>}, separator)
-      _ ->
-        emit_token!(current_token, receiver)
-        lex(index, tail, receiver, {:delimiter, << @carriage_return :: utf8 >>}, separator)
-    end
+    emit_token!(current_token, receiver)
+    lex(index, tail, receiver, {:delimiter, << @carriage_return :: utf8 >>}, separator)
   end
 
   defp lex(index, << @double_quote :: utf8 >> <> tail, receiver, current_token, separator) do

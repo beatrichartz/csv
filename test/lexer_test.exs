@@ -10,6 +10,7 @@ defmodule LexerTest do
 
     send lexer_pid, {1, "a,be\r\n"}
     send lexer_pid, {2, "c,d"}
+
     assert_receive {:start, 1}, 1
     assert_receive {:content, "a"}, 1
     assert_receive {:separator, ","}, 1
