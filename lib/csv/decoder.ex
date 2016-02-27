@@ -6,6 +6,7 @@ defmodule CSV.Decoder do
   In setup, it parallelises lexing and parsing, as well as different lexer/parser pairs as pipes.
   The number of pipes can be controlled via options.
   """
+  alias CSV.LineAggregator, as: LineAggregator
   alias CSV.Parser, as: Parser
   alias CSV.Lexer, as: Lexer
   alias CSV.Relay, as: Relay
@@ -59,12 +60,19 @@ defmodule CSV.Decoder do
   def decode(stream, options \\ []) do
     { headers, stream } = options |> Keyword.get(:headers, false) |> get_headers!(stream, options)
     num_pipes = options |> Keyword.get(:num_pipes, default_num_pipes)
+    multiline_escape = options |> Keyword.get(:multiline_escape, true)
     pipes = num_pipes |> build_pipes!(options)
 
-    producer = stream |> build_producer!(pipes) 
+    producer = stream |> aggregate(multiline_escape) |> build_producer!(pipes) 
     consumer = producer |> build_consumer!(headers)
 
     consumer
+  end
+  defp aggregate(stream, true) do
+    stream |> LineAggregator.aggregate
+  end
+  defp aggregate(stream, false) do
+    stream
   end
 
   defp get_headers!(headers, stream, _) when is_list(headers) do

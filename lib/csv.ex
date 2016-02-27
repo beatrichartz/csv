@@ -12,12 +12,13 @@ defmodule CSV do
 
   These are the options:
 
-    * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + (your separator)).
     * `:delimiter`   – The delimiter token to use, defaults to `\r\n`. Must be a string.
-    * `:strip_cells` – When set to true, will strip whitespace from cells. Defaults to false.
-    * `:num_pipes`   – The number of parallel operations to run when producing the stream.
-      Defaults to number of erlang schedulers times 3 
     * `:headers`     – When set to `true`, will take the first row of the csv and use it as
+    * `:multiline_escape` – Whether to allow multiline escape sequences. Defaults to true.
+    * `:num_pipes`   – The number of parallel operations to run when producing the stream.
+    * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + (your separator)).
+    * `:strip_cells` – When set to true, will strip whitespace from cells. Defaults to false.
+      Defaults to number of erlang schedulers times 3 
       header values.
       When set to a list, will use the given list as header values.
       When set to `false` (default), will use no header values.

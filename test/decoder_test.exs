@@ -94,7 +94,22 @@ defmodule DecoderTest do
     stream = Stream.map(["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"], &(&1))
     result = Decoder.decode(stream) |> Enum.count
 
-    assert result ==  6
+    assert result == 6
+  end
+
+  test "collects rows with fields spanning multiple lines" do
+    stream = Stream.map(["a,\"be", "c,d", "e,f\"", "g,h", "i,j", "k,l"], &(&1))
+    result = Decoder.decode(stream) |> Enum.take(2)
+
+    assert result == [["a", "be\r\nc,d\r\ne,f"], ~w(g h)]
+  end
+
+  test "does not collect rows with fields spanning multiple lines if multiline_escape is false" do
+    stream = Stream.map(["a,\"be", "c,d", "e,f\"", "g,h", "i,j", "k,l"], &(&1))
+
+    assert_raise CSV.Parser.SyntaxError, fn ->
+      Decoder.decode(stream, multiline_escape: false) |> Stream.run
+    end
   end
 
   test "delivers correctly ordered rows" do

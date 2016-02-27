@@ -5,6 +5,7 @@
 erl_crash.dump
 mix.lock
 /docs
+/cover
 /doc
 .envrc
 *.hist
