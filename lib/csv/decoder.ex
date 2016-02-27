@@ -110,9 +110,9 @@ defmodule CSV.Decoder do
           { ^relay, { :row, { ^index, row } } } ->
             build_row(row, headers)
           { ^relay, { :syntax_error, { index, message } } } ->
-            raise Parser.SyntaxError, line: index, message: message
+            raise Parser.SyntaxError, line: index + 1, message: message
           { ^relay, { :lexer_error, { index, message } } } ->
-            raise Lexer.EncodingError, line: index, message: message
+            raise Lexer.EncodingError, line: index + 1, message: message
         end
       end)
 

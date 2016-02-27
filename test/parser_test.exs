@@ -109,7 +109,7 @@ defmodule ParserTest do
       send(context[:parser_pid], token)
     end
 
-    assert_receive {:syntax_error, {2, "Unterminated escape sequence."}}, 10
+    assert_receive {:syntax_error, {2, "Unterminated escape sequence"}}, 10
   end
 
   test "raises a syntax error when halted in an escape sequence", context do
@@ -136,7 +136,7 @@ defmodule ParserTest do
       send(context[:parser_pid], token)
     end
 
-    assert_receive {:syntax_error, {2, "Stream halted with unterminated escape sequence."}}, 10
+    assert_receive {:syntax_error, {2, "Stream halted with unterminated escape sequence"}}, 10
   end
 
 

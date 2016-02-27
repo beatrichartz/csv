@@ -33,9 +33,9 @@ defmodule CSV.Parser do
       {:double_quote, _} ->
         parse(row, receiver, not quoted, true, strip_cells)
       {:end, index} ->
-        send receiver, {:syntax_error, {index, "Unterminated escape sequence." }}
+        send receiver, {:syntax_error, {index, "Unterminated escape sequence" }}
       {:halt, index} ->
-        send receiver, {:syntax_error, {index, "Stream halted with unterminated escape sequence." }}
+        send receiver, {:syntax_error, {index, "Stream halted with unterminated escape sequence" }}
     end
   end
 

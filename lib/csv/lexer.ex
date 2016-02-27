@@ -26,7 +26,7 @@ defmodule CSV.Lexer do
             lex(index, line, receiver, options)
             lex_into(receiver, options)
           false ->
-            send receiver, {:lexer_error, { index, "Invalid encoding for utf-8."}}
+            send receiver, {:lexer_error, { index, "Invalid encoding for utf-8"}}
         end
     end
   end
