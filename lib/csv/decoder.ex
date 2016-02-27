@@ -63,7 +63,7 @@ defmodule CSV.Decoder do
     multiline_escape = options |> Keyword.get(:multiline_escape, true)
     pipes = num_pipes |> build_pipes!(options)
 
-    producer = stream |> aggregate(multiline_escape) |> build_producer!(pipes) 
+    producer = stream |> aggregate(multiline_escape) |> build_producer!(pipes)
     consumer = producer |> build_consumer!(headers)
 
     consumer
@@ -79,7 +79,7 @@ defmodule CSV.Decoder do
     { headers, stream }
   end
   defp get_headers!(headers, stream, options) when headers do
-    producer = stream |> build_producer!([self |> build_pipe!(options)]) 
+    producer = stream |> build_producer!([self |> build_pipe!(options)])
     consumer = producer |> build_consumer!(false)
     { consumer |> Enum.take(1) |> List.first, stream |> Stream.drop(1) }
   end
@@ -136,7 +136,7 @@ defmodule CSV.Decoder do
 
   defp build_pipe!(receiver, options) do
     { :ok, relay } = Task.start_link fn ->
-      Relay.listen(receiver) 
+      Relay.listen(receiver)
     end
     { :ok, line_receiver } = Task.start_link fn ->
       { :ok, token_receiver } = Task.start_link fn ->
