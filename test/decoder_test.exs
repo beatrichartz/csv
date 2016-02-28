@@ -146,7 +146,7 @@ defmodule DecoderTest do
       "that\",\"",
       "should",
       "\",\"stay",
-      "",
+      "\"\"\"\"",
       "together\""
     ], &(&1))
 
@@ -171,7 +171,7 @@ defmodule DecoderTest do
       [
         "text\r\nthat",
         "\r\nshould\r\n",
-        "stay\r\n\r\ntogether"
+        "stay\r\n\"\"\r\ntogether"
       ]
     ]
   end
