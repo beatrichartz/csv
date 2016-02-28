@@ -1,8 +1,9 @@
 defmodule CSV.Parser do
+  alias CSV.Parser.SyntaxError
 
   @moduledoc ~S"""
-  The CSV Parser module - parses tokens coming from the lexer and sends them
-  to the receiver process / the decoder.
+  The CSV Parser module - parses tokens coming from the lexer and parses them
+  into a row of fields.
   """
 
   @doc """
@@ -13,81 +14,63 @@ defmodule CSV.Parser do
 
   Options get transferred from the decoder. They are:
 
-    * `:strip_cells` – When set to true, will strip whitespace from cells. Defaults to false.
+    * `:strip_cells` – When set to true, will strip whitespace from fields. Defaults to false.
   """
 
-  def parse_into(receiver, options \\ []) do
-    strip_cells = Keyword.get(options, :strip_cells, false)
-
-    parse([], receiver, false, false, strip_cells)
+  def parse(message, options \\ [])
+  def parse({ tokens, index }, options) do
+    case parse([], "", tokens, false, false, options) do
+      { :ok, row } -> { :ok, row, index }
+      { :error, type, message } -> { :error, type, message, index }
+    end
+  end
+  def parse({ :error, mod, message, index }, _) do
+    { :error, mod, message, index }
   end
 
-  defp parse(row, receiver, quoted, _, strip_cells) when quoted do
-    receive do
-      {:content, content} ->
-        parse(add_to_last_content(row, content), receiver, quoted, false, strip_cells)
-      {:separator, content} ->
-        parse(add_to_last_content(row, content), receiver, quoted, false, strip_cells)
-      {:delimiter, content} ->
-        parse(add_to_last_content(row, content), receiver, quoted, false, strip_cells)
+  defp parse(row, field, [token | tokens], true, _, options) do
+    case token do
       {:double_quote, _} ->
-        parse(row, receiver, not quoted, true, strip_cells)
-      {:end, index} ->
-        send receiver, {:syntax_error, {index, "Unterminated escape sequence" }}
-      {:halt, index} ->
-        send receiver, {:syntax_error, {index, "Stream halted with unterminated escape sequence" }}
+        parse(row, field, tokens, false, true, options)
+      {_, content} ->
+        parse(row, field <> content, tokens, true, false, options)
     end
   end
-
-  defp parse(row, receiver, quoted, after_unquote, strip_cells) when not quoted do
-    receive do
+  defp parse(_, field, [], true, _, _) do
+    { :error, SyntaxError, "Unterminated escape sequence near '#{field}'" }
+  end
+  defp parse(row, "", [token | tokens], false, after_unquote, options) do
+    case token do
       {:content, content} ->
-        parse(add_to_last_content(row, content), receiver, quoted, false, strip_cells)
+        parse(row, content, tokens, false, false, options)
       {:separator, _} ->
-        parse(add_content(row, "", strip_cells), receiver, quoted, false, strip_cells)
+        parse(row ++ [""], "", tokens, false, false, options)
       {:delimiter, _} ->
-        parse(row, receiver, quoted, false, strip_cells)
-      {:start, _} ->
-        parse([""], receiver, quoted, false, strip_cells)
-      {:double_quote, content} when after_unquote ->
-        parse(add_to_last_content(row, content), receiver, true, false, strip_cells)
+        parse(row, "", tokens, false, false, options)
+      {:double_quote, _} ->
+        parse(row, "", tokens, true, false, options)
+    end
+  end
+  defp parse(row, field, [token | tokens], false, after_unquote, options) do
+    case token do
+      {:content, content} ->
+        parse(row, field <> content, tokens, false, false, options)
+      {:separator, _} ->
+        parse(row ++ [field |> strip(options)], "", tokens, false, false, options)
+      {:delimiter, _} ->
+        parse(row, field, tokens, false, false, options)
       {:double_quote, content} ->
-        cond do
-          last_content_length(row) == 0 ->
-            parse(row, receiver, not quoted, false, strip_cells)
-          true ->
-            parse(add_to_last_content(row, content), receiver, quoted, false, strip_cells)
-        end
-      {:end, index } ->
-        send receiver, {:row, {index, strip_last_cell(row, strip_cells)}}
-        parse([], receiver, false, false, strip_cells)
-      {:halt, index } ->
-        send receiver, {:halt, index}
-      {:lexer_error, content } ->
-        send receiver, {:lexer_error, content }
+        parse(row, field <> content, tokens, after_unquote, false, options)
     end
   end
-
-
-  defp add_to_last_content(row, content) do
-    List.update_at(row, length(row) - 1, &(&1 <> content))
+  defp parse(row, field, [], false, _, options) do
+    { :ok, row ++ [field |> strip(options)] }
   end
 
-  defp add_content(row, content, strip_cells) do
-    strip_last_cell(row, strip_cells) ++ [content]
+  defp strip(field, [ strip_cells: true ]) do
+    field |> String.strip
   end
-
-  defp last_content_length(row) do
-    Enum.fetch!(row, length(row) - 1) |> String.length
+  defp strip(field, _) do
+    field
   end
-
-  defp strip_last_cell(row, strip_cells) do
-    cond do
-      strip_cells ->
-        List.update_at(row, length(row) - 1, &(String.strip(&1)))
-      true ->
-        row
-    end
-  end
-
 end

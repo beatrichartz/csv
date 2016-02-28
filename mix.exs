@@ -28,6 +28,7 @@ defmodule CSV.Mixfile do
 
   defp deps do
     [
+      {:parallel_stream, "~> 1.0"},
       {:excoveralls, "~> 0.5", only: :test},
       {:benchfella, only: :bench},
       {:ex_csv, only: :bench},

@@ -1,26 +1,45 @@
 defmodule LexerTest do
   use ExUnit.Case
-  alias CSV.Lexer, as: Lexer
+  alias CSV.Lexer
+  alias CSV.Lexer.EncodingError
 
-  test "parses strings into a list of token tuples and emits them" do
-    test_pid = self
-    lexer_pid = spawn_link fn ->
-      Lexer.lex_into(test_pid)
-    end
+  test "parses strings into a list of token tuples" do
+    lexed = Lexer.lex({"a,be\r\n", 11})
 
-    send lexer_pid, {1, "a,be\r\n"}
-    send lexer_pid, {2, "c,d"}
+    assert lexed == {:ok, [
+        {:content, "a"},
+        {:separator, ","},
+        {:content, "be"},
+        {:delimiter, "\r\n"}
+      ], 11}
+  end
 
-    assert_receive {:start, 1}, 1
-    assert_receive {:content, "a"}, 1
-    assert_receive {:separator, ","}, 1
-    assert_receive {:content, "be"}, 1
-    assert_receive {:delimiter, "\r\n"}, 1
-    assert_receive {:end, 1}, 1
-    assert_receive {:start, 2}, 1
-    assert_receive {:content, "c"}, 1
-    assert_receive {:separator, ","}, 1
-    assert_receive {:content, "d"}, 1
-    assert_receive {:end, 2}, 1
+  test "parse escape sequences into a list of token tuples" do
+    lexed = Lexer.lex({"\"c,d", 11})
+    assert lexed == {:ok, [
+        {:double_quote, "\""},
+        {:content, "c"},
+        {:separator, ","},
+        {:content, "d"}
+      ], 11}
+  end
+
+  test "parses strings into a list of token tuples with quotes" do
+    lexed = Lexer.lex({"a,\"be\"\"\r\n", 1})
+
+    assert lexed == {:ok, [
+        {:content, "a"},
+        {:separator, ","},
+        {:double_quote, "\""},
+        {:content, "be"},
+        {:double_quote, "\""},
+        {:double_quote, "\""},
+        {:delimiter, "\r\n"}
+      ], 1}
+  end
+
+  test "raises a syntax error when the string is not valid" do
+    lexed = Lexer.lex({<<191>>, 1})
+    assert lexed == {:error, EncodingError, "Invalid encoding", 1}
   end
 end

@@ -9,8 +9,16 @@ defmodule CSV.Defaults do
       @newline         ?\n
       @carriage_return ?\r
       @delimiter       << @carriage_return :: utf8 >> <> << @newline :: utf8 >>
-      @double_quote    ?" 
+      @double_quote    ?"
     end
+  end
+
+  def worker_work_ratio do
+    5
+  end
+
+  def num_workers do
+    :erlang.system_info(:schedulers) * 3
   end
 
 end

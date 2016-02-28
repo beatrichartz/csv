@@ -33,3 +33,19 @@ defmodule CSV.Lexer.EncodingError do
     }
   end
 end
+
+defmodule CSV.LineAggregator.CorruptStreamError do
+  @moduledoc """
+  Raised at runtime when the CSV stream ends with unfinished escape sequences
+  """
+
+  defexception [:message]
+
+  def exception(options) do
+    message = options |> Keyword.fetch!(:message)
+
+    %__MODULE__{
+      message: message
+    }
+  end
+end
