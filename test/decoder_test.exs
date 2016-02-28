@@ -70,7 +70,7 @@ defmodule DecoderTest do
   end
 
   test "parses strings that contain single double quotes" do
-    stream = Stream.map(["a,be", "c\",d"], &(&1))
+    stream = Stream.map(["a,be", "\"c\"\"\",d"], &(&1))
     result = Decoder.decode(stream) |> Enum.into([])
 
     assert result == [["a", "be"], ["c\"", "d"]]

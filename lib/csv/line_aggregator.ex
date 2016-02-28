@@ -22,23 +22,8 @@ defmodule CSV.LineAggregator do
     separator = options |> Keyword.get(:separator, @separator)
     stream |> Stream.transform(fn -> [] end, fn line, collected ->
       case collected do
-        [] ->
-          cond do
-            is_open?(line, separator) ->
-              { [], [line] }
-            true ->
-              { [line], [] }
-          end
-        _ ->
-          { is_closing, tail } = is_closing?(line, separator)
-          cond do
-            is_closing && is_open?(tail, separator) ->
-              { [], collected ++ [line] }
-            is_closing ->
-              { [collected ++ [line] |> Enum.join(@delimiter)], [] }
-            true ->
-              { [], collected ++ [line] }
-          end
+        [] -> start_aggregate(line, separator)
+        _ -> continue_aggregate(collected, line, separator)
       end
     end, fn collected ->
       case collected do
@@ -46,6 +31,25 @@ defmodule CSV.LineAggregator do
         _ -> raise CorruptStreamError, message: "Stream halted with unterminated escape sequence"
       end
     end)
+  end
+  defp start_aggregate(line, separator) do
+    cond do
+      is_open?(line, separator) ->
+        { [], [line] }
+      true ->
+        { [line], [] }
+    end
+  end
+  defp continue_aggregate(collected, line, separator) do
+    { is_closing, tail } = is_closing?(line, separator)
+    cond do
+      is_closing && is_open?(tail, separator) ->
+        { [], collected ++ [line] }
+      is_closing ->
+        { [collected ++ [line] |> Enum.join(@delimiter)], [] }
+      true ->
+        { [], collected ++ [line] }
+    end
   end
 
   defp is_closing?(line, separator) do
@@ -55,8 +59,8 @@ defmodule CSV.LineAggregator do
   defp is_closing?(<< @double_quote :: utf8 >> <> tail, << @double_quote :: utf8 >>, quoted, separator) do
     is_closing?(tail, @double_quote, !quoted, separator)
   end
-  defp is_closing?(line, << @double_quote :: utf8 >>, quoted, _) do
-    { quoted, line }
+  defp is_closing?(<< head :: utf8 >> <> tail, << @double_quote :: utf8 >>, quoted, _) do
+    { quoted, tail }
   end
   defp is_closing?(<< head :: utf8 >> <> tail, _, quoted, separator) do
     is_closing?(tail, << head :: utf8 >>, quoted, separator)
@@ -81,8 +85,8 @@ defmodule CSV.LineAggregator do
   defp is_open?(<< @double_quote :: utf8 >> <> tail, "", false, separator) do
     is_open?(tail, @double_quote, true, separator)
   end
-  defp is_open?(<< @double_quote :: utf8 >> <> tail, _, false, separator) do
-    is_open?(tail, @double_quote, false, separator)
+  defp is_open?(<< @double_quote :: utf8 >> <> tail, _, quoted, separator) do
+    is_open?(tail, @double_quote, !quoted, separator)
   end
   defp is_open?(<< head :: utf8 >> <> tail, _, quoted, separator) do
     is_open?(tail, << head :: utf8 >>, quoted, separator)
