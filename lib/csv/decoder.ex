@@ -23,7 +23,10 @@ defmodule CSV.Decoder do
     * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + (your separator)).
     * `:delimiter`   – The delimiter token to use, defaults to `\r\n`. Must be a string.
     * `:strip_cells` – When set to true, will strip whitespace from cells. Defaults to false.
-    * `:num_pipes`   – The number of parallel operations to run when producing the stream.
+    * `:num_pipes`   – Will be deprecated in 2.0 - see num_workers
+    * `:num_workers` – The number of parallel operations to run when producing the stream.
+    * `:worker_work_ratio` – The available work per worker, defaults to 5. Higher rates will mean more work sharing, but might also lead to work fragmentation slowing down the queues.
+    * `:multiline_escape` – Whether escape sequences can span linebreaks.
     * `:headers`     – When set to `true`, will take the first row of the csv and use it as
       header values.
       When set to a list, will use the given list as header values.
@@ -79,7 +82,7 @@ defmodule CSV.Decoder do
       |> lex_to_parse
       |> Parser.parse(options)
       |> build_row(headers)
-    end, options)
+    end, options |> Keyword.merge(num_workers: num_workers))
     |> handle_errors
   end
   defp aggregate(stream, true) do

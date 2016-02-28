@@ -78,7 +78,7 @@ defmodule DecoderTest do
 
   test "parses strings unless they contain unfinished escape sequences" do
     stream = Stream.map(["a,be", "\"c,d"], &(&1))
-    assert_raise SyntaxError, fn ->
+    assert_raise CorruptStreamError, fn ->
       Decoder.decode(stream, headers: [:a, :b]) |> Enum.into([])
     end
   end
@@ -127,6 +127,53 @@ defmodule DecoderTest do
     assert_raise CorruptStreamError, fn ->
       Decoder.decode(stream) |> Stream.run
     end
+  end
+
+  test "collects rows with field spanning multiple lines" do
+    stream = Stream.map([
+      ",,\"",
+      "text that",
+      "should \"\"stay\"\" together",
+      "should \"\"stay\"\"",
+      "should\"",
+      "text,\"should,stay",
+      "together\",should",
+      "\"text that should stay,",
+      "together\",\"should",
+      "stay\",\"to",
+      "gether\"",
+      "\"text",
+      "that\",\"",
+      "should",
+      "\",\"stay",
+      "",
+      "together\""
+    ], &(&1))
+
+    result = Decoder.decode(stream) |> Enum.into([])
+
+    assert result == [
+      [
+        "",
+        "",
+        "\r\ntext that\r\nshould \"stay\" together\r\nshould \"stay\"\r\nshould"
+      ],
+      [
+        "text",
+        "should,stay\r\ntogether",
+        "should"
+      ],
+      [
+        "text that should stay,\r\ntogether",
+        "should\r\nstay",
+        "to\r\ngether"
+      ],
+      [
+        "text\r\nthat",
+        "\r\nshould\r\n",
+        "stay\r\n\r\ntogether"
+      ]
+    ]
   end
 
 
