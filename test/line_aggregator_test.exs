@@ -43,7 +43,7 @@ defmodule LineAggregatorTest do
     ]
   end
 
-  test "does not aggregate empty rows with escapes" do
+  test "does not aggregate partially empty rows with escape sequences" do
     stream = Stream.map(["g,", ",\"\"\"\"", ",l", "\"\",\"\""], &(&1))
     aggregated = stream |> LineAggregator.aggregate |> Enum.into([])
     assert aggregated == [
@@ -54,7 +54,7 @@ defmodule LineAggregatorTest do
     ]
   end
 
-  test "does not aggregate escaped, terminated rows" do
+  test "does not aggregate terminated escape sequences" do
     stream = Stream.map(["a,\"be\"\"\"", "c,\"\"\"d\"\"\"\"\"", "\"e,f\"\"\",g"], &(&1))
     aggregated = stream |> LineAggregator.aggregate |> Enum.into([])
     assert aggregated == [
@@ -64,7 +64,7 @@ defmodule LineAggregatorTest do
     ]
   end
 
-  test "does not aggregate rows with terminated escaped quotes and separators in escapes" do
+  test "aggregates rows with terminated escape sequences and separators in escapes" do
     stream = Stream.map(["a,\"be\"\"", "c,\"\"d", "e,f\"", "\"g\",\"h\"\",\"", "\"i\",\"j\""], &(&1))
     aggregated = stream |> LineAggregator.aggregate |> Enum.into([])
     assert aggregated == [
@@ -75,7 +75,7 @@ defmodule LineAggregatorTest do
   end
 
 
-  test "aggregates escaped, unterminated rows" do
+  test "aggregates unterminated escape sequences over rows" do
     stream = Stream.map(["a,\"be", "c,d", "e,f\"", "g,h"], &(&1))
     aggregated = stream |> LineAggregator.aggregate |> Enum.into([])
     assert aggregated == [
@@ -84,7 +84,7 @@ defmodule LineAggregatorTest do
     ]
   end
 
-  test "aggregates escaped, unterminated rows only containing a linebreak" do
+  test "aggregates unterminated escape sequences only containing line breaks over rows" do
     stream = Stream.map(["a,\"", "\"", "c,d"], &(&1))
     aggregated = stream |> LineAggregator.aggregate |> Enum.into([])
     assert aggregated == [
@@ -93,7 +93,7 @@ defmodule LineAggregatorTest do
     ]
   end
 
-  test "aggregates escaped, unterminated rows with different separators" do
+  test "aggregates unterminated escape sequences over rows with different separators" do
     stream = Stream.map(["a\t\"be", "c\td", "e\tf\"", "g\th"], &(&1))
     aggregated = stream |> LineAggregator.aggregate(separator: ?\t) |> Enum.into([])
     assert aggregated == [
@@ -102,7 +102,7 @@ defmodule LineAggregatorTest do
     ]
   end
 
-  test "aggregates escaped, unterminated rows with multiple quotes" do
+  test "aggregates unterminated escape sequences over rows with multiple quotes" do
     stream = Stream.map(["a,\"\"\"be", "c,d", "e,f\"", "g,h"], &(&1))
     aggregated = stream |> LineAggregator.aggregate |> Enum.into([])
     assert aggregated == [
@@ -111,7 +111,7 @@ defmodule LineAggregatorTest do
     ]
   end
 
-  test "aggregates escaped, unterminated where the escape begins at the start" do
+  test "aggregates unterminated escape sequences where the sequence begins at the start of the row" do
     stream = Stream.map(["\"\"\"be", "c,d", "e,f\",g", "g,h"], &(&1))
     aggregated = stream |> LineAggregator.aggregate |> Enum.into([])
     assert aggregated == [
@@ -120,7 +120,7 @@ defmodule LineAggregatorTest do
     ]
   end
 
-  test "aggregates rows with escaped quotes in escapes" do
+  test "aggregates rows with escaped quotes in escape sequences" do
     stream = Stream.map(["a,\"be\"\"", "c,\"\"d", "e,f\"", "g,\"h\"\"\"\"", "i,j\"", "k,l"], &(&1))
     aggregated = stream |> LineAggregator.aggregate |> Enum.into([])
     assert aggregated == [
@@ -151,7 +151,7 @@ defmodule LineAggregatorTest do
   end
 
 
-  test "aggregates rows with escape sequences that are ending somewhere in the next row" do
+  test "aggregates rows with escape sequences ending in the next row" do
     stream = Stream.map(["a,\"be\"\"", "c,d", "e,f\",\"super,cool\"", "g,h,i"], &(&1))
     aggregated = stream |> LineAggregator.aggregate |> Enum.into([])
     assert aggregated == [
@@ -170,13 +170,11 @@ defmodule LineAggregatorTest do
   end
 
   test "aggregates rows with escape sequences that are starting with a linebreak" do
-    stream = Stream.map(["a,be,\"", "c,d\"", "g,h,i", "i,j,k", "k,l,m"], &(&1))
+    stream = Stream.map(["a,be,\"", "c,d\"", "g,h,i"], &(&1))
     aggregated = stream |> LineAggregator.aggregate |> Enum.into([])
     assert aggregated == [
       "a,be,\"\r\nc,d\"",
-      "g,h,i",
-      "i,j,k",
-      "k,l,m"
+      "g,h,i"
     ]
   end
 
@@ -200,8 +198,15 @@ defmodule LineAggregatorTest do
     ]
   end
 
-  test "fails on open escape sequences to the end of the stream" do
+  test "fails on open escape sequences" do
     stream = Stream.map(["a,\"be\"\"", "c,d", "e,f\",\"super,cool\"", "g,h,i", "i,j,\"k", "k,l,m"], &(&1))
+    assert_raise CorruptStreamError, fn ->
+      stream |> LineAggregator.aggregate |> Stream.run
+    end
+  end
+
+  test "fails on open escape sequences with escaped quotes" do
+    stream = Stream.map(["a,\"\"\"be\"\"", "\"\"c,d"], &(&1))
     assert_raise CorruptStreamError, fn ->
       stream |> LineAggregator.aggregate |> Stream.run
     end
