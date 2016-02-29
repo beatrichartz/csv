@@ -107,6 +107,17 @@ defmodule DecoderTest do
     assert next_result == [~w(a be), ~w(c d)]
   end
 
+  test "can reuse the same stream" do
+    stream = Stream.map(["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"], &(&1))
+             |> Decoder.decode
+    result = stream |> Enum.take(2)
+
+    assert result == [~w(a be), ~w(c d)]
+
+    next_result = stream |> Enum.take(2)
+    assert next_result == [~w(a be), ~w(c d)]
+  end
+
   test "delivers the correct number of rows" do
     stream = Stream.map(["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"], &(&1))
     result = Decoder.decode(stream) |> Enum.count
