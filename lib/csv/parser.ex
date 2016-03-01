@@ -39,7 +39,7 @@ defmodule CSV.Parser do
   defp parse(_, field, [], true, _, _) do
     { :error, SyntaxError, "Unterminated escape sequence near '#{field}'" }
   end
-  defp parse(row, "", [token | tokens], false, _, options) do
+  defp parse(row, "", [token | tokens], false, after_unquote, options) do
     case token do
       {:content, content} ->
         parse(row, content, tokens, false, false, options)
@@ -47,6 +47,8 @@ defmodule CSV.Parser do
         parse(row ++ [""], "", tokens, false, false, options)
       {:delimiter, _} ->
         parse(row, "", tokens, false, false, options)
+      {:double_quote, content} when after_unquote ->
+        parse(row, content, tokens, true, false, options)
       {:double_quote, _} ->
         parse(row, "", tokens, true, false, options)
     end
@@ -59,8 +61,10 @@ defmodule CSV.Parser do
         parse(row ++ [field |> strip(options)], "", tokens, false, false, options)
       {:delimiter, _} ->
         parse(row, field, tokens, false, false, options)
-      {:double_quote, content} ->
-        parse(row, field <> content, tokens, after_unquote, false, options)
+      {:double_quote, content} when after_unquote ->
+        parse(row, field <> content, tokens, true, false, options)
+      {:double_quote, _} ->
+        parse(row, field, tokens, true, false, options)
     end
   end
   defp parse(row, field, [], false, _, options) do

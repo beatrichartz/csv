@@ -101,6 +101,32 @@ defmodule ParserTest do
     ]
   end
 
+  test "manages escaped double quotes at the beginning of double quoted fields according to RFC 4180" do
+    parsed = Enum.map [
+      {[
+          {:content, "a"},
+          {:separator, ","},
+          {:double_quote, "\""},
+          {:double_quote, "\""},
+          {:double_quote, "\""},
+          {:content, "b"},
+          {:content, "c"},
+          {:separator, ","},
+          {:double_quote, "\""},
+        ], 1}, {[
+          {:delimiter, "\r\n"},
+          {:content, "c"},
+          {:separator, ","},
+          {:content, "d"},
+        ], 2}
+    ], &Parser.parse/1
+
+    assert parsed == [
+      {:ok, ["a", "\"bc,"], 1},
+      {:ok, ["c", "d"], 2}
+    ]
+  end
+
   test "raises a syntax error when given an invalid sequence of tokens" do
     parsed = Enum.map [
       {[
