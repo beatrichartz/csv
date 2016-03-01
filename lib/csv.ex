@@ -13,7 +13,7 @@ defmodule CSV do
   These are the options:
 
     * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + (your separator)).
-    * `:delimiter`   – The delimiter token to use, defaults to `\r\n`. Must be a string.
+    * `:delimiter`   – The delimiter token to use, defaults to `\\r\\n`. Must be a string.
     * `:strip_cells` – When set to true, will strip whitespace from cells. Defaults to false.
     * `:multiline_escape` – Whether to allow multiline escape sequences. Defaults to true.
     * `:num_pipes`   – Will be deprecated in 2.0 - see num_workers
@@ -75,7 +75,7 @@ defmodule CSV do
   These are the options:
 
     * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + (your separator)).
-    * `:delimiter`   – The delimiter token to use, defaults to `\r\n`. Must be a string.
+    * `:delimiter`   – The delimiter token to use, defaults to `\\r\\n`. Must be a string.
 
   ## Examples
 
