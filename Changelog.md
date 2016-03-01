@@ -1,3 +1,9 @@
+## 1.3.0
+
+- Now supports linebreaks inside escaped fields (#13)
+- Raises an error when row length mismatches accross rows
+- Uses [parallel_stream](https://github.com/beatrichartz/parallel_stream) for parallelism
+
 ## 1.2.4
 
 - Fix encoding of double quotes
