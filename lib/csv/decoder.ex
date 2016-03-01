@@ -10,6 +10,7 @@ defmodule CSV.Decoder do
   alias CSV.Parser
   alias CSV.Lexer
   alias CSV.Defaults
+  alias CSV.Decoder.RowLengthError
 
   @doc """
   Decode a stream of comma-separated lines into a table.
@@ -63,7 +64,12 @@ defmodule CSV.Decoder do
   def decode(stream, options \\ []) do
     { headers, stream } = options
                           |> Keyword.get(:headers, false)
-                          |> get_headers!(stream, options)
+                          |> get_headers(stream, options)
+
+    row_length = case headers do
+      false -> stream |> get_row_length(options)
+      _ -> headers |> Enum.count
+    end
 
     num_workers = options
                   |> Keyword.get(:num_workers, options
@@ -81,6 +87,7 @@ defmodule CSV.Decoder do
       |> Lexer.lex(options)
       |> lex_to_parse
       |> Parser.parse(options)
+      |> check_row_length(row_length)
       |> build_row(headers)
     end, options |> Keyword.merge(num_workers: num_workers))
     |> handle_errors
@@ -99,6 +106,18 @@ defmodule CSV.Decoder do
     result
   end
 
+  defp check_row_length({ :ok, data, index }, row_length) do
+    actual_length = data |> Enum.count
+
+    case actual_length do
+      ^row_length -> { :ok, data, index }
+      _ -> { :error, RowLengthError, "Encountered a row with length #{actual_length} instead of #{row_length}", index }
+    end
+  end
+  defp check_row_length(error, _) do
+    error
+  end
+
   defp build_row({ :ok, data, _ }, headers) when is_list(headers) do
     headers |> Enum.zip(data) |> Enum.into(%{})
   end
@@ -109,24 +128,37 @@ defmodule CSV.Decoder do
     error
   end
 
-  defp get_headers!(headers, stream, _) when is_list(headers) do
+  defp get_headers(headers, stream, _) when is_list(headers) do
     { headers, stream }
   end
-  defp get_headers!(headers, stream, options) when headers do
-    headers_line = stream
-      |> Enum.take(1)
-      |> List.first
-
-    headers = { headers_line, 0 }
-      |> Lexer.lex(options)
-      |> lex_to_parse
-      |> Parser.parse(options)
-      |> build_row(nil)
+  defp get_headers(headers, stream, options) when headers do
+    headers = stream
+              |> get_first_row(options)
 
     { headers, stream |> Stream.drop(1) }
   end
-  defp get_headers!(_, stream, _) do
+  defp get_headers(_, stream, _) do
     { false, stream }
+  end
+
+  defp get_row_length(stream, options) do
+    stream
+    |> get_first_row(options)
+    |> Enum.count
+  end
+
+  defp get_first_row(stream, options) do
+    first_line = stream
+      |> LineAggregator.aggregate(options)
+      |> Enum.take(1)
+      |> List.first
+
+    { first_line, 0 }
+      |> Lexer.lex(options)
+      |> lex_to_parse
+      |> Parser.parse(options)
+      |> handle_error_for_result!
+      |> build_row(nil)
   end
 
   defp handle_errors(stream) do

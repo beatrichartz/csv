@@ -187,6 +187,14 @@ defmodule LineAggregatorTest do
     ]
   end
 
+  test "aggregates rows with escape sequences that are containing a linebreak" do
+    stream = Stream.map(["a,be,\"\n", "c,\"\"\"d", "\"\"\"", "g,h,i"], &(&1))
+    aggregated = stream |> LineAggregator.aggregate |> Enum.into([])
+    assert aggregated == [
+      "a,be,\"\n\r\nc,\"\"\"d\r\n\"\"\"",
+      "g,h,i"
+    ]
+  end
 
   test "aggregates rows with multiple escape sequences in the same stream" do
     stream = Stream.map(["a,\"be\"\"", "c,d", "e,f\",\"super,cool\"", "g,\"h,i", "i,j\",k", "k,l,m"], &(&1))

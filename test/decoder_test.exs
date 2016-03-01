@@ -3,6 +3,7 @@ defmodule DecoderTest do
   alias CSV.Decoder
   alias CSV.Parser.SyntaxError
   alias CSV.Lexer.EncodingError
+  alias CSV.Decoder.RowLengthError
   alias CSV.LineAggregator.CorruptStreamError
 
   @moduletag timeout: 1000
@@ -140,7 +141,7 @@ defmodule DecoderTest do
     end
   end
 
-  test "collects rows with field spanning multiple lines" do
+  test "collects rows with fields and escape sequences spanning multiple lines" do
     stream = Stream.map([
       ",,\"",
       "text that",
@@ -158,7 +159,7 @@ defmodule DecoderTest do
       "should",
       "\",\"stay",
       "\"\"\"\"",
-      "together\"",
+      "together\n\"",
       "\"text\",\"",
       "",
       "\",\"\"\"should",
@@ -189,7 +190,7 @@ defmodule DecoderTest do
       [
         "text\r\nthat",
         "\r\nshould\r\n",
-        "stay\r\n\"\"\r\ntogether"
+        "stay\r\n\"\"\r\ntogether\n"
       ],
       [
         "text",
@@ -210,6 +211,14 @@ defmodule DecoderTest do
 
     assert_raise SyntaxError, fn ->
       Decoder.decode(stream, multiline_escape: false) |> Stream.run
+    end
+  end
+
+  test "raises an error if rows are of variable length" do
+    stream = Stream.map(["a,\"be\"", ",c,d", "e,f", "g,,h", "i,j", "k,l"], &(&1))
+
+    assert_raise RowLengthError, fn ->
+      Decoder.decode(stream) |> Stream.run
     end
   end
 

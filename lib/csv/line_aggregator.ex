@@ -76,9 +76,6 @@ defmodule CSV.LineAggregator do
     is_open?(line, "", false, separator)
   end
 
-  defp is_open?(<< @double_quote :: utf8 >> <> tail, << @double_quote :: utf8 >>, quoted, separator) do
-    is_open?(tail, @double_quote, quoted, separator)
-  end
   defp is_open?(<< @double_quote :: utf8 >> <> tail, last_token, false, separator) when last_token == << separator :: utf8 >> do
     is_open?(tail, @double_quote, true, separator)
   end
@@ -93,9 +90,6 @@ defmodule CSV.LineAggregator do
   end
   defp is_open?(<< head >> <> tail, _, quoted, separator) do
     is_open?(tail, << head >>, quoted, separator)
-  end
-  defp is_open?("", << @double_quote :: utf8 >>, quoted, _) do
-    !quoted
   end
   defp is_open?("", _, quoted, _) do
     quoted
