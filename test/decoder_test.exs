@@ -163,6 +163,9 @@ defmodule DecoderTest do
       "",
       "\",\"\"\"should",
       "\"\"\"",
+      "\"\"\"\"\"\",\"\"\"",
+      "\"\"\"\"",
+      "\",\"\"\"\"",
     ], &(&1))
 
     result = Decoder.decode(stream) |> Enum.into([])
@@ -192,6 +195,11 @@ defmodule DecoderTest do
         "text",
         "\r\n\r\n",
         "\"should\r\n\""
+      ],
+      [
+        "\"\"",
+        "\"\r\n\"\"\r\n",
+        "\""
       ]
     ]
   end
