@@ -71,10 +71,11 @@ defmodule CSV.Parser do
     { :ok, row ++ [field |> strip(options)] }
   end
 
-  defp strip(field, [ strip_cells: true ]) do
-    field |> String.strip
-  end
-  defp strip(field, _) do
-    field
+  defp strip(field, options \\ []) do
+    strip_cells = options |> Keyword.get(:strip_cells, false)
+    case strip_cells do
+      true -> field |> String.strip
+      _ -> field
+    end
   end
 end
