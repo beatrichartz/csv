@@ -60,6 +60,16 @@ defmodule DecoderTest do
     ]
   end
 
+  test "parses strings and strips cells when headers are given and strip_cells is true" do
+    stream = Stream.map(["h1,h2", "a, be free ", "c,d"], &(&1))
+    result = Decoder.decode(stream, headers: true, strip_cells: true) |> Enum.into([])
+
+    assert result == [
+      %{"h1" => "a", "h2" => "be free"},
+      %{"h1" => "c", "h2" => "d"}
+    ]
+  end
+
   test "parses strings into maps when headers are given as a list" do
     stream = Stream.map(["a,be", "c,d"], &(&1))
     result = Decoder.decode(stream, headers: [:a, :b]) |> Enum.into([])
