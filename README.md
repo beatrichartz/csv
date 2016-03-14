@@ -46,9 +46,9 @@ a tab separated file because someone is angry:
 ````elixir
 File.stream!("data.csv") |>
 CSV.decode(separator: ?\t) |>
-Enum.map fn row ->
-  Enum.each(row, &String.upcase/1)
-end
+Enum.map(fn row ->
+  Enum.map(row, &String.upcase/1)
+end)
 ````
 
 Do this to encode a table (two-dimensional list):
@@ -97,7 +97,7 @@ Or similar.
 
 ## Ensure performant encoding
 
-The encoding protocol implements a fallback to Any for types where a simple call 
+The encoding protocol implements a fallback to Any for types where a simple call
 o `to_string` will provide unambiguous results. Protocol dispatch for the
 fallback to Any is *very* slow when protocols are not consolidated, so make sure
 you [have `consolidate_protocols: true`](http://blog.plataformatec.com.br/2015/04/build-embedded-and-start-permanent-in-elixir-1-0-4/)
