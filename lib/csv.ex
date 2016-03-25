@@ -65,6 +65,9 @@ defmodule CSV do
     CSV.Decoder.decode(stream, options)
   end
 
+  def decode!(stream, options \\ []) do
+    CSV.Decoder.decode!(stream, options)
+  end
 
   @doc """
   Encode a table stream into a stream of RFC 4180 compliant CSV lines for writing to a file

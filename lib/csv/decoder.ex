@@ -61,6 +61,11 @@ defmodule CSV.Decoder do
       [%{:x => \"a\", :y => \"b\"}, %{:x => \"c\", :y => \"d\"}]
   """
   
+  def decode!(stream, options \\ []) do
+    decode(stream, options)
+    |> handle_errors!
+  end
+
   def decode(stream, options \\ []) do
     with options <- options_with_defaults(options),
          { :ok, { headers, stream } } <-
@@ -149,14 +154,17 @@ defmodule CSV.Decoder do
     process_line({ { first_line, 0 }, false }, options)
   end
 
-  defp handle_errors(stream) do
-    stream |> Stream.map(&handle_error_for_result!/1)
+  defp handle_errors!({ :error, error }) do
+    raise error
   end
-  defp handle_error_for_result!({ :error, mod, message, index }) do
+  defp handle_errors!({ :ok, stream }) do
+    stream |> Stream.map(&monad_value!/1)
+  end
+  defp monad_value!({ :error, mod, message, index }) do
     raise mod, message: message, line: index + 1
   end
-  defp handle_error_for_result!(result) do
-    result
+  defp monad_value!({ :ok, row }) do
+    row
   end
 
 end
