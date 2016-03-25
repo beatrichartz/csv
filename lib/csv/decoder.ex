@@ -60,7 +60,7 @@ defmodule CSV.Decoder do
       iex> Enum.take(2)
       [%{:x => \"a\", :y => \"b\"}, %{:x => \"c\", :y => \"d\"}]
   """
-  
+
   def decode!(stream, options \\ []) do
     decode(stream, options)
     |> handle_errors!
@@ -83,7 +83,7 @@ defmodule CSV.Decoder do
     |> ParallelStream.map(&(process_line({ &1, row_length }, options)),
                           options)
   end
-  
+
   defp options_with_defaults(options) do
     num_pipes = options |> Keyword.get(:num_pipes, Defaults.num_workers)
     options
@@ -93,6 +93,9 @@ defmodule CSV.Decoder do
                      headers: options |> Keyword.get(:headers, false))
   end
 
+  defp process_line({ { nil, _ }, _ }) do
+    []
+  end
   defp process_line({ { line, index }, row_length }, options) do
     with { :ok, lex, _ } <- Lexer.lex({ line, index }, options),
          { :ok, parsed, _ } <- Parser.parse({ lex, index }, options),
@@ -146,12 +149,12 @@ defmodule CSV.Decoder do
   end
 
   defp get_first_row(stream, options) do
-    first_line = stream
+    data = stream
       |> LineAggregator.aggregate(options)
       |> Enum.take(1)
       |> List.first
 
-    process_line({ { first_line, 0 }, false }, options)
+      process_line({ { data, 0 }, false }, options)
   end
 
   defp handle_errors!({ :error, mod, message }) do

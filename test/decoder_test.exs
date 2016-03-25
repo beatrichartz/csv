@@ -118,6 +118,12 @@ defmodule DecoderTest do
     assert next_result == [~w(a be), ~w(c d)]
   end
 
+  test "empty stream input produces an empty stream as output" do
+    stream = Stream.map([], &(&1))
+              |> Decoder.decode
+    assert stream |> Enum.into([]) == []
+  end
+
   test "can reuse the same stream" do
     stream = Stream.map(["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"], &(&1))
              |> Decoder.decode
