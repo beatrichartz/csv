@@ -255,7 +255,7 @@ defmodule DecoderTest do
 
     assert stream
     |> Decoder.decode
-    |> Stream.any(fn
+    |> Enum.any?(fn
       { :error, RowLengthError, _, _ } -> true
     _ -> false
     end)
