@@ -154,8 +154,11 @@ defmodule CSV.Decoder do
     process_line({ { first_line, 0 }, false }, options)
   end
 
-  defp handle_errors!({ :error, error }) do
-    raise error
+  defp handle_errors!({ :error, mod, message }) do
+    monad_value!({ :error, mod, message, 0 })
+  end
+  defp handle_errors!({ :error, _, _, _ } = monad) do
+    monad_value!(monad)
   end
   defp handle_errors!({ :ok, stream }) do
     stream |> Stream.map(&monad_value!/1)
