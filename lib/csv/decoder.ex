@@ -102,7 +102,7 @@ defmodule CSV.Decoder do
     { :ok, headers |> Enum.zip(data) |> Enum.into(%{}) }
   end
   defp build_row(data, _), do: { :ok, data }
-  
+
   defp options_with_defaults(options) do
     num_pipes = options |> Keyword.get(:num_pipes, Defaults.num_workers)
     options
@@ -121,7 +121,7 @@ defmodule CSV.Decoder do
   defp prepare_headers(job), do: job
 
   defp prepare_row_length({ stream, %{ headers: headers } = options}) do
-    { stream, %{ options | :headers => get_row_length(headers || stream, options) } }
+    { stream, %{ options | :row_length => get_row_length(headers || stream, options) } }
   end
 
   defp check_row_length(_, false), do: { :ok }
