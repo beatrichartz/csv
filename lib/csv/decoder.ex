@@ -148,11 +148,17 @@ defmodule CSV.Decoder do
   end
 
   defp get_first_row(stream, options) do
-    first_line = stream
+    stream
       |> LineAggregator.aggregate(options)
       |> Enum.take(1)
       |> List.first
+      |> decode_first_row(options)
+  end
 
+  defp decode_first_row(nil, _) do
+    []
+  end
+  defp decode_first_row(first_line, options) do
     { first_line, 0 }
       |> Lexer.lex(options)
       |> lex_to_parse
