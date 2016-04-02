@@ -1,6 +1,7 @@
 defmodule EncoderTest do
   use ExUnit.Case
   alias CSV.Encoder, as: Encoder
+  doctest Encoder
 
   test "encodes streams to csv strings" do
     result = Encoder.encode([~w(a b), ~w(c d)]) |> Enum.take(2)
@@ -27,4 +28,13 @@ defmodule EncoderTest do
     assert result == ["\"a\\t\"\t\"b\\re\"\n", "\"c\\tf\"\"\"\tdg\n"]
   end
 
+  test "use keys from first row as headers when headers: true" do
+    result = Encoder.encode([%{"a" => 1, "b" => 2}], headers: true) |> Enum.to_list()
+    assert result == ["a,b\r\n", "1,2\r\n"]
+  end
+
+  test "specified headers inserted as first row and used to order columns" do
+    result = Encoder.encode([%{"b" => 2}], headers: ["a", "b"]) |> Enum.to_list()
+    assert result == ["a,b\r\n", ",2\r\n"]
+  end
 end
