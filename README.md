@@ -18,14 +18,14 @@ Now.
 
 Add
 ```elixir
-{:csv, "~> 1.3.3"}
+{:csv, "~> 1.4.0"}
 ```
 to your deps in `mix.exs` like so:
 
 ```elixir
 defp deps do
   [
-    {:csv, "~> 1.3.3"}
+    {:csv, "~> 1.4.0"}
   ]
 end
 ```
@@ -78,6 +78,14 @@ like this:
 
 ````elixir
 your_data |> CSV.encode(separator: ?;)
+````
+
+You can also specify headers when encoding, which will encode map values into
+the right place:
+
+````elixir
+[%{"a" => "value!"}] |> CSV.encode(headers: ["z", "a"])
+# ["z,a\\r\\n", ",value!\\r\\n"]
 ````
 
 ## Polymorphic encoding
