@@ -1,0 +1,11 @@
+#!/bin/bash
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd $DIR/..
+
+MIX_ENV=test
+
+ELIXIR_IS_1_2=$(elixir -v | grep 1.2)
+
+if [ -n "$ELIXIR_IS_1_2" ]; then
+  mix coveralls.travis
+fi
