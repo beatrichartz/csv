@@ -1,3 +1,21 @@
+## 1.4.0
+
+- Add option to specify headers in encode - added in #34 by
+  [@barruumrex](https://github.com/barruumrex)
+
+## 1.3.3
+
+- Fix empty streams raising a lexer error - raised in #28 by [@kiliancs](https://github.com/kiliancs)
+
+## 1.3.2
+
+- Cleanup, removing some unused defaults in function headers to remove compile
+  time warnings
+
+## 1.3.1
+
+- Fix `:strip_cells` not stripping cells when multible options are specified - #29 by [@tomjoro](https://github.com/tomjoro)
+
 ## 1.3.0
 
 - Now supports linebreaks inside escaped fields (#13)
