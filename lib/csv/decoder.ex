@@ -39,25 +39,27 @@ defmodule CSV.Decoder do
 
   Convert a filestream into a stream of rows:
 
-      iex> File.stream!(\"data.csv\") |>
-      iex> CSV.Decoder.decode |>
-      iex> Enum.take(2)
+      iex> \"../../test/fixtures/docs.csv\"
+      iex> |> Path.expand(__DIR__)
+      iex> |> File.stream!
+      iex> |> CSV.Decoder.decode
+      iex> |> Enum.take(2)
       [[\"a\",\"b\",\"c\"], [\"d\",\"e\",\"f\"]]
 
   Map an existing stream of lines separated by a token to a stream of rows with a header row:
 
-      iex> [\"a;b\",\"c;d\", \"e;f\"] |>
-      iex> Stream.map(&(&1)) |>
-      iex> CSV.Decoder.decode(separator: ?;, headers: true) |>
-      iex> Enum.take(2)
+      iex> [\"a;b\",\"c;d\", \"e;f\"]
+      iex> |> Stream.map(&(&1))
+      iex> |> CSV.Decoder.decode(separator: ?;, headers: true)
+      iex> |> Enum.take(2)
       [%{\"a\" => \"c\", \"b\" => \"d\"}, %{\"a\" => \"e\", \"b\" => \"f\"}]
 
   Map an existing stream of lines separated by a token to a stream of rows with a given header row:
 
-      iex> [\"a;b\",\"c;d\", \"e;f\"] |>
-      iex> Stream.map(&(&1)) |>
-      iex> CSV.Decoder.decode(separator: ?;, headers: [:x, :y]) |>
-      iex> Enum.take(2)
+      iex> [\"a;b\",\"c;d\", \"e;f\"]
+      iex> |> Stream.map(&(&1))
+      iex> |> CSV.Decoder.decode(separator: ?;, headers: [:x, :y])
+      iex> |> Enum.take(2)
       [%{:x => \"a\", :y => \"b\"}, %{:x => \"c\", :y => \"d\"}]
   """
 

@@ -50,18 +50,18 @@ defmodule CSV do
 
   Map an existing stream of lines separated by a token to a stream of rows with a header row:
 
-      iex> [\"a;b\",\"c;d\", \"e;f\"] |>
-      iex> Stream.map(&(&1)) |>
-      iex> CSV.decode(separator: ?;, headers: true) |>
-      iex> Enum.take(2)
+      iex> [\"a;b\",\"c;d\", \"e;f\"]
+      iex> |> Stream.map(&(&1))
+      iex> |> CSV.Decoder.decode(separator: ?;, headers: true)
+      iex> |> Enum.take(2)
       [%{\"a\" => \"c\", \"b\" => \"d\"}, %{\"a\" => \"e\", \"b\" => \"f\"}]
 
   Map an existing stream of lines separated by a token to a stream of rows with a given header row:
 
-      iex> [\"a;b\",\"c;d\", \"e;f\"] |>
-      iex> Stream.map(&(&1)) |>
-      iex> CSV.decode(separator: ?;, headers: [:x, :y]) |>
-      iex> Enum.take(2)
+      iex> [\"a;b\",\"c;d\", \"e;f\"]
+      iex> |> Stream.map(&(&1))
+      iex> |> CSV.Decoder.decode(separator: ?;, headers: [:x, :y])
+      iex> |> Enum.take(2)
       [%{:x => \"a\", :y => \"b\"}, %{:x => \"c\", :y => \"d\"}]
   """
 
@@ -85,16 +85,16 @@ defmodule CSV do
 
   Convert a stream of rows with cells into a stream of lines:
 
-      iex> [~w(a b), ~w(c d)] |>
-      iex> CSV.encode |>
-      iex> Enum.take(2)
+      iex> [~w(a b), ~w(c d)]
+      iex> |> CSV.encode
+      iex> |> Enum.take(2)
       [\"a,b\\r\\n\", \"c,d\\r\\n\"]
 
   Convert a stream of rows with cells with escape sequences into a stream of lines:
 
-      iex> [[\"a\\nb\", \"\\tc\"], [\"de\", \"\\tf\\\"\"]] |>
-      iex> CSV.encode(separator: ?\\t, delimiter: \"\\n\") |>
-      iex> Enum.take(2)
+      iex> [[\"a\\nb\", \"\\tc\"], [\"de\", \"\\tf\\\"\"]]
+      iex> |> CSV.encode(separator: ?\\t, delimiter: \"\\n\")
+      iex> |> Enum.take(2)
       [\"\\\"a\\\\nb\\\"\\t\\\"\\\\tc\\\"\\n\", \"de\\t\\\"\\\\tf\\\"\\\"\\\"\\n\"]
   """
 

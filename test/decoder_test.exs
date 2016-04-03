@@ -6,6 +6,8 @@ defmodule DecoderTest do
   alias CSV.Decoder.RowLengthError
   alias CSV.LineAggregator.CorruptStreamError
 
+  doctest Decoder
+
   @moduletag timeout: 1000
 
   test "parses strings into a list of token tuples and emits them" do

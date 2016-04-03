@@ -27,23 +27,23 @@ defmodule CSV.Encoder do
 
   Convert a stream of rows with cells into a stream of lines:
 
-      iex> [~w(a b), ~w(c d)] |>
-      iex> CSV.Encoder.encode |>
-      iex> Enum.take(2)
+      iex> [~w(a b), ~w(c d)]
+      iex> |> CSV.Encoder.encode
+      iex> |> Enum.take(2)
       [\"a,b\\r\\n\", \"c,d\\r\\n\"]
 
   Convert a stream of maps into a stream of lines:
 
-      iex> [%{"a" => 1, "b" => 2}, %{"a" => 3, "b" => 4}] |>
-      iex> CSV.Encoder.encode(headers: true) |>
-      iex> Enum.to_list()
+      iex> [%{"a" => 1, "b" => 2}, %{"a" => 3, "b" => 4}]
+      iex> |> CSV.Encoder.encode(headers: true)
+      iex> |> Enum.to_list()
       [\"a,b\\r\\n\", \"1,2\\r\\n\", \"3,4\\r\\n\"]
 
   Convert a stream of rows with cells with escape sequences into a stream of lines:
 
-      iex> [[\"a\\nb\", \"\\tc\"], [\"de\", \"\\tf\\\"\"]] |>
-      iex> CSV.Encoder.encode(separator: ?\\t, delimiter: \"\\n\") |>
-      iex> Enum.take(2)
+      iex> [[\"a\\nb\", \"\\tc\"], [\"de\", \"\\tf\\\"\"]]
+      iex> |> CSV.Encoder.encode(separator: ?\\t, delimiter: \"\\n\")
+      iex> |> Enum.take(2)
       [\"\\\"a\\\\nb\\\"\\t\\\"\\\\tc\\\"\\n\", \"de\\t\\\"\\\\tf\\\"\\\"\\\"\\n\"]
   """
 
