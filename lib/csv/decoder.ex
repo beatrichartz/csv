@@ -63,7 +63,7 @@ defmodule CSV.Decoder do
 
   def decode!(stream, options \\ []) do
     decode(stream, options)
-    |> handle_errors!
+    |> raise_errors!
   end
 
   def decode(stream, options \\ []) do
@@ -151,7 +151,7 @@ defmodule CSV.Decoder do
     data
   end
 
-  defp handle_errors!(stream) do
+  defp raise_errors!(stream) do
     stream |> Stream.map(&monad_value!/1)
   end
   defp monad_value!({ :error, mod, message, index }) do
