@@ -67,7 +67,8 @@ defmodule CSV.Decoder do
   end
 
   def decode(stream, options \\ []) do
-    { stream, options |> options_with_defaults }
+    stream
+    |> with_default_options(options)
     |> prepare_headers
     |> prepare_row_length
     |> decode_stream
@@ -94,8 +95,6 @@ defmodule CSV.Decoder do
     do: build_row(parsed, headers)
   end
 
-  #defp decode_row({ nil, 0 }, %{ row_length: false }), do: { :ok, [] }
-
   defp parse_row({ line, index}, options) do
     with { :ok, lex, _ } <- Lexer.lex({ line, index }, options),
     do: Parser.parse({ lex, index }, options)
@@ -111,15 +110,17 @@ defmodule CSV.Decoder do
   end
   defp build_row(data, _), do: { :ok, data }
 
-  defp options_with_defaults(options) do
+  defp with_default_options(stream, options) do
     num_pipes = options |> Keyword.get(:num_pipes, Defaults.num_workers)
 
-    options
+    options = options
     |> Keyword.merge(num_pipes: num_pipes,
                      num_workers: options |> Keyword.get(:num_workers, num_pipes),
                      multiline_escape: options |> Keyword.get(:multiline_escape, true),
                      headers: options |> Keyword.get(:headers, false),
                      row_length: false)
+
+    { stream, options }
   end
 
   defp prepare_headers({ stream, options } = payload) do
