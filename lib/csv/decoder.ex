@@ -62,23 +62,28 @@ defmodule CSV.Decoder do
   """
 
   def decode!(stream, options \\ []) do
-    decode(stream, options)
+    stream
+    |> decode_stream(options)
     |> raise_errors!
   end
 
   def decode(stream, options \\ []) do
     stream
+    |> decode_stream(options)
+    |> simplify_errors
+  end
+
+  defp decode_stream(stream, options \\ []) do
+    stream
     |> with_default_options(options)
     |> prepare_headers
     |> prepare_row_length
-    |> decode_stream
+    |> decode_rows
   end
 
-  defp decode_stream({ stream, options }) do
-    multiline_escape = options |> Keyword.get(:multiline_escape)
-
+  defp decode_rows({ stream, options }) do
     stream
-    |> aggregate(multiline_escape)
+    |> aggregate(options)
     |> Stream.with_index
     |> ParallelStream.map(&(decode_row(&1, options)), options)
   end
@@ -100,10 +105,12 @@ defmodule CSV.Decoder do
     do: Parser.parse({ lex, index }, options)
   end
 
-  defp aggregate(stream, true) do
-    stream |> LineAggregator.aggregate
+  defp aggregate(stream, options) do
+    case options |> Keyword.get(:multiline_escape) do
+      true -> stream |> LineAggregator.aggregate
+      _ -> stream
+    end
   end
-  defp aggregate(stream, false), do: stream
 
   defp build_row(data, headers) when is_list(headers) do
     { :ok, headers |> Enum.zip(data) |> Enum.into(%{}) }
@@ -162,9 +169,19 @@ defmodule CSV.Decoder do
   defp raise_errors!(stream) do
     stream |> Stream.map(&monad_value!/1)
   end
+
   defp monad_value!({ :error, mod, message, index }) do
     raise mod, message: message, line: index + 1
   end
   defp monad_value!({ :ok, row }), do: row
+
+  defp simplify_errors(stream) do
+    stream |> Stream.map(&simplify_error/1)
+  end
+
+  defp simplify_error({ :error, _, message, _ }) do
+    { :error, message }
+  end
+  defp simplify_error(monad), do: monad
 
 end

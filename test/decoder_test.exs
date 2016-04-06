@@ -115,7 +115,7 @@ defmodule DecoderTest do
     assert CSV.decode(stream)
     |> Enum.into([])
     |> Enum.any?(fn
-      { :error, EncodingError, _, _ } -> true
+      { :error, "Invalid encoding" } -> true
     _ -> false
     end)
   end
@@ -248,7 +248,7 @@ defmodule DecoderTest do
     assert stream
     |> Decoder.decode(multiline_escape: false)
     |> Stream.filter(fn
-      { :error, SyntaxError, _, _ } -> true
+      { :error, message } -> message |> String.contains?("Unterminated escape sequence")
     _ -> false
     end)
     |> Enum.count == 2
@@ -268,7 +268,7 @@ defmodule DecoderTest do
     assert stream
     |> Decoder.decode
     |> Enum.filter(fn
-      { :error, RowLengthError, _, _ } -> true
+      { :error, message } -> message |> String.contains?("row with length")
     _ -> false
     end)
     |> Enum.count == 2
