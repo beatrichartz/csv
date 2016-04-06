@@ -40,7 +40,7 @@ defmodule CSV.Decoder do
   Convert a filestream into a stream of rows:
 
       iex> File.stream!(\"data.csv\") |>
-      iex> CSV.Decoder.decode |>
+      iex> CSV.Decoder.decode! |>
       iex> Enum.take(2)
       [[\"a\",\"b\",\"c\"], [\"d\",\"e\",\"f\"]]
 
@@ -48,7 +48,7 @@ defmodule CSV.Decoder do
 
       iex> [\"a;b\",\"c;d\", \"e;f\"] |>
       iex> Stream.map(&(&1)) |>
-      iex> CSV.Decoder.decode(separator: ?;, headers: true) |>
+      iex> CSV.Decoder.decode!(separator: ?;, headers: true) |>
       iex> Enum.take(2)
       [%{\"a\" => \"c\", \"b\" => \"d\"}, %{\"a\" => \"e\", \"b\" => \"f\"}]
 
@@ -56,7 +56,7 @@ defmodule CSV.Decoder do
 
       iex> [\"a;b\",\"c;d\", \"e;f\"] |>
       iex> Stream.map(&(&1)) |>
-      iex> CSV.Decoder.decode(separator: ?;, headers: [:x, :y]) |>
+      iex> CSV.Decoder.decode!(separator: ?;, headers: [:x, :y]) |>
       iex> Enum.take(2)
       [%{:x => \"a\", :y => \"b\"}, %{:x => \"c\", :y => \"d\"}]
   """
@@ -73,7 +73,7 @@ defmodule CSV.Decoder do
     |> simplify_errors
   end
 
-  defp decode_stream(stream, options \\ []) do
+  defp decode_stream(stream, options) do
     stream
     |> with_default_options(options)
     |> prepare_headers
@@ -88,7 +88,7 @@ defmodule CSV.Decoder do
     |> ParallelStream.map(&(decode_row(&1, options)), options)
   end
 
-  defp decode_row({ nil, 0 }, options) do
+  defp decode_row({ nil, 0 }, _) do
     { :ok, [] }
   end
   defp decode_row({ line, index }, options) do

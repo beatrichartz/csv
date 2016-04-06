@@ -33,14 +33,14 @@ defmodule CSV do
   Convert a filestream into a stream of rows:
 
       iex> File.stream!(\"data.csv\") |>
-      iex> CSV.decode |>
+      iex> CSV.decode! |>
       iex> Enum.take(2)
       [[\"a\",\"b\",\"c\"], [\"d\",\"e\",\"f\"]]
 
   Convert a filestream into a stream of rows in order of the given stream:
 
       iex> File.stream!(\"data.csv\") |>
-      iex> CSV.decode(num_pipes: 1) |>
+      iex> CSV.decode!(num_pipes: 1) |>
       iex> Enum.take(2)
       [[\"a\",\"b\",\"c\"], [\"d\",\"e\",\"f\"]]
 
@@ -48,7 +48,7 @@ defmodule CSV do
 
       iex> [\"a;b\",\"c;d\", \"e;f\"] |>
       iex> Stream.map(&(&1)) |>
-      iex> CSV.decode(separator: ?;, headers: true) |>
+      iex> CSV.decode!(separator: ?;, headers: true) |>
       iex> Enum.take(2)
       [%{\"a\" => \"c\", \"b\" => \"d\"}, %{\"a\" => \"e\", \"b\" => \"f\"}]
 
@@ -56,7 +56,7 @@ defmodule CSV do
 
       iex> [\"a;b\",\"c;d\", \"e;f\"] |>
       iex> Stream.map(&(&1)) |>
-      iex> CSV.decode(separator: ?;, headers: [:x, :y]) |>
+      iex> CSV.decode!(separator: ?;, headers: [:x, :y]) |>
       iex> Enum.take(2)
       [%{:x => \"a\", :y => \"b\"}, %{:x => \"c\", :y => \"d\"}]
   """
