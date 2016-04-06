@@ -84,7 +84,7 @@ defmodule CSV.Decoder do
   defp decode_row({ nil, 0 }, %{ row_length: false }), do: { :ok, [] }
   defp decode_row({ line, index }, %{ headers: headers, row_length: row_length } = options) do
     with { :ok, parsed, _ } <- parse_row({ line, index }, options |> Enum.into([])),
-         { :ok } <- check_row_length({ parsed, index }, row_length),
+         { :ok, _ } <- validate_row_length({ parsed, index }, row_length),
          do: build_row(parsed, headers)
   end
 
@@ -121,34 +121,27 @@ defmodule CSV.Decoder do
   defp prepare_headers(job), do: job
 
   defp prepare_row_length({ stream, %{ headers: headers } = options}) do
-    { stream, %{ options | :row_length => get_row_length(headers || stream, options) } }
+    first_row = if headers, do: headers, else: stream |> get_first_row(options)
+    { stream, %{ options | :row_length => Enum.count(first_row) } }
   end
 
-  defp check_row_length(_, false), do: { :ok }
-  defp check_row_length({ data, index }, row_length) do
-    actual_length = get_row_length(data)
-
-    case actual_length do
-      ^row_length -> { :ok }
-      _ -> { :error, RowLengthError, "Encountered a row with length #{actual_length} instead of #{row_length}", index }
+  defp validate_row_length({ data, _}, false), do: { :ok, data }
+  defp validate_row_length({ data, index }, expected_length) do
+    case data |> Enum.count do
+      ^expected_length -> { :ok, data }
+      actual_length -> { :error, RowLengthError, "Encountered a row with length #{actual_length} instead of #{expected_length}", index }
     end
   end
-
-  defp get_row_length(%Stream{} = stream, options) do
-    stream
-    |> get_first_row(options)
-    |> get_row_length
-  end
-  defp get_row_length(row, _), do: row |> get_row_length
-  defp get_row_length(row), do: Enum.count(row)
 
   defp get_first_row(stream, options) do
     row = stream
             |> LineAggregator.aggregate(options |> Enum.into([]))
             |> Enum.take(1)
             |> List.first
-    { :ok, data } = decode_row({ row, 0 }, options)
-    data
+    case decode_row({ row, 0 }, options) do
+      { :ok, data } -> data
+      _ -> []
+    end
   end
 
   defp raise_errors!(stream) do
