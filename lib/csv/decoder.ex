@@ -73,20 +73,28 @@ defmodule CSV.Decoder do
     |> decode_stream
   end
 
-  defp decode_stream({ stream, %{ multiline_escape: multiline_escape } = options }) do
+  defp decode_stream({ stream, options }) do
+    multiline_escape = options |> Keyword.get(:multiline_escape)
+
     stream
     |> aggregate(multiline_escape)
     |> Stream.with_index
-    |> ParallelStream.map(&(decode_row(&1, options)),
-                          options |> Enum.into([]))
+    |> ParallelStream.map(&(decode_row(&1, options)), options)
   end
 
-  defp decode_row({ nil, 0 }, %{ row_length: false }), do: { :ok, [] }
-  defp decode_row({ line, index }, %{ headers: headers, row_length: row_length } = options) do
-    with { :ok, parsed, _ } <- parse_row({ line, index }, options |> Enum.into([])),
-         { :ok, _ } <- validate_row_length({ parsed, index }, row_length),
-         do: build_row(parsed, headers)
+  defp decode_row({ nil, 0 }, options) do
+    { :ok, [] }
   end
+  defp decode_row({ line, index }, options) do
+    headers = options |> Keyword.get(:headers)
+    row_length = options |> Keyword.get(:row_length)
+
+    with { :ok, parsed, _ } <- parse_row({ line, index }, options),
+    { :ok, _ } <- validate_row_length({ parsed, index }, row_length),
+    do: build_row(parsed, headers)
+  end
+
+  #defp decode_row({ nil, 0 }, %{ row_length: false }), do: { :ok, [] }
 
   defp parse_row({ line, index}, options) do
     with { :ok, lex, _ } <- Lexer.lex({ line, index }, options),
@@ -105,24 +113,29 @@ defmodule CSV.Decoder do
 
   defp options_with_defaults(options) do
     num_pipes = options |> Keyword.get(:num_pipes, Defaults.num_workers)
+
     options
     |> Keyword.merge(num_pipes: num_pipes,
                      num_workers: options |> Keyword.get(:num_workers, num_pipes),
                      multiline_escape: options |> Keyword.get(:multiline_escape, true),
                      headers: options |> Keyword.get(:headers, false),
                      row_length: false)
-    |> Enum.into(%{})
   end
 
-  defp prepare_headers({ stream, %{ headers: true } = options }) do
-    { stream |> Stream.drop(1),
-      %{ options | :headers => get_first_row(stream, options) } }
+  defp prepare_headers({ stream, options } = payload) do
+    case options |> Keyword.get(:headers) do
+      true -> 
+        { stream |> Stream.drop(1),
+          options |> Keyword.put(:headers, get_first_row(stream, options)) }
+      _ -> payload
+    end
   end
-  defp prepare_headers(job), do: job
 
-  defp prepare_row_length({ stream, %{ headers: headers } = options}) do
+  defp prepare_row_length({ stream, options }) do
+    headers = options |> Keyword.get(:headers)
     first_row = if headers, do: headers, else: stream |> get_first_row(options)
-    { stream, %{ options | :row_length => Enum.count(first_row) } }
+    { stream,
+      options |> Keyword.put(:row_length, Enum.count(first_row)) }
   end
 
   defp validate_row_length({ data, _}, false), do: { :ok, data }
@@ -135,9 +148,10 @@ defmodule CSV.Decoder do
 
   defp get_first_row(stream, options) do
     row = stream
-            |> LineAggregator.aggregate(options |> Enum.into([]))
+            |> LineAggregator.aggregate(options)
             |> Enum.take(1)
             |> List.first
+
     case decode_row({ row, 0 }, options) do
       { :ok, data } -> data
       _ -> []
