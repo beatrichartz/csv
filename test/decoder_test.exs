@@ -107,12 +107,16 @@ defmodule DecoderTest do
     assert_raise EncodingError, fn ->
       CSV.decode!(stream) |> Enum.into([]) |> Enum.sort
     end
+  end
+
+  test "emitted monads include an error for non-unicode files" do
+    stream = "./fixtures/broken-encoding.csv" |> Path.expand(__DIR__) |> File.stream!
 
     assert CSV.decode(stream)
     |> Enum.into([])
     |> Enum.any?(fn
       { :error, EncodingError, _, _ } -> true
-      _ -> false
+    _ -> false
     end)
   end
 
@@ -236,12 +240,16 @@ defmodule DecoderTest do
     assert_raise SyntaxError, fn ->
       Decoder.decode!(stream, multiline_escape: false) |> Stream.run
     end
+  end
+
+  test "emitted monads include an error for each row with fields spanning multiple lines if multiple_escape is false" do
+    stream = Stream.map(["a,\"be", "c,d", "e,f\"", "g,h", "i,j", "k,l"], &(&1))
 
     assert stream
     |> Decoder.decode(multiline_escape: false)
     |> Stream.filter(fn
       { :error, SyntaxError, _, _ } -> true
-      _ -> false
+    _ -> false
     end)
     |> Enum.count == 2
   end
@@ -252,13 +260,18 @@ defmodule DecoderTest do
     assert_raise RowLengthError, fn ->
       Decoder.decode!(stream) |> Stream.run
     end
+  end
+
+  test "emitted monads include an error for rows with variable length" do
+    stream = Stream.map(["a,\"be\"", ",c,d", "e,f", "g,,h", "i,j", "k,l"], &(&1))
 
     assert stream
     |> Decoder.decode
-    |> Enum.any?(fn
+    |> Enum.filter(fn
       { :error, RowLengthError, _, _ } -> true
     _ -> false
     end)
+    |> Enum.count == 2
   end
 
   test "delivers correctly ordered rows" do
