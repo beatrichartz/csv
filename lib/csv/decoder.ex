@@ -42,7 +42,7 @@ defmodule CSV.Decoder do
       iex> \"../../test/fixtures/docs.csv\"
       iex> |> Path.expand(__DIR__)
       iex> |> File.stream!
-      iex> |> CSV.Decoder.decode
+      iex> |> CSV.Decoder.decode!
       iex> |> Enum.take(2)
       [[\"a\",\"b\",\"c\"], [\"d\",\"e\",\"f\"]]
 
@@ -50,7 +50,7 @@ defmodule CSV.Decoder do
 
       iex> [\"a;b\",\"c;d\", \"e;f\"]
       iex> |> Stream.map(&(&1))
-      iex> |> CSV.Decoder.decode(separator: ?;, headers: true)
+      iex> |> CSV.Decoder.decode!(separator: ?;, headers: true)
       iex> |> Enum.take(2)
       [%{\"a\" => \"c\", \"b\" => \"d\"}, %{\"a\" => \"e\", \"b\" => \"f\"}]
 
@@ -58,125 +58,132 @@ defmodule CSV.Decoder do
 
       iex> [\"a;b\",\"c;d\", \"e;f\"]
       iex> |> Stream.map(&(&1))
-      iex> |> CSV.Decoder.decode(separator: ?;, headers: [:x, :y])
+      iex> |> CSV.Decoder.decode!(separator: ?;, headers: [:x, :y])
       iex> |> Enum.take(2)
       [%{:x => \"a\", :y => \"b\"}, %{:x => \"c\", :y => \"d\"}]
   """
 
+  def decode!(stream, options \\ []) do
+    stream
+    |> decode_stream(options)
+    |> raise_errors!
+  end
+
   def decode(stream, options \\ []) do
-    { headers, stream } = options
-                          |> Keyword.get(:headers, false)
-                          |> get_headers(stream, options)
-
-    row_length = case headers do
-      false -> stream |> get_row_length(options)
-      _ -> headers |> Enum.count
-    end
-
-    num_workers = options
-                  |> Keyword.get(:num_workers, options
-                  |> Keyword.get(:num_pipes, Defaults.num_workers))
-
-    multiline_escape = options
-                        |> Keyword.get(:multiline_escape, true)
-
-
     stream
-    |> aggregate(multiline_escape)
+    |> decode_stream(options)
+    |> simplify_errors
+  end
+
+  defp decode_stream(stream, options) do
+    stream
+    |> with_default_options(options)
+    |> prepare_headers
+    |> prepare_row_length
+    |> decode_rows
+  end
+
+  defp decode_rows({ stream, options }) do
+    stream
+    |> aggregate(options)
     |> Stream.with_index
-    |> ParallelStream.map(fn { line, index } ->
-      { line, index }
-      |> Lexer.lex(options)
-      |> lex_to_parse
-      |> Parser.parse(options)
-      |> check_row_length(row_length)
-      |> build_row(headers)
-    end, options |> Keyword.merge(num_workers: num_workers))
-    |> handle_errors
-  end
-  defp aggregate(stream, true) do
-    stream |> LineAggregator.aggregate
-  end
-  defp aggregate(stream, false) do
-    stream
+    |> ParallelStream.map(&(decode_row(&1, options)), options)
   end
 
-  defp lex_to_parse({ :ok, tokens, index }) do
-    { tokens, index }
+  defp decode_row({ nil, 0 }, _) do
+    { :ok, [] }
   end
-  defp lex_to_parse(result) do
-    result
+  defp decode_row({ line, index }, options) do
+    headers = options |> Keyword.get(:headers)
+    row_length = options |> Keyword.get(:row_length)
+
+    with { :ok, parsed, _ } <- parse_row({ line, index }, options),
+    { :ok, _ } <- validate_row_length({ parsed, index }, row_length),
+    do: build_row(parsed, headers)
   end
 
-  defp check_row_length({ :ok, data, index }, row_length) do
-    actual_length = data |> Enum.count
+  defp parse_row({ line, index}, options) do
+    with { :ok, lex, _ } <- Lexer.lex({ line, index }, options),
+    do: Parser.parse({ lex, index }, options)
+  end
 
-    case actual_length do
-      ^row_length -> { :ok, data, index }
-      _ -> { :error, RowLengthError, "Encountered a row with length #{actual_length} instead of #{row_length}", index }
+  defp aggregate(stream, options) do
+    case options |> Keyword.get(:multiline_escape) do
+      true -> stream |> LineAggregator.aggregate
+      _ -> stream
     end
   end
-  defp check_row_length(error, _) do
-    error
+
+  defp build_row(data, headers) when is_list(headers) do
+    { :ok, headers |> Enum.zip(data) |> Enum.into(%{}) }
+  end
+  defp build_row(data, _), do: { :ok, data }
+
+  defp with_default_options(stream, options) do
+    num_pipes = options |> Keyword.get(:num_pipes, Defaults.num_workers)
+
+    options = options
+    |> Keyword.merge(num_pipes: num_pipes,
+                     num_workers: options |> Keyword.get(:num_workers, num_pipes),
+                     multiline_escape: options |> Keyword.get(:multiline_escape, true),
+                     headers: options |> Keyword.get(:headers, false),
+                     row_length: false)
+
+    { stream, options }
   end
 
-  defp build_row({ :ok, data, _ }, headers) when is_list(headers) do
-    headers |> Enum.zip(data) |> Enum.into(%{})
-  end
-  defp build_row({ :ok, data, _ }, _) do
-    data
-  end
-  defp build_row(error, _) do
-    error
-  end
-
-  defp get_headers(headers, stream, _) when is_list(headers) do
-    { headers, stream }
-  end
-  defp get_headers(headers, stream, options) when headers do
-    headers = stream
-              |> get_first_row(options)
-
-    { headers, stream |> Stream.drop(1) }
-  end
-  defp get_headers(_, stream, _) do
-    { false, stream }
+  defp prepare_headers({ stream, options } = payload) do
+    case options |> Keyword.get(:headers) do
+      true -> 
+        { stream |> Stream.drop(1),
+          options |> Keyword.put(:headers, get_first_row(stream, options)) }
+      _ -> payload
+    end
   end
 
-  defp get_row_length(stream, options) do
-    stream
-    |> get_first_row(options)
-    |> Enum.count
+  defp prepare_row_length({ stream, options }) do
+    headers = options |> Keyword.get(:headers)
+    first_row = if headers, do: headers, else: stream |> get_first_row(options)
+    { stream,
+      options |> Keyword.put(:row_length, Enum.count(first_row)) }
+  end
+
+  defp validate_row_length({ data, _}, false), do: { :ok, data }
+  defp validate_row_length({ data, index }, expected_length) do
+    case data |> Enum.count do
+      ^expected_length -> { :ok, data }
+      actual_length -> { :error, RowLengthError, "Encountered a row with length #{actual_length} instead of #{expected_length}", index }
+    end
   end
 
   defp get_first_row(stream, options) do
-    stream
-      |> LineAggregator.aggregate(options)
-      |> Enum.take(1)
-      |> List.first
-      |> decode_first_row(options)
+    row = stream
+            |> LineAggregator.aggregate(options)
+            |> Enum.take(1)
+            |> List.first
+
+    case decode_row({ row, 0 }, options) do
+      { :ok, data } -> data
+      _ -> []
+    end
   end
 
-  defp decode_first_row(nil, _) do
-    []
-  end
-  defp decode_first_row(first_line, options) do
-    { first_line, 0 }
-      |> Lexer.lex(options)
-      |> lex_to_parse
-      |> Parser.parse(options)
-      |> handle_error_for_result!
-      |> build_row(nil)
+  defp raise_errors!(stream) do
+    stream |> Stream.map(&monad_value!/1)
   end
 
-  defp handle_errors(stream) do
-    stream |> Stream.map(&handle_error_for_result!/1)
-  end
-  defp handle_error_for_result!({ :error, mod, message, index }) do
+  defp monad_value!({ :error, mod, message, index }) do
     raise mod, message: message, line: index + 1
   end
-  defp handle_error_for_result!(result) do
-    result
+  defp monad_value!({ :ok, row }), do: row
+
+  defp simplify_errors(stream) do
+    stream |> Stream.map(&simplify_error/1)
   end
+
+  defp simplify_error({ :error, _, message, _ }) do
+    { :error, message }
+  end
+  defp simplify_error(monad), do: monad
 
 end

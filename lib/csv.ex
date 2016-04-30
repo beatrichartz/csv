@@ -35,7 +35,7 @@ defmodule CSV do
       iex> \"../test/fixtures/docs.csv\"
       iex> |> Path.expand(__DIR__)
       iex> |> File.stream!
-      iex> |> CSV.decode
+      iex> |> CSV.decode!
       iex> |> Enum.take(2)
       [[\"a\",\"b\",\"c\"], [\"d\",\"e\",\"f\"]]
 
@@ -44,7 +44,7 @@ defmodule CSV do
       iex> \"../test/fixtures/docs.csv\"
       iex> |> Path.expand(__DIR__)
       iex> |> File.stream!
-      iex> |> CSV.decode(num_pipes: 1)
+      iex> |> CSV.decode!(num_pipes: 1)
       iex> |> Enum.take(2)
       [[\"a\",\"b\",\"c\"], [\"d\",\"e\",\"f\"]]
 
@@ -52,7 +52,7 @@ defmodule CSV do
 
       iex> [\"a;b\",\"c;d\", \"e;f\"]
       iex> |> Stream.map(&(&1))
-      iex> |> CSV.Decoder.decode(separator: ?;, headers: true)
+      iex> |> CSV.decode!(separator: ?;, headers: true)
       iex> |> Enum.take(2)
       [%{\"a\" => \"c\", \"b\" => \"d\"}, %{\"a\" => \"e\", \"b\" => \"f\"}]
 
@@ -60,7 +60,7 @@ defmodule CSV do
 
       iex> [\"a;b\",\"c;d\", \"e;f\"]
       iex> |> Stream.map(&(&1))
-      iex> |> CSV.Decoder.decode(separator: ?;, headers: [:x, :y])
+      iex> |> CSV.decode!(separator: ?;, headers: [:x, :y])
       iex> |> Enum.take(2)
       [%{:x => \"a\", :y => \"b\"}, %{:x => \"c\", :y => \"d\"}]
   """
@@ -69,6 +69,9 @@ defmodule CSV do
     CSV.Decoder.decode(stream, options)
   end
 
+  def decode!(stream, options \\ []) do
+    CSV.Decoder.decode!(stream, options)
+  end
 
   @doc """
   Encode a table stream into a stream of RFC 4180 compliant CSV lines for writing to a file
