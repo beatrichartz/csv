@@ -10,6 +10,13 @@ defmodule DecoderTest do
 
   @moduletag timeout: 1000
 
+  defp filter_errors(stream) do
+    stream |> Stream.filter(fn
+      { :error, _ } -> true
+      _ -> false
+    end)
+  end
+
   test "parses strings into a list of token tuples and emits them" do
     stream = Stream.map(["a,be", "c,d"], &(&1))
     result = Decoder.decode!(stream) |> Enum.into([])
@@ -114,12 +121,11 @@ defmodule DecoderTest do
   test "emitted monads include an error for non-unicode files" do
     stream = "./fixtures/broken-encoding.csv" |> Path.expand(__DIR__) |> File.stream!
 
-    assert CSV.decode(stream)
-    |> Enum.into([])
-    |> Enum.any?(fn
-      { :error, "Invalid encoding" } -> true
-    _ -> false
-    end)
+    errors = stream |> Decoder.decode |> filter_errors |> Enum.into([])
+    assert errors == [
+      error: "Invalid encoding",
+      error: "Encountered a row with length 1 instead of 0" #TODO halt the stream on invalid encoding?
+    ]
   end
 
   test "discards any state in the current message queues when halted" do
@@ -247,13 +253,11 @@ defmodule DecoderTest do
   test "emitted monads include an error for each row with fields spanning multiple lines if multiple_escape is false" do
     stream = Stream.map(["a,\"be", "c,d", "e,f\"", "g,h", "i,j", "k,l"], &(&1))
 
-    assert stream
-    |> Decoder.decode(multiline_escape: false)
-    |> Stream.filter(fn
-      { :error, message } -> message |> String.contains?("Unterminated escape sequence")
-    _ -> false
-    end)
-    |> Enum.count == 2
+    errors = stream |> Decoder.decode(multiline_escape: false) |> filter_errors |> Enum.into([])
+    assert errors == [
+      error: "Unterminated escape sequence near 'be'",
+      error: "Unterminated escape sequence near 'f'"
+    ]
   end
 
   test "raises an error if rows are of variable length" do
@@ -267,13 +271,11 @@ defmodule DecoderTest do
   test "emitted monads include an error for rows with variable length" do
     stream = Stream.map(["a,\"be\"", ",c,d", "e,f", "g,,h", "i,j", "k,l"], &(&1))
 
-    assert stream
-    |> Decoder.decode
-    |> Enum.filter(fn
-      { :error, message } -> message |> String.contains?("row with length")
-    _ -> false
-    end)
-    |> Enum.count == 2
+    errors = stream |> Decoder.decode |> filter_errors |> Enum.into([])
+    assert errors == [
+      error: "Encountered a row with length 3 instead of 2",
+      error: "Encountered a row with length 3 instead of 2"
+    ]
   end
 
   test "delivers correctly ordered rows" do
