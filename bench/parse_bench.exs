@@ -1,4 +1,4 @@
-defmodule ParseBench do
+defmodult ParseBench do
   use Benchfella
 
   setup_all do

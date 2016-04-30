@@ -1,0 +1,4 @@
+login,name,shell
+A,Mr A,/bin/bash
+admin, Administrator, /bin/bash
+root, Root, /bin/sh

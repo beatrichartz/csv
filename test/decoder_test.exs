@@ -12,49 +12,49 @@ defmodule DecoderTest do
 
   test "parses strings into a list of token tuples and emits them" do
     stream = Stream.map(["a,be", "c,d"], &(&1))
-    result = Decoder.decode(stream) |> Enum.into([])
+    result = Decoder.decode!(stream) |> Enum.into([])
 
     assert result == [~w(a be), ~w(c d)]
   end
 
   test "parses empty lines into a list of token tuples" do
     stream = Stream.map([",", "c,d"], &(&1))
-    result = Decoder.decode(stream) |> Enum.into([])
+    result = Decoder.decode!(stream) |> Enum.into([])
 
     assert result == [["", ""], ~w(c d)]
   end
 
   test "parses partially populated lines into a list of token tuples" do
     stream = Stream.map([",ci,\"\"", ",c,d"], &(&1))
-    result = Decoder.decode(stream) |> Enum.into([])
+    result = Decoder.decode!(stream) |> Enum.into([])
 
     assert result == [["", "ci", ""], ["", "c", "d"]]
   end
 
   test "parses strings separated by custom separators into a list of token tuples and emits them" do
     stream = Stream.map(["a;be", "c;d"], &(&1))
-    result = Decoder.decode(stream, separator: ?;) |> Enum.into([])
+    result = Decoder.decode!(stream, separator: ?;) |> Enum.into([])
 
     assert result == [~w(a be), ~w(c d)]
   end
 
   test "parses strings separated by custom tab separators into a list of token tuples and emits them" do
     stream = Stream.map(["a\tbe", "c\td"], &(&1))
-    result = Decoder.decode(stream, separator: ?\t) |> Enum.into([])
+    result = Decoder.decode!(stream, separator: ?\t) |> Enum.into([])
 
     assert result == [~w(a be), ~w(c d)]
   end
 
   test "parses strings and strips cells when given the option" do
     stream = Stream.map(["  a , be", "c,    d\t"], &(&1))
-    result = Decoder.decode(stream, strip_cells: true) |> Enum.into([])
+    result = Decoder.decode!(stream, strip_cells: true) |> Enum.into([])
 
     assert result == [~w(a be), ~w(c d)]
   end
 
   test "parses strings into maps when headers are set to true" do
     stream = Stream.map(["a,be", "c,d", "e,f"], &(&1))
-    result = Decoder.decode(stream, headers: true) |> Enum.into([])
+    result = Decoder.decode!(stream, headers: true) |> Enum.into([])
 
     assert result |> Enum.sort == [
       %{"a" => "c", "be" => "d"},
@@ -64,7 +64,7 @@ defmodule DecoderTest do
 
   test "parses strings and strips cells when headers are given and strip_cells is true" do
     stream = Stream.map(["h1,h2", "a, be free ", "c,d"], &(&1))
-    result = Decoder.decode(stream, headers: true, strip_cells: true) |> Enum.into([])
+    result = Decoder.decode!(stream, headers: true, strip_cells: true) |> Enum.into([])
 
     assert result == [
       %{"h1" => "a", "h2" => "be free"},
@@ -74,7 +74,7 @@ defmodule DecoderTest do
 
   test "parses strings into maps when headers are given as a list" do
     stream = Stream.map(["a,be", "c,d"], &(&1))
-    result = Decoder.decode(stream, headers: [:a, :b]) |> Enum.into([])
+    result = Decoder.decode!(stream, headers: [:a, :b]) |> Enum.into([])
 
     assert result == [
       %{:a => "a", :b => "be"},
@@ -84,7 +84,7 @@ defmodule DecoderTest do
 
   test "parses strings that contain single double quotes" do
     stream = Stream.map(["a,be", "\"c\"\"\",d"], &(&1))
-    result = Decoder.decode(stream) |> Enum.into([])
+    result = Decoder.decode!(stream) |> Enum.into([])
 
     assert result == [["a", "be"], ["c\"", "d"]]
   end
@@ -92,43 +92,55 @@ defmodule DecoderTest do
   test "parses strings unless they contain unfinished escape sequences" do
     stream = Stream.map(["a,be", "\"c,d"], &(&1))
     assert_raise CorruptStreamError, fn ->
-      Decoder.decode(stream, headers: [:a, :b]) |> Enum.into([])
+      Decoder.decode!(stream, headers: [:a, :b]) |> Enum.into([])
     end
   end
 
   test "parses strings that contain multi-byte unicode characters" do
     stream = Stream.map(["a,b", "c,ಠ_ಠ"], &(&1))
-    result = CSV.decode(stream) |> Enum.into([])
+    result = CSV.decode!(stream) |> Enum.into([])
 
     assert result == [["a", "b"], ["c", "ಠ_ಠ"]]
   end
 
   test "produces meaningful errors for non-unicode files" do
     stream = "./fixtures/broken-encoding.csv" |> Path.expand(__DIR__) |> File.stream!
+
     assert_raise EncodingError, fn ->
-      CSV.decode(stream) |> Enum.into([]) |> Enum.sort
+      CSV.decode!(stream) |> Enum.into([]) |> Enum.sort
     end
+  end
+
+  test "emitted monads include an error for non-unicode files" do
+    stream = "./fixtures/broken-encoding.csv" |> Path.expand(__DIR__) |> File.stream!
+
+    assert CSV.decode(stream)
+    |> Enum.into([])
+    |> Enum.any?(fn
+      { :error, "Invalid encoding" } -> true
+    _ -> false
+    end)
   end
 
   test "discards any state in the current message queues when halted" do
     stream = Stream.map(["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"], &(&1))
-    result = Decoder.decode(stream) |> Enum.take(2)
+    result = Decoder.decode!(stream) |> Enum.take(2)
 
     assert result == [~w(a be), ~w(c d)]
 
-    next_result = Decoder.decode(stream) |> Enum.take(2)
+    next_result = Decoder.decode!(stream) |> Enum.take(2)
     assert next_result == [~w(a be), ~w(c d)]
   end
 
   test "empty stream input produces an empty stream as output" do
     stream = Stream.map([], &(&1))
-              |> Decoder.decode
+              |> Decoder.decode!
     assert stream |> Enum.into([]) == []
   end
 
   test "can reuse the same stream" do
     stream = Stream.map(["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"], &(&1))
-             |> Decoder.decode
+             |> Decoder.decode!
     result = stream |> Enum.take(2)
 
     assert result == [~w(a be), ~w(c d)]
@@ -139,14 +151,14 @@ defmodule DecoderTest do
 
   test "delivers the correct number of rows" do
     stream = Stream.map(["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"], &(&1))
-    result = Decoder.decode(stream) |> Enum.count
+    result = Decoder.decode!(stream) |> Enum.count
 
     assert result == 6
   end
 
   test "collects rows with fields spanning multiple lines" do
     stream = Stream.map(["a,\"be", "c,d", "e,f\"", "g,h", "i,j", "k,l"], &(&1))
-    result = Decoder.decode(stream) |> Enum.take(2)
+    result = Decoder.decode!(stream) |> Enum.take(2)
 
     assert result == [["a", "be\r\nc,d\r\ne,f"], ~w(g h)]
   end
@@ -155,7 +167,7 @@ defmodule DecoderTest do
     stream = Stream.map([",ci,\"\"\"", ",c,d"], &(&1))
 
     assert_raise CorruptStreamError, fn ->
-      Decoder.decode(stream) |> Stream.run
+      Decoder.decode!(stream) |> Stream.run
     end
   end
 
@@ -187,7 +199,7 @@ defmodule DecoderTest do
       "\",\"\"\"\"",
     ], &(&1))
 
-    result = Decoder.decode(stream) |> Enum.into([])
+    result = Decoder.decode!(stream) |> Enum.into([])
 
     assert result == [
       [
@@ -228,16 +240,40 @@ defmodule DecoderTest do
     stream = Stream.map(["a,\"be", "c,d", "e,f\"", "g,h", "i,j", "k,l"], &(&1))
 
     assert_raise SyntaxError, fn ->
-      Decoder.decode(stream, multiline_escape: false) |> Stream.run
+      Decoder.decode!(stream, multiline_escape: false) |> Stream.run
     end
+  end
+
+  test "emitted monads include an error for each row with fields spanning multiple lines if multiple_escape is false" do
+    stream = Stream.map(["a,\"be", "c,d", "e,f\"", "g,h", "i,j", "k,l"], &(&1))
+
+    assert stream
+    |> Decoder.decode(multiline_escape: false)
+    |> Stream.filter(fn
+      { :error, message } -> message |> String.contains?("Unterminated escape sequence")
+    _ -> false
+    end)
+    |> Enum.count == 2
   end
 
   test "raises an error if rows are of variable length" do
     stream = Stream.map(["a,\"be\"", ",c,d", "e,f", "g,,h", "i,j", "k,l"], &(&1))
 
     assert_raise RowLengthError, fn ->
-      Decoder.decode(stream) |> Stream.run
+      Decoder.decode!(stream) |> Stream.run
     end
+  end
+
+  test "emitted monads include an error for rows with variable length" do
+    stream = Stream.map(["a,\"be\"", ",c,d", "e,f", "g,,h", "i,j", "k,l"], &(&1))
+
+    assert stream
+    |> Decoder.decode
+    |> Enum.filter(fn
+      { :error, message } -> message |> String.contains?("row with length")
+    _ -> false
+    end)
+    |> Enum.count == 2
   end
 
   test "delivers correctly ordered rows" do
@@ -256,7 +292,7 @@ defmodule DecoderTest do
       "w,x",
       "y,z"
     ], &(&1))
-    result = Decoder.decode(stream, num_pipes: 3) |> Enum.into([])
+    result = Decoder.decode!(stream, num_pipes: 3) |> Enum.into([])
 
     assert result ==  [
       ~w(a be),
@@ -276,7 +312,7 @@ defmodule DecoderTest do
   end
 
   def encode_decode_loop(l) do
-    l |> CSV.encode |> CSV.decode |> Enum.to_list
+    l |> CSV.encode |> CSV.decode! |> Enum.to_list
   end
   test "does not get corrupted after an error" do
     assert_raise Protocol.UndefinedError, fn ->
