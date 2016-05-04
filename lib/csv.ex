@@ -117,11 +117,11 @@ defmodule CSV do
   ...
   ```
 
-  using `CSV.decode_as_map` you can decode as a stream of `Map` using the header information such that
+  using `CSV.decode_as_map` you can decode the file as a stream of maps using the header. The following lines
   ```elixir
   File.stream!("data.csv") |> CSV.decode_as_map
   ```
-  should create a stream of maps with the header as atom keys
+  create a stream of maps with the header as atom keys like this
   ```
   {a: 1, b: 2, c: 3}
   {a: 4, b: 5, c: 6}
