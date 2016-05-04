@@ -68,8 +68,8 @@ File.stream!("data.csv") |> CSV.decode_as_map
 ```
 create a stream of maps with the header as atom keys like this
 ```
-{a: 1, b: 2, c: 3}
-{a: 4, b: 5, c: 6}
+{a: "1", b: "2", c: "3"}
+{a: "4", b: "5", c: "6"}
 ...
 ```
 
