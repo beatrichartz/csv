@@ -187,8 +187,8 @@ defmodule CSV.Decoder do
   defp simplify_error(monad), do: monad
 
 
-  
-  def decode_as_map(enum, options \\ []) do
+
+  def decode_as_map(enum, options) do
     enum
     |> CSV.decode(options)
     |> Stream.transform(:first, &structure_from_header/2)
