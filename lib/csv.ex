@@ -105,4 +105,28 @@ defmodule CSV do
     CSV.Encoder.encode(stream, options)
   end
 
+
+  @doc """
+  Given a `csv` with headers like this
+
+  **data.csv**
+  ```
+  a,b,c
+  1,2,3
+  4,5,6
+  ...
+  ```
+
+  using `CSV.decode_as_map` you can decode the file as a stream of maps using the header. The following lines
+  ```elixir
+  File.stream!("data.csv") |> CSV.decode_as_map
+  ```
+  create a stream of maps with the header as atom keys like this
+  ```
+  {a: 1, b: 2, c: 3}
+  {a: 4, b: 5, c: 6}
+  ...
+  ```
+  """
+
 end

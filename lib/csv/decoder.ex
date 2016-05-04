@@ -186,4 +186,32 @@ defmodule CSV.Decoder do
   end
   defp simplify_error(monad), do: monad
 
+
+
+  def decode_as_map(enum, options) do
+    enum
+    |> CSV.decode(options)
+    |> Stream.transform(:first, &structure_from_header/2)
+    |> Stream.drop(1)
+  end
+
+  #The accumulator should initially be :first, the its set to the structure of the csv
+  #which is the first line
+  defp structure_from_header(line, :first) do
+    structure = line
+      |> Enum.map(&String.to_atom/1)
+    
+    { [ nil ], structure }
+  end
+
+  #zips the stucture and the current line into a map
+  defp structure_from_header(line, structure) do
+    map = 
+      structure
+      |> Enum.zip(line)
+      |> Enum.into(%{})
+
+    { [ map ], structure }
+  end
+
 end
