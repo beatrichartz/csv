@@ -14,7 +14,7 @@ defmodule CSV.Decoder do
 
   @doc """
   Decode a stream of comma-separated lines into a table.
-  You can control the number of parallel operations via the option `:num_pipes` - 
+  You can control the number of parallel operations via the option `:num_pipes` -
   default is the number of erlang schedulers times 3.
 
   ## Options
@@ -40,27 +40,37 @@ defmodule CSV.Decoder do
   Convert a filestream into a stream of rows:
 
       iex> \"../../test/fixtures/docs.csv\"
-      iex> |> Path.expand(__DIR__)
-      iex> |> File.stream!
-      iex> |> CSV.Decoder.decode!
-      iex> |> Enum.take(2)
-      [[\"a\",\"b\",\"c\"], [\"d\",\"e\",\"f\"]]
+      ...> |> Path.expand(__DIR__)
+      ...> |> File.stream!
+      ...> |> CSV.Decoder.decode!
+      ...> |> Enum.take(2)
+      [[\"a\", \"b\", \"c\"], [\"d\", \"e\", \"f\"]]
 
   Map an existing stream of lines separated by a token to a stream of rows with a header row:
 
       iex> [\"a;b\",\"c;d\", \"e;f\"]
-      iex> |> Stream.map(&(&1))
-      iex> |> CSV.Decoder.decode!(separator: ?;, headers: true)
-      iex> |> Enum.take(2)
+      ...> |> Stream.map(&(&1))
+      ...> |> CSV.Decoder.decode!(separator: ?;, headers: true)
+      ...> |> Enum.take(2)
       [%{\"a\" => \"c\", \"b\" => \"d\"}, %{\"a\" => \"e\", \"b\" => \"f\"}]
 
   Map an existing stream of lines separated by a token to a stream of rows with a given header row:
 
       iex> [\"a;b\",\"c;d\", \"e;f\"]
-      iex> |> Stream.map(&(&1))
-      iex> |> CSV.Decoder.decode!(separator: ?;, headers: [:x, :y])
-      iex> |> Enum.take(2)
+      ...> |> Stream.map(&(&1))
+      ...> |> CSV.Decoder.decode!(separator: ?;, headers: [:x, :y])
+      ...> |> Enum.take(2)
       [%{:x => \"a\", :y => \"b\"}, %{:x => \"c\", :y => \"d\"}]
+
+  Decode a CSV string
+
+      iex> csv_string = \"id,name\\r\\n1,Jane\\r\\n2,George\\r\\n3,John\"
+      ...> {:ok, out} = csv_string |> StringIO.open
+      ...> out
+      ...> |> IO.binstream(:line)
+      ...> |> CSV.Decoder.decode!(headers: true)
+      ...> |> Enum.map(&(&1))
+      [%{\"id\" => \"2\", \"name\" => \"George\"}, %{\"id\" => \"3\", \"name\" => \"John\"}]
   """
 
   def decode!(stream, options \\ []) do
@@ -134,7 +144,7 @@ defmodule CSV.Decoder do
 
   defp prepare_headers({ stream, options } = payload) do
     case options |> Keyword.get(:headers) do
-      true -> 
+      true ->
         { stream |> Stream.drop(1),
           options |> Keyword.put(:headers, get_first_row(stream, options)) }
       _ -> payload
