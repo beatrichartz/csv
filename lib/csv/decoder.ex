@@ -64,15 +64,6 @@ defmodule CSV.Decoder do
   """
 
   def decode(stream, options \\ []) do
-    { headers, stream } = options
-                          |> Keyword.get(:headers, false)
-                          |> get_headers(stream, options)
-
-    row_length = case headers do
-      false -> stream |> get_row_length(options)
-      _ -> headers |> Enum.count
-    end
-
     num_workers = options
                   |> Keyword.get(:num_workers, options
                   |> Keyword.get(:num_pipes, Defaults.num_workers))
@@ -84,7 +75,8 @@ defmodule CSV.Decoder do
     stream
     |> aggregate(multiline_escape)
     |> Stream.with_index
-    |> ParallelStream.map(fn { line, index } ->
+    |> add_headers_and_row_length(options)
+    |> ParallelStream.map(fn { line, index, headers, row_length } ->
       { line, index }
       |> Lexer.lex(options)
       |> lex_to_parse
@@ -94,6 +86,38 @@ defmodule CSV.Decoder do
     end, options |> Keyword.merge(num_workers: num_workers))
     |> handle_errors
   end
+
+  defp add_headers_and_row_length(stream, options) do
+    headers = options |> Keyword.get(:headers, false)
+    stream |> Stream.transform({ headers, options, nil }, &add_headers_and_row_length_to_item/2)
+  end
+
+  defp add_headers_and_row_length_to_item({ line, 0 }, { headers, options, _ }) when is_list(headers) do
+    row_length = headers |> Enum.count
+    { [{ line, 0, headers, row_length }], { headers, options, row_length } }
+  end
+  defp add_headers_and_row_length_to_item({ line, 0 }, { true, options, _ }) do
+    headers = decode_line!({ line, 0 }, options)
+    row_length = headers |> Enum.count
+    { [], { headers, options, row_length } }
+  end
+  defp add_headers_and_row_length_to_item({ line, 0 }, { false, options, _ }) do
+    row_length = decode_line!({ line, 0 }, options) |> Enum.count
+    { [{ line, 0, false, row_length }], { false, options, row_length } }
+  end
+  defp add_headers_and_row_length_to_item({ line, index }, { headers, options, row_length }) do
+    { [{ line, index, headers, row_length }], { headers, options, row_length } }
+  end
+
+  def decode_line!({ line, index }, options) do
+    { line, index }
+        |> Lexer.lex(options)
+        |> lex_to_parse
+        |> Parser.parse(options)
+        |> build_row(nil)
+        |> handle_error_for_result!
+  end
+
   defp aggregate(stream, true) do
     stream |> LineAggregator.aggregate
   end
@@ -128,45 +152,6 @@ defmodule CSV.Decoder do
   end
   defp build_row(error, _) do
     error
-  end
-
-  defp get_headers(headers, stream, _) when is_list(headers) do
-    { headers, stream }
-  end
-  defp get_headers(headers, stream, options) when headers do
-    headers = stream
-              |> get_first_row(options)
-
-    { headers, stream |> Stream.drop(1) }
-  end
-  defp get_headers(_, stream, _) do
-    { false, stream }
-  end
-
-  defp get_row_length(stream, options) do
-    stream
-    |> get_first_row(options)
-    |> Enum.count
-  end
-
-  defp get_first_row(stream, options) do
-    stream
-      |> LineAggregator.aggregate(options)
-      |> Enum.take(1)
-      |> List.first
-      |> decode_first_row(options)
-  end
-
-  defp decode_first_row(nil, _) do
-    []
-  end
-  defp decode_first_row(first_line, options) do
-    { first_line, 0 }
-      |> Lexer.lex(options)
-      |> lex_to_parse
-      |> Parser.parse(options)
-      |> handle_error_for_result!
-      |> build_row(nil)
   end
 
   defp handle_errors(stream) do

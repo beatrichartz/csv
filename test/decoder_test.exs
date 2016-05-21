@@ -275,6 +275,35 @@ defmodule DecoderTest do
     ]
   end
 
+  test "decodes from a StringIO stream" do
+    {:ok, out} =
+      "a,b,c\nd,e,f"
+      |> StringIO.open
+
+    result = out
+             |> IO.binstream(:line)
+             |> CSV.decode
+             |> Enum.into([])
+
+    assert result == [~w(a b c), ~w(d e f)]
+  end
+
+  test "decodes with headers from a StringIO stream" do
+    {:ok, out} =
+      "a,b,c\nd,e,f\ng,h,i"
+      |> StringIO.open
+
+    result = out
+             |> IO.binstream(:line)
+             |> CSV.decode(headers: true)
+             |> Enum.into([])
+
+    assert result == [
+      %{"a" => "d", "b" => "e", "c" => "f"},
+      %{"a" => "g", "b" => "h", "c" => "i"}
+    ]
+  end
+
   def encode_decode_loop(l) do
     l |> CSV.encode |> CSV.decode |> Enum.to_list
   end
