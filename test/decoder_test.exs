@@ -17,6 +17,35 @@ defmodule DecoderTest do
     end)
   end
 
+  test "decodes from a StringIO stream" do
+    {:ok, out} =
+      "a,b,c\nd,e,f"
+      |> StringIO.open
+
+    result = out
+             |> IO.binstream(:line)
+             |> CSV.decode!
+             |> Enum.into([])
+
+    assert result == [~w(a b c), ~w(d e f)]
+  end
+
+  test "decodes with headers from a StringIO stream" do
+    {:ok, out} =
+      "a,b,c\nd,e,f\ng,h,i"
+      |> StringIO.open
+
+    result = out
+             |> IO.binstream(:line)
+             |> CSV.decode!(headers: true)
+             |> Enum.into([])
+
+    assert result == [
+      %{"a" => "d", "b" => "e", "c" => "f"},
+      %{"a" => "g", "b" => "h", "c" => "i"}
+    ]
+  end
+
   test "parses strings into a list of token tuples and emits them" do
     stream = Stream.map(["a,be", "c,d"], &(&1))
     result = Decoder.decode!(stream) |> Enum.into([])
@@ -123,8 +152,7 @@ defmodule DecoderTest do
 
     errors = stream |> Decoder.decode |> filter_errors |> Enum.into([])
     assert errors == [
-      error: "Invalid encoding",
-      error: "Encountered a row with length 1 instead of 0" #TODO halt the stream on invalid encoding?
+      error: "Invalid encoding"
     ]
   end
 
