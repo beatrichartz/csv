@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+while sleep 1; do
+  {
+    find $DIR -name "*.exs";
+    find $DIR -name "*.ex";
+  } | entr -cdr $DIR/run
+done
