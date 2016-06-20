@@ -4,7 +4,7 @@ defmodule CSV.Mixfile do
   def project do
     [
         app: :csv,
-        version: "1.4.0",
+        version: "2.0.0",
         elixir: "~> 1.1",
         deps: deps,
         package: package,
@@ -28,7 +28,7 @@ defmodule CSV.Mixfile do
 
   defp deps do
     [
-      {:parallel_stream, "~> 1.0.3"},
+      {:parallel_stream, "~> 1.0.4"},
       {:excoveralls, "~> 0.5", only: :test},
       {:benchfella, only: :bench},
       {:ex_csv, only: :bench},
