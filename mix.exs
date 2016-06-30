@@ -30,12 +30,12 @@ defmodule CSV.Mixfile do
     [
       {:parallel_stream, "~> 1.0.4"},
       {:excoveralls, "~> 0.5", only: :test},
-      {:benchfella, only: :bench},
-      {:ex_csv, only: :bench},
-      {:csvlixir, only: :bench},
-      {:cesso, only: :bench},
+      {:benchfella, ">= 0.0.0", only: :bench},
+      {:ex_csv, ">= 0.0.0", only: :bench},
+      {:csvlixir, ">= 0.0.0", only: :bench},
+      {:cesso, ">= 0.0.0", only: :bench},
       {:ex_doc, "0.9.0", only: :docs},
-      {:inch_ex, only: :docs},
+      {:inch_ex, ">= 0.0.0", only: :docs},
       {:earmark, "0.1.19", only: :docs}
     ]
   end
