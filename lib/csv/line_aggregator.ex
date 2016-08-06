@@ -20,35 +20,41 @@ defmodule CSV.LineAggregator do
 
   def aggregate(stream, options \\ []) do
     separator = options |> Keyword.get(:separator, @separator)
-    stream |> Stream.transform(fn -> [] end, fn line, collected ->
+    multiline_escape_max_lines = options |> Keyword.get(:multiline_escape_max_lines, @multiline_escape_max_lines)
+
+    stream |> Stream.transform(fn -> { [], 0 } end, fn line, { collected, collected_size } ->
       case collected do
         [] -> start_aggregate(line, separator)
-        _ -> continue_aggregate(collected, line, separator)
+        _ when collected_size < multiline_escape_max_lines ->
+          continue_aggregate(collected, collected_size + 1, line, separator)
+        _ -> raise CorruptStreamError,
+                   message: "Stream halted with escape sequence spanning more than #{multiline_escape_max_lines} lines. Use the multiline_escape_max_lines option to increase this threshold."
       end
-    end, fn collected ->
+    end, fn { collected, _ } ->
       case collected do
         [] -> :ok
-        _ -> raise CorruptStreamError, message: "Stream halted with unterminated escape sequence"
+        _ -> raise CorruptStreamError,
+                   message: "Stream halted with unterminated escape sequence"
       end
     end)
   end
   defp start_aggregate(line, separator) do
     cond do
       is_open?(line, separator) ->
-        { [], [line] }
+        { [], { [line], 1 } }
       true ->
-        { [line], [] }
+        { [line], { [], 0 } }
     end
   end
-  defp continue_aggregate(collected, line, separator) do
+  defp continue_aggregate(collected, collected_size, line, separator) do
     { is_closing, tail } = is_closing?(line, separator)
     cond do
       is_closing && is_open?(tail, separator) ->
-        { [], collected ++ [line] }
+        { [], { collected ++ [line], collected_size } }
       is_closing ->
-        { [collected ++ [line] |> Enum.join(@delimiter)], [] }
+        { [collected ++ [line] |> Enum.join(@delimiter)], { [], collected_size } }
       true ->
-        { [], collected ++ [line] }
+        { [], { collected ++ [line], collected_size } }
     end
   end
 
