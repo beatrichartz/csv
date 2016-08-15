@@ -35,6 +35,7 @@ defmodule CSV.Decoder do
       When set to `false` (default), will use no header values.
       When set to anything but `false`, the resulting rows in the matrix will
       be maps instead of lists.
+    * `:drop_rows`   - Skip the number of rows specified. Defaults to zero
 
   ## Examples
 
@@ -93,6 +94,7 @@ defmodule CSV.Decoder do
     stream
     |> aggregate(options)
     |> Stream.with_index
+    |> drop_rows(options)
     |> with_headers(options)
     |> with_row_length(options)
     |> decode_rows(options)
@@ -105,7 +107,8 @@ defmodule CSV.Decoder do
     |> Keyword.merge(num_pipes: num_pipes,
                      num_workers: options |> Keyword.get(:num_workers, num_pipes),
                      multiline_escape: options |> Keyword.get(:multiline_escape, true),
-                     headers: options |> Keyword.get(:headers, false))
+                     headers: options |> Keyword.get(:headers, false),
+                     drop_rows: options |> Keyword.get(:drop_rows, 0))
   end
 
   defp decode_rows(stream, options) do
@@ -116,6 +119,7 @@ defmodule CSV.Decoder do
   defp decode_row({ nil, 0 }, _) do
     { :ok, [] }
   end
+
   defp decode_row({ line, index, headers, row_length }, options) do
     with { :ok, parsed, _ } <- parse_row({ line, index }, options),
     { :ok, _ } <- validate_row_length({ parsed, index }, row_length),
@@ -137,6 +141,7 @@ defmodule CSV.Decoder do
   defp build_row(data, headers) when is_list(headers) do
     { :ok, headers |> Enum.zip(data) |> Enum.into(%{}) }
   end
+
   defp build_row(data, _), do: { :ok, data }
 
   defp with_headers(stream, options) do
@@ -144,10 +149,16 @@ defmodule CSV.Decoder do
     stream |> Stream.transform({ headers, options }, &add_headers/2)
   end
 
+  defp drop_rows(stream, options) do
+    drop_rows = options |> Keyword.get(:drop_rows, 0)
+    stream |> Stream.drop(drop_rows)
+  end
+
   defp add_headers({ line, 0 }, { headers, options }) when is_list(headers) do
     { [{ line, 0, headers }], { headers, options } }
   end
-  defp add_headers({ line, 0 }, { true, options }) do
+
+  defp add_headers({ line, _ }, { true, options }) do
     case parse_row({ line, 0 }, options) do
       { :ok, headers, _ } ->
         { [], { headers, options } }
@@ -155,9 +166,11 @@ defmodule CSV.Decoder do
         { [], { false, options } }
     end
   end
+
   defp add_headers({ line, 0 }, { false, options }) do
     { [{ line, 0, false }], { false, options } }
   end
+
   defp add_headers({ line, index }, { headers, options }) do
     { [{ line, index, headers }], { headers, options } }
   end
