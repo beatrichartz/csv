@@ -18,6 +18,10 @@ defmodule CSV.Mixfile do
     ]
   end
 
+  def application do
+    [applications: [:parallel_stream]]
+  end
+
   defp package do
     [
         maintainers: ["Beat Richartz"],
