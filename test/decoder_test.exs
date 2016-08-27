@@ -46,6 +46,22 @@ defmodule DecoderTest do
     ]
   end
 
+    test "decodes with headers from a StringIO stream and drop n lines" do
+    {:ok, out} =
+      "#comment1\n,#comment2\naa,bb,cc\nd,e,f\ng,h,i"
+      |> StringIO.open
+
+    result = out
+             |> IO.binstream(:line)
+             |> CSV.decode!(headers: true, drop_rows: 2)
+             |> Enum.into([])
+
+    assert result == [
+      %{"aa" => "d", "bb" => "e", "cc" => "f"},
+      %{"aa" => "g", "bb" => "h", "cc" => "i"}
+    ]
+  end
+
   test "parses strings into a list of token tuples and emits them" do
     stream = Stream.map(["a,be", "c,d"], &(&1))
     result = Decoder.decode!(stream) |> Enum.into([])
