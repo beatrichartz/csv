@@ -62,20 +62,14 @@ defmodule CSV.LineAggregator do
     is_closing?(line, "", true, separator)
   end
 
-  defp is_closing?(<< @double_quote :: utf8 >> <> tail, << @double_quote :: utf8 >>, quoted, separator) do
-    is_closing?(tail, @double_quote, !quoted, separator)
-  end
-  defp is_closing?(<< _ :: utf8 >> <> tail, << @double_quote :: utf8 >>, quoted, _) do
-    { quoted, tail }
+  defp is_closing?(<< @double_quote :: utf8 >> <> tail, _, quoted, separator) do
+    is_closing?(tail, << @double_quote :: utf8 >>, !quoted, separator)
   end
   defp is_closing?(<< head :: utf8 >> <> tail, _, quoted, separator) do
     is_closing?(tail, << head :: utf8 >>, quoted, separator)
   end
-  defp is_closing?("", << @double_quote :: utf8 >>, _, _) do
-    { true, "" }
-  end
-  defp is_closing?("", _, _, _) do
-    { false, "" }
+  defp is_closing?("", _, quoted, _) do
+    { !quoted, "" }
   end
 
   defp is_open?(line, separator) do
