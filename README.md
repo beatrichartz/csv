@@ -61,7 +61,7 @@ And you'll get a stream of lines ready to be written to an IO.
 So, this is writing to a file:
 
 ````elixir
-file = File.open!("test.csv", [:write])
+file = File.open!("test.csv", [:write, :utf8])
 table_data |> CSV.encode |> Enum.each(&IO.write(file, &1))
 ````
 
