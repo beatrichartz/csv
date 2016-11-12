@@ -26,6 +26,10 @@ defmodule CSV.Mixfile do
     ]
   end
 
+  def application do
+    [applications: [:parallel_stream]]
+  end
+
   defp deps do
     [
       {:parallel_stream, "~> 1.0.4"},
