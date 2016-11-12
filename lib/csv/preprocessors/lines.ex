@@ -1,10 +1,10 @@
-defmodule CSV.LineAggregator do
+defmodule CSV.Preprocessors.Lines do
   use CSV.Defaults
 
-  alias CSV.LineAggregator.CorruptStreamError
+  alias CSV.Preprocessors.CorruptStreamError
 
   @moduledoc ~S"""
-  The CSV LineAggregator module - aggregates lines in a stream that are part
+  The CSV lines preprocessor module - aggregates lines in a stream that are part
   of a common escape sequence.
   """
 
@@ -18,7 +18,7 @@ defmodule CSV.LineAggregator do
     * `:separator` – The field separator
   """
 
-  def aggregate(stream, options \\ []) do
+  def process(stream, options \\ []) do
     separator = options |> Keyword.get(:separator, @separator)
     multiline_escape_max_lines = options |> Keyword.get(:multiline_escape_max_lines, @multiline_escape_max_lines)
 

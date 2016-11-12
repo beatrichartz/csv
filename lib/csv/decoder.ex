@@ -6,7 +6,7 @@ defmodule CSV.Decoder do
   In setup, it parallelises lexing and parsing, as well as different lexer/parser pairs as pipes.
   The number of pipes can be controlled via options.
   """
-  alias CSV.LineAggregator
+  alias CSV.Preprocessors
   alias CSV.Parser
   alias CSV.Lexer
   alias CSV.Defaults
@@ -129,7 +129,7 @@ defmodule CSV.Decoder do
 
   defp aggregate(stream, options) do
     case options |> Keyword.get(:multiline_escape) do
-      true -> stream |> LineAggregator.aggregate(options)
+      true -> stream |> Preprocessors.lines(options)
       _ -> stream
     end
   end

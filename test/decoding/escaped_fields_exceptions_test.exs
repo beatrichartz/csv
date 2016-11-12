@@ -2,7 +2,7 @@ defmodule DecodingTests.EscapedFieldsExceptionsTest do
   use ExUnit.Case
   alias CSV.Decoder
   alias CSV.Parser.SyntaxError
-  alias CSV.LineAggregator.CorruptStreamError
+  alias CSV.Preprocessors.CorruptStreamError
 
   @moduletag timeout: 1000
 

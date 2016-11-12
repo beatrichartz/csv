@@ -52,7 +52,7 @@ defmodule CSV.Decoder.RowLengthError do
   end
 end
 
-defmodule CSV.LineAggregator.CorruptStreamError do
+defmodule CSV.Preprocessors.CorruptStreamError do
   @moduledoc """
   Raised at runtime when the CSV stream ends with unfinished escape sequences
   """
