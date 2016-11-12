@@ -7,13 +7,15 @@ defmodule CSVTest do
     assert result == ["a,b\r\n", "c,d\r\n"]
   end
 
-  test "decodes" do
+  test "decodes in strict mode raising errors" do
     stream = Stream.map(["a,be", "c,d"], &(&1))
-    assert (CSV.decode!(stream) |> Enum.into([]) |> Enum.sort) == [~w(a be), ~w(c d)]
+    result = CSV.decode!(stream) |> Enum.into([])
+    assert result == [~w(a be), ~w(c d)]
   end
 
-  test "decodes emitting a stram of monads" do
+  test "decodes emitting errors with rows" do
     stream = Stream.map(["a,be", "c,d"], &(&1))
-    assert (CSV.decode(stream) |> Enum.into([]) |> Enum.sort) == [ ok: ~w(a be), ok: ~w(c d) ]
+    result = CSV.decode(stream) |> Enum.into([])
+    assert result == [ok: ~w(a be), ok: ~w(c d)]
   end
 end

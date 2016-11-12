@@ -1,7 +1,8 @@
-defmodule LexerTest do
+defmodule LexingTests.BaselineTest do
   use ExUnit.Case
   alias CSV.Lexer
-  alias CSV.Lexer.EncodingError
+
+  doctest Lexer
 
   test "parses strings into a list of token tuples" do
     lexed = Lexer.lex({"a,be\r\n", 11})
@@ -36,10 +37,5 @@ defmodule LexerTest do
         {:double_quote, "\""},
         {:delimiter, "\r\n"}
       ], 1}
-  end
-
-  test "raises a syntax error when the string is not valid" do
-    lexed = Lexer.lex({<<191>>, 1})
-    assert lexed == {:error, EncodingError, "Invalid encoding", 1}
   end
 end

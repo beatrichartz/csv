@@ -1,4 +1,4 @@
-defmodule EncodeTest do
+defmodule EncodingTests.ProtocolTest do
   use ExUnit.Case
 
   test "it defines standard encoding for strings" do

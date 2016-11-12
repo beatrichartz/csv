@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+TEST_DIR=$(dirname "$0")
 
-mix test $DIR
+mix test $TEST_DIR

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+TEST_DIR=$(dirname "$0")
 
 while sleep 1; do
   {
-    find $DIR -name "*.exs";
-    find $DIR -name "*.ex";
-  } | entr -cdr $DIR/run
+    find $TEST_DIR -name "*.exs";
+    find $TEST_DIR -name "*.ex";
+  } | entr -cdr $TEST_DIR/run
 done
