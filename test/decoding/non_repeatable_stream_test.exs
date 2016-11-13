@@ -12,7 +12,7 @@ defmodule DecodingTests.NonRepeatableStreamTest do
     result = out
              |> IO.binstream(:line)
              |> Decoder.decode!
-             |> Enum.into([])
+             |> Enum.to_list
 
     assert result == [~w(a b c), ~w(d e f)]
   end
@@ -25,7 +25,7 @@ defmodule DecodingTests.NonRepeatableStreamTest do
     result = out
              |> IO.binstream(:line)
              |> Decoder.decode!(headers: true)
-             |> Enum.into([])
+             |> Enum.to_list
 
     assert result == [
       %{"a" => "d", "b" => "e", "c" => "f"},

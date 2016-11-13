@@ -1,5 +1,7 @@
 defmodule DecodingTests.EscapedFieldsExceptionsTest do
   use ExUnit.Case
+  import TestSupport.StreamHelpers
+
   alias CSV.Decoder
   alias CSV.Parser.SyntaxError
   alias CSV.Preprocessors.CorruptStreamError
@@ -14,14 +16,14 @@ defmodule DecodingTests.EscapedFieldsExceptionsTest do
   end
 
   test "parses strings unless they contain unfinished escape sequences" do
-    stream = Stream.map(["a,be", "\"c,d"], &(&1))
+    stream = ["a,be", "\"c,d"] |> to_stream
     assert_raise CorruptStreamError, fn ->
-      Decoder.decode!(stream, headers: [:a, :b]) |> Enum.into([])
+      Decoder.decode!(stream, headers: [:a, :b]) |> Enum.to_list
     end
   end
 
   test "raises errors for unfinished escape sequences spanning multiple lines" do
-    stream = Stream.map([",ci,\"\"\"", ",c,d"], &(&1))
+    stream = [",ci,\"\"\"", ",c,d"] |> to_stream
 
     assert_raise CorruptStreamError, fn ->
       Decoder.decode!(stream) |> Stream.run
@@ -29,7 +31,7 @@ defmodule DecodingTests.EscapedFieldsExceptionsTest do
   end
 
   test "raises errors for fields spanning multiple lines if escaping is disabled" do
-    stream = Stream.map(["a,\"be", "c,d", "e,f\"", "g,h", "i,j", "k,l"], &(&1))
+    stream = ["a,\"be", "c,d", "e,f\"", "g,h", "i,j", "k,l"] |> to_stream
 
     assert_raise SyntaxError, fn ->
       Decoder.decode!(stream, multiline_escape: false) |> Stream.run
@@ -37,9 +39,9 @@ defmodule DecodingTests.EscapedFieldsExceptionsTest do
   end
 
   test "emits errors for each row with fields spanning multiple lines if escaping is disabled" do
-    stream = Stream.map(["a,\"be", "c,d", "e,f\"", "g,h", "i,j", "k,l"], &(&1))
+    stream = ["a,\"be", "c,d", "e,f\"", "g,h", "i,j", "k,l"] |> to_stream
 
-    errors = stream |> Decoder.decode(multiline_escape: false) |> filter_errors |> Enum.into([])
+    errors = stream |> Decoder.decode(multiline_escape: false) |> filter_errors |> Enum.to_list
     assert errors == [
       error: "Unterminated escape sequence near 'be'",
       error: "Unterminated escape sequence near 'f'"

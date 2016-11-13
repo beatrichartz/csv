@@ -1,9 +1,11 @@
 defmodule PreprocessingTests.LinesTest do
   use ExUnit.Case
+  import TestSupport.StreamHelpers
+
   alias CSV.Preprocessors.Lines
 
   test "does not aggregate normal lines" do
-    stream = Stream.map(["g,h", "i,j", "k,l"], &(&1))
+    stream = ["g,h", "i,j", "k,l"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "g,h",
@@ -13,7 +15,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "does not aggregate escaped normal lines" do
-    stream = Stream.map(["\"g\",h", "\"i\",j", "k,\"l\""], &(&1))
+    stream = ["\"g\",h", "\"i\",j", "k,\"l\""] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "\"g\",h",
@@ -23,7 +25,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "does not aggregate escaped normal lines with escaped quotes" do
-    stream = Stream.map(["\"g\"\"\",\"\"\"h\"", "\"i\",j", "k,\"\"\"l\""], &(&1))
+    stream = ["\"g\"\"\",\"\"\"h\"", "\"i\",j", "k,\"\"\"l\""] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "\"g\"\"\",\"\"\"h\"",
@@ -33,7 +35,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "does not aggregate empty lines" do
-    stream = Stream.map(["g,", ",", ",l"], &(&1))
+    stream = ["g,", ",", ",l"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "g,",
@@ -43,7 +45,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "does not aggregate partially empty lines with escape sequences" do
-    stream = Stream.map(["g,", ",\"\"\"\"", ",l", "\"\",\"\""], &(&1))
+    stream = ["g,", ",\"\"\"\"", ",l", "\"\",\"\""] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "g,",
@@ -54,7 +56,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "does not aggregate terminated escape sequences" do
-    stream = Stream.map(["a,\"be\"\"\"", "c,\"\"\"d\"\"\"\"\"", "\"e,f\"\"\",g"], &(&1))
+    stream = ["a,\"be\"\"\"", "c,\"\"\"d\"\"\"\"\"", "\"e,f\"\"\",g"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "a,\"be\"\"\"",
@@ -64,7 +66,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "aggregates lines with terminated escape sequences and separators in escapes" do
-    stream = Stream.map(["a,\"be\"\"", "c,\"\"d", "e,f\"", "\"g\",\"h\"\",\"", "\"i\",\"j\""], &(&1))
+    stream = ["a,\"be\"\"", "c,\"\"d", "e,f\"", "\"g\",\"h\"\",\"", "\"i\",\"j\""] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "a,\"be\"\"\r\nc,\"\"d\r\ne,f\"",
@@ -75,7 +77,7 @@ defmodule PreprocessingTests.LinesTest do
 
 
   test "aggregates unterminated escape sequences over lines" do
-    stream = Stream.map(["a,\"be", "c,d", "e,f\"", "g,h"], &(&1))
+    stream = ["a,\"be", "c,d", "e,f\"", "g,h"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "a,\"be\r\nc,d\r\ne,f\"",
@@ -84,7 +86,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "aggregates unterminated escape sequences only containing line breaks over lines" do
-    stream = Stream.map(["a,\"", "\"", "c,d"], &(&1))
+    stream = ["a,\"", "\"", "c,d"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "a,\"\r\n\"",
@@ -93,7 +95,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "aggregates unterminated escape sequences over rows with different separators" do
-    stream = Stream.map(["a\t\"be", "c\td", "e\tf\"", "g\th"], &(&1))
+    stream = ["a\t\"be", "c\td", "e\tf\"", "g\th"] |> to_stream
     aggregated = stream |> Lines.process(separator: ?\t) |> Enum.to_list
     assert aggregated == [
       "a\t\"be\r\nc\td\r\ne\tf\"",
@@ -102,7 +104,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "aggregates unterminated escape sequences over rows with multiple quotes" do
-    stream = Stream.map(["a,\"\"\"be", "c,d", "e,f\"", "g,h"], &(&1))
+    stream = ["a,\"\"\"be", "c,d", "e,f\"", "g,h"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "a,\"\"\"be\r\nc,d\r\ne,f\"",
@@ -111,7 +113,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "aggregates unterminated escape sequences where the sequence begins at the start of the row" do
-    stream = Stream.map(["\"\"\"be", "c,d", "e,f\",g", "g,h"], &(&1))
+    stream = ["\"\"\"be", "c,d", "e,f\",g", "g,h"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "\"\"\"be\r\nc,d\r\ne,f\",g",
@@ -120,7 +122,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "aggregates lines with escaped quotes in escape sequences" do
-    stream = Stream.map(["a,\"be\"\"", "c,\"\"d", "e,f\"", "g,\"h\"\"\"\"", "i,j\"", "k,l"], &(&1))
+    stream = ["a,\"be\"\"", "c,\"\"d", "e,f\"", "g,\"h\"\"\"\"", "i,j\"", "k,l"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "a,\"be\"\"\r\nc,\"\"d\r\ne,f\"",
@@ -130,7 +132,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "aggregates lines with escaped quotes and separators in escapes" do
-    stream = Stream.map(["a,\"be\"\"", "c,\"\"d", "e,f\"", "g,\"h\"\",\"\"", "i,j\"", "k,l"], &(&1))
+    stream = ["a,\"be\"\"", "c,\"\"d", "e,f\"", "g,\"h\"\",\"\"", "i,j\"", "k,l"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "a,\"be\"\"\r\nc,\"\"d\r\ne,f\"",
@@ -140,7 +142,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "aggregates partially empty lines with open escape sequences" do
-    stream = Stream.map([",,\"be", "c,d", "e,f\"", "g,,\"h\"\"\"\"", "i,,j\"", "k,l,"], &(&1))
+    stream = [",,\"be", "c,d", "e,f\"", "g,,\"h\"\"\"\"", "i,,j\"", "k,l,"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       ",,\"be\r\nc,d\r\ne,f\"",
@@ -151,7 +153,7 @@ defmodule PreprocessingTests.LinesTest do
 
 
   test "aggregates lines with escape sequences ending in the next line" do
-    stream = Stream.map(["a,\"be\"\"", "c,d", "e,f\",\"super,cool\"", "g,h,i"], &(&1))
+    stream = ["a,\"be\"\"", "c,d", "e,f\",\"super,cool\"", "g,h,i"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "a,\"be\"\"\r\nc,d\r\ne,f\",\"super,cool\"",
@@ -160,7 +162,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "aggregates lines with escape sequences that are ending with a separator" do
-    stream = Stream.map(["a,\"be\"\"", "c,d", "e,f,\",\"super,cool\"", "g,h,i"], &(&1))
+    stream = ["a,\"be\"\"", "c,d", "e,f,\",\"super,cool\"", "g,h,i"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "a,\"be\"\"\r\nc,d\r\ne,f,\",\"super,cool\"",
@@ -169,7 +171,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "aggregates lines with escape sequences that are starting with a linebreak" do
-    stream = Stream.map(["a,be,\"", "c,d\"", "g,h,i"], &(&1))
+    stream = ["a,be,\"", "c,d\"", "g,h,i"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "a,be,\"\r\nc,d\"",
@@ -178,7 +180,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "aggregates lines with escape sequences that are ending with a linebreak" do
-    stream = Stream.map(["a,be,\"", "c,\"\"d", "\"\"\"", "g,h,i"], &(&1))
+    stream = ["a,be,\"", "c,\"\"d", "\"\"\"", "g,h,i"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "a,be,\"\r\nc,\"\"d\r\n\"\"\"",
@@ -187,7 +189,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "aggregates lines with escaped quotes after a linebreak" do
-    stream = Stream.map(["a,be,\"", "c", "\"\"d", "e", "\"\"\",f", "g,h,i,k"], &(&1))
+    stream = ["a,be,\"", "c", "\"\"d", "e", "\"\"\",f", "g,h,i,k"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "a,be,\"\r\nc\r\n\"\"d\r\ne\r\n\"\"\",f",
@@ -196,7 +198,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "aggregates lines with escape sequences that are containing a linebreak" do
-    stream = Stream.map(["a,be,\"\n", "c,\"\"d", "\"\"\"", "g,h,i"], &(&1))
+    stream = ["a,be,\"\n", "c,\"\"d", "\"\"\"", "g,h,i"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "a,be,\"\n\r\nc,\"\"d\r\n\"\"\"",
@@ -205,7 +207,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "aggregates lines with multiple escape sequences in the same stream" do
-    stream = Stream.map(["a,\"be\"\"", "c,d", "e,f\",\"super,cool\"", "g,\"h,i", "i,j\",k", "k,l,m"], &(&1))
+    stream = ["a,\"be\"\"", "c,d", "e,f\",\"super,cool\"", "g,\"h,i", "i,j\",k", "k,l,m"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "a,\"be\"\"\r\nc,d\r\ne,f\",\"super,cool\"",
@@ -215,7 +217,7 @@ defmodule PreprocessingTests.LinesTest do
   end
 
   test "aggregates lines with multiple escape sequences in the same row" do
-    stream = Stream.map(["a,\"be\"\"", "c,d", "e,f\",\",\",\"super,cool", "g,\"", "h,\"i,l", "\",\"j\",k", "k,l,m"], &(&1))
+    stream = ["a,\"be\"\"", "c,d", "e,f\",\",\",\"super,cool", "g,\"", "h,\"i,l", "\",\"j\",k", "k,l,m"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
       "a,\"be\"\"\r\nc,d\r\ne,f\",\",\",\"super,cool\r\ng,\"",

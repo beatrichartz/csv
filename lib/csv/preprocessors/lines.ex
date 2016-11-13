@@ -16,19 +16,20 @@ defmodule CSV.Preprocessors.Lines do
   Options get transferred from the decoder. They are:
 
     * `:separator` – The field separator
+    * `:escape_max_lines` – The maximum number of lines to collect in an escaped field
   """
 
   def process(stream, options \\ []) do
     separator = options |> Keyword.get(:separator, @separator)
-    multiline_escape_max_lines = options |> Keyword.get(:multiline_escape_max_lines, @multiline_escape_max_lines)
+    escape_max_lines = options |> Keyword.get(:escape_max_lines, @escape_max_lines)
 
     stream |> Stream.transform(fn -> { [], 0 } end, fn line, { collected, collected_size } ->
       case collected do
         [] -> start_aggregate(line, separator)
-        _ when collected_size < multiline_escape_max_lines ->
+        _ when collected_size < escape_max_lines ->
           continue_aggregate(collected, collected_size + 1, line, separator)
         _ -> raise CorruptStreamError,
-                   message: "Stream halted with escape sequence spanning more than #{multiline_escape_max_lines} lines. Use the multiline_escape_max_lines option to increase this threshold."
+                   message: "Stream halted with escape sequence spanning more than #{escape_max_lines} lines. Use the escape_max_lines option to increase this threshold."
       end
     end, fn { collected, _ } ->
       case collected do

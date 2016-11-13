@@ -1,5 +1,7 @@
 defmodule DecodingTests.BaselineExceptionsTest do
   use ExUnit.Case
+  import TestSupport.StreamHelpers
+
   alias CSV.Decoder
   alias CSV.Lexer.EncodingError
   alias CSV.Decoder.RowLengthError
@@ -17,21 +19,21 @@ defmodule DecodingTests.BaselineExceptionsTest do
     stream = "../fixtures/broken-encoding.csv" |> Path.expand(__DIR__) |> File.stream!
 
     assert_raise EncodingError, fn ->
-      CSV.decode!(stream) |> Enum.into([]) |> Enum.sort
+      CSV.decode!(stream) |> Enum.to_list |> Enum.sort
     end
   end
 
   test "produces meaningful errors for non-unicode files" do
     stream = "../fixtures/broken-encoding.csv" |> Path.expand(__DIR__) |> File.stream!
 
-    errors = stream |> Decoder.decode |> filter_errors |> Enum.into([])
+    errors = stream |> Decoder.decode |> filter_errors |> Enum.to_list
     assert errors == [
       error: "Invalid encoding"
     ]
   end
 
   test "discards any state in the current message queues when halted" do
-    stream = Stream.map(["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"], &(&1))
+    stream = ["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"] |> to_stream
     result = Decoder.decode!(stream) |> Enum.take(2)
 
     assert result == [~w(a be), ~w(c d)]
@@ -41,13 +43,13 @@ defmodule DecodingTests.BaselineExceptionsTest do
   end
 
   test "empty stream input produces an empty stream as output" do
-    stream = Stream.map([], &(&1))
+    stream = [] |> to_stream
               |> Decoder.decode!
-    assert stream |> Enum.into([]) == []
+    assert stream |> Enum.to_list == []
   end
 
   test "can reuse the same stream" do
-    stream = Stream.map(["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"], &(&1))
+    stream = ["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"] |> to_stream
              |> Decoder.decode!
     result = stream |> Enum.take(2)
 
@@ -58,7 +60,7 @@ defmodule DecodingTests.BaselineExceptionsTest do
   end
 
   test "raises an error if rows are of variable length" do
-    stream = Stream.map(["a,\"be\"", ",c,d", "e,f", "g,,h", "i,j", "k,l"], &(&1))
+    stream = ["a,\"be\"", ",c,d", "e,f", "g,,h", "i,j", "k,l"] |> to_stream
 
     assert_raise RowLengthError, fn ->
       Decoder.decode!(stream) |> Stream.run
@@ -66,9 +68,9 @@ defmodule DecodingTests.BaselineExceptionsTest do
   end
 
   test "includes an error for rows with variable length" do
-    stream = Stream.map(["a,\"be\"", ",c,d", "e,f", "g,,h", "i,j", "k,l"], &(&1))
+    stream = ["a,\"be\"", ",c,d", "e,f", "g,,h", "i,j", "k,l"] |> to_stream
 
-    errors = stream |> Decoder.decode |> filter_errors |> Enum.into([])
+    errors = stream |> Decoder.decode |> filter_errors |> Enum.to_list
     assert errors == [
       error: "Encountered a row with length 3 instead of 2",
       error: "Encountered a row with length 3 instead of 2"

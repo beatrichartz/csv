@@ -14,7 +14,7 @@ defmodule CSV.Parser do
 
   Options get transferred from the decoder. They are:
 
-    * `:strip_cells` – When set to true, will strip whitespace from fields. Defaults to false.
+    * `:strip_fields` – When set to true, will strip whitespace from fields. Defaults to false.
   """
 
   def parse(message, options \\ [])
@@ -72,8 +72,8 @@ defmodule CSV.Parser do
   end
 
   defp strip(field, options) do
-    strip_cells = options |> Keyword.get(:strip_cells, false)
-    case strip_cells do
+    strip_fields = options |> Keyword.get(:strip_fields, false)
+    case strip_fields do
       true -> field |> String.strip
       _ -> field
     end

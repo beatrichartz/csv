@@ -14,10 +14,10 @@ defmodule CSV.Preprocessors.Codepoints do
 
   Options get transferred from the decoder. They are:
 
-    * `:separator` – The field separator
+    * `:escape_max_lines` – The maximum number of lines to collect in an escaped field
   """
   def process(stream, options \\ []) do
-    escape_max_lines = options |> Keyword.get(:multiline_escape_max_lines, @multiline_escape_max_lines)
+    escape_max_lines = options |> Keyword.get(:escape_max_lines, @escape_max_lines)
 
     stream |> Stream.transform(fn -> { "", false, 0 } end, fn codepoint, line ->
       collect_codepoint(line, escape_max_lines, codepoint)
@@ -31,7 +31,7 @@ defmodule CSV.Preprocessors.Codepoints do
 
   defp collect_codepoint({ _, true, num_lines }, escape_max_lines, << @newline :: utf8 >>) when escape_max_lines == num_lines do
     raise CorruptStreamError,
-                message: "Stream halted with escape sequence spanning more than #{escape_max_lines} lines. Use the multiline_escape_max_lines option to increase this threshold."
+                message: "Stream halted with escape sequence spanning more than #{escape_max_lines} lines. Use the escape_max_lines option to increase this threshold."
   end
   defp collect_codepoint({ line, true, num_lines }, _, << @newline :: utf8 >>) do
     { [], { line <> "\n", true, num_lines + 1 } }

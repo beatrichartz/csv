@@ -13,9 +13,18 @@ defmodule CSV.Mixfile do
         consolidate_protocols: true,
         source_url: "https://github.com/beatrichartz/csv",
         description: "CSV Decoding and Encoding for Elixir",
+        elixirc_paths: elixirc_paths,
         test_coverage: [tool: ExCoveralls],
         preferred_cli_env: ["coveralls": :test, "coveralls.detail": :test, "coveralls.post": :test]
     ]
+  end
+
+  defp elixirc_paths do
+    if Mix.env == :test do
+      ["lib", "test/support"]
+    else
+      ["lib"]
+    end
   end
 
   def application do

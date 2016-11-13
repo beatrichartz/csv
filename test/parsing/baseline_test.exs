@@ -43,7 +43,7 @@ defmodule ParsingTests.BaselineTest do
           {:content, "d"},
           {:content, " "},
         ], 2}
-    ], &Parser.parse(&1, strip_cells: true)
+    ], &Parser.parse(&1, strip_fields: true)
 
     assert parsed == [
       {:ok, ~w(a b), 1},

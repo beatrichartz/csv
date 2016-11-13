@@ -1,11 +1,8 @@
 defmodule PreprocessingTests.CodepointsTest do
   use ExUnit.Case
+  import TestSupport.StreamHelpers
 
   alias CSV.Preprocessors.Codepoints
-
-  defp to_codepoints_stream(stream) do
-    stream |> String.codepoints |> Stream.map(&(&1))
-  end
 
   test "does collect normal lines" do
     stream = "g,h\ni,j\nk,l\n" |> to_codepoints_stream

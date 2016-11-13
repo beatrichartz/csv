@@ -1,18 +1,20 @@
 defmodule DecodingTests.EscapedFieldsTest do
   use ExUnit.Case
+  import TestSupport.StreamHelpers
+
   alias CSV.Decoder
 
   @moduletag timeout: 1000
 
   test "collects rows with fields spanning multiple lines" do
-    stream = Stream.map(["a,\"be", "c,d", "e,f\"", "g,h", "i,j", "k,l"], &(&1))
+    stream = ["a,\"be", "c,d", "e,f\"", "g,h", "i,j", "k,l"] |> to_stream
     result = Decoder.decode!(stream) |> Enum.take(2)
 
     assert result == [["a", "be\r\nc,d\r\ne,f"], ~w(g h)]
   end
 
   test "collects rows with fields and escape sequences spanning multiple lines" do
-    stream = Stream.map([
+    stream = [
       # line 1
       ",,\"",
       "field three of line one",
@@ -49,9 +51,9 @@ defmodule DecodingTests.EscapedFieldsTest do
       "\"\"a new line",
       "and",
       "ends with a standard, \"\"\",unquoted third field"
-    ], &(&1))
+    ] |> to_stream
 
-    result = Decoder.decode!(stream) |> Enum.into([])
+    result = Decoder.decode!(stream) |> Enum.to_list
 
     assert result == [
       [
