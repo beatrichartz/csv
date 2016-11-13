@@ -1,4 +1,4 @@
-defmodule CSV.Preprocessing.Lines do
+defmodule CSV.Decoding.Preprocessing.Lines do
   use CSV.Defaults
 
   alias CSV.CorruptStreamError

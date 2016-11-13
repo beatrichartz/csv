@@ -1,4 +1,4 @@
-defmodule ParsingTests.ExceptionsTest do
+defmodule DecodingTests.ParsingTests.ExceptionsTest do
   use ExUnit.Case
 
   alias CSV.Decoding.Parser

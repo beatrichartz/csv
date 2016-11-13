@@ -1,8 +1,8 @@
-defmodule PreprocessingTests.LinesTest do
+defmodule DecodingTests.PreprocessingTests.LinesTest do
   use ExUnit.Case
   import TestSupport.StreamHelpers
 
-  alias CSV.Preprocessing.Lines
+  alias CSV.Decoding.Preprocessing.Lines
 
   test "does not aggregate normal lines" do
     stream = ~w(g,h i,j k,l) |> to_stream

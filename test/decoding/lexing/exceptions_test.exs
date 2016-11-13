@@ -1,4 +1,4 @@
-defmodule LexingTests.ExceptionsTest do
+defmodule DecodingTests.LexingTests.ExceptionsTest do
   use ExUnit.Case
   alias CSV.Decoding.Lexer
   alias CSV.EncodingError

@@ -1,8 +1,8 @@
-defmodule PreprocessingTests.LinesExceptionsTest do
+defmodule DecodingTests.PreprocessingTests.LinesExceptionsTest do
   use ExUnit.Case
   import TestSupport.StreamHelpers
 
-  alias CSV.Preprocessing.Lines
+  alias CSV.Decoding.Preprocessing.Lines
   alias CSV.CorruptStreamError
 
   test "fails on open escape sequences" do

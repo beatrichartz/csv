@@ -1,8 +1,8 @@
-defmodule PreprocessingTests.CodepointsExceptionsTest do
+defmodule DecodingTests.PreprocessingTests.CodepointsExceptionsTest do
   use ExUnit.Case
   import TestSupport.StreamHelpers
 
-  alias CSV.Preprocessing.Codepoints
+  alias CSV.Decoding.Preprocessing.Codepoints
   alias CSV.CorruptStreamError
 
   test "fails on open escape sequences with escaped quotes" do

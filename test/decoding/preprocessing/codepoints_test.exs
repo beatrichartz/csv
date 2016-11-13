@@ -1,8 +1,8 @@
-defmodule PreprocessingTests.CodepointsTest do
+defmodule DecodingTests.PreprocessingTests.CodepointsTest do
   use ExUnit.Case
   import TestSupport.StreamHelpers
 
-  alias CSV.Preprocessing.Codepoints
+  alias CSV.Decoding.Preprocessing.Codepoints
 
   test "does collect normal lines" do
     stream = "g,h\ni,j\nk,l\n" |> to_codepoints_stream

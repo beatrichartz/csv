@@ -1,7 +1,7 @@
 defmodule CSV do
+  alias CSV.Decoding.Preprocessing
   alias CSV.Decoding.Decoder
   alias CSV.Encoding.Encoder
-  alias CSV.Preprocessing
 
   @moduledoc ~S"""
   RFC 4180 compliant CSV parsing and encoding for Elixir. Allows to specify other separators,
