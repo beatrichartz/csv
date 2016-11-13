@@ -24,7 +24,6 @@ defmodule CSV.Decoder do
     * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + (your separator)).
     * `:delimiter`   – The delimiter token to use, defaults to `\\r\\n`. Must be a string.
     * `:strip_fields` – When set to true, will strip whitespace from fields. Defaults to false.
-    * `:multiline_escape` – Whether to allow multiline escape sequences. Defaults to true.
     * `:escape_max_lines` – How many lines to maximally aggregate for multiline escapes. Defaults to a 1000.
     * `:num_pipes`   – Will be deprecated in 2.0 - see num_workers
     * `:num_workers` – The number of parallel operations to run when producing the stream.
@@ -105,7 +104,6 @@ defmodule CSV.Decoder do
     options
     |> Keyword.merge(num_pipes: num_pipes,
                      num_workers: options |> Keyword.get(:num_workers, num_pipes),
-                     multiline_escape: options |> Keyword.get(:multiline_escape, true),
                      headers: options |> Keyword.get(:headers, false))
   end
 
@@ -129,10 +127,7 @@ defmodule CSV.Decoder do
   end
 
   defp aggregate(stream, options) do
-    case options |> Keyword.get(:multiline_escape) do
-      true -> stream |> Preprocessors.lines(options)
-      _ -> stream
-    end
+    stream |> Preprocessors.lines(options)
   end
 
   defp build_row(data, headers) when is_list(headers) do

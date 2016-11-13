@@ -28,18 +28,6 @@ defmodule ParseBench do
     |> Stream.run
   end
 
-  bench "csv no multiline" do
-    sep = case separator do
-      "\\t" -> ?\t
-      <<s::utf8>> -> s
-    end
-
-    path
-    |> File.stream!
-    |> CSV.decode(separator: sep, multiline_escape: false)
-    |> Stream.run
-  end
-
   bench "ex_csv" do
     path
     |> File.read!

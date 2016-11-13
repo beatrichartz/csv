@@ -15,9 +15,7 @@ defmodule CSV do
     * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + (your separator)).
     * `:delimiter`   – The delimiter token to use, defaults to `\\r\\n`. Must be a string.
     * `:strip_fields` – When set to true, will strip whitespace from cells. Defaults to false.
-    * `:multiline_escape` – Whether to allow multiline escape sequences. Defaults to true.
     * `:escape_max_lines` – How many lines to maximally aggregate for multiline escapes. Defaults to a 1000.
-    * `:num_pipes`   – Will be deprecated in 2.0 - see num_workers
     * `:num_workers` – The number of parallel operations to run when producing the stream.
     * `:worker_work_ratio` – The available work per worker, defaults to 5. Higher rates will mean more work sharing, but might also lead to work fragmentation slowing down the queues.
     * `:headers`     – When set to `true`, will take the first row of the csv and use it as
