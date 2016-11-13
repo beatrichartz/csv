@@ -1,7 +1,7 @@
 defmodule ParsingTests.BaselineTest do
   use ExUnit.Case
 
-  alias CSV.Parser
+  alias CSV.Decoding.Parser
 
   doctest Parser
 

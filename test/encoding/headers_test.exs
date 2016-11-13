@@ -1,6 +1,6 @@
 defmodule EncodingTests.HeadersTest do
   use ExUnit.Case
-  alias CSV.Encoder, as: Encoder
+  alias CSV.Encoding.Encoder
 
   test "use keys from first row as headers when headers: true" do
     result = Encoder.encode([%{"a" => 1, "b" => 2}], headers: true) |> Enum.to_list

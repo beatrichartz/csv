@@ -1,4 +1,7 @@
 defmodule CSV do
+  alias CSV.Decoding.Decoder
+  alias CSV.Encoding.Encoder
+  alias CSV.Preprocessing
 
   @moduledoc ~S"""
   RFC 4180 compliant CSV parsing and encoding for Elixir. Allows to specify other separators,
@@ -7,7 +10,7 @@ defmodule CSV do
 
   @doc """
   Decode a stream of comma-separated lines into a table.
-  
+
   ## Options
 
   These are the options:
@@ -20,7 +23,7 @@ defmodule CSV do
     * `:worker_work_ratio` – The available work per worker, defaults to 5. Higher rates will mean more work sharing, but might also lead to work fragmentation slowing down the queues.
     * `:headers`     – When set to `true`, will take the first row of the csv and use it as
       header values.
-      Defaults to number of erlang schedulers times 3 
+      Defaults to number of erlang schedulers times 3
       header values.
       When set to a list, will use the given list as header values.
       When set to `false` (default), will use no header values.
@@ -62,15 +65,43 @@ defmodule CSV do
       iex> |> CSV.decode!(separator: ?;, headers: [:x, :y])
       iex> |> Enum.take(2)
       [%{:x => \"a\", :y => \"b\"}, %{:x => \"c\", :y => \"d\"}]
+
   """
 
   def decode(stream, options \\ []) do
-    CSV.Decoder.decode(stream, options)
+    stream |> preprocess(options) |> Decoder.decode(options) |> inline_errors!
   end
 
   def decode!(stream, options \\ []) do
-    CSV.Decoder.decode!(stream, options)
+    stream |> preprocess(options) |> Decoder.decode(options) |> raise_errors!
   end
+
+  defp preprocess(stream, options) do
+    case options |> Keyword.get(:mode) do
+      :codepoints ->
+          stream |> Preprocessing.Codepoints.process(options)
+      _ ->
+          stream |> Preprocessing.Lines.process(options)
+    end
+  end
+
+  defp raise_errors!(stream) do
+    stream |> Stream.map(&yield_or_raise!/1)
+  end
+
+  defp yield_or_raise!({ :error, mod, message, index }) do
+    raise mod, message: message, line: index + 1
+  end
+  defp yield_or_raise!({ :ok, row }), do: row
+
+  defp inline_errors!(stream) do
+    stream |> Stream.map(&yield_or_inline!/1)
+  end
+
+  defp yield_or_inline!({ :error, errormod, message, index }) do
+    { :error, errormod.exception(message: message, line: index + 1).message }
+  end
+  defp yield_or_inline!(value), do: value
 
   @doc """
   Encode a table stream into a stream of RFC 4180 compliant CSV lines for writing to a file
@@ -101,7 +132,7 @@ defmodule CSV do
   """
 
   def encode(stream, options \\ []) do
-    CSV.Encoder.encode(stream, options)
+    Encoder.encode(stream, options)
   end
 
 end

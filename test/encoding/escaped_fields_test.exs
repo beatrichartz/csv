@@ -1,6 +1,6 @@
 defmodule EncodingTests.EscapedFieldsTest do
   use ExUnit.Case
-  alias CSV.Encoder, as: Encoder
+  alias CSV.Encoding.Encoder
 
   test "encodes streams to csv strings and escapes them" do
     result = Encoder.encode([["a,", "b\re"], ["c,f\"", "dg"]]) |> Enum.to_list

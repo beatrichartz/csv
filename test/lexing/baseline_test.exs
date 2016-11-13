@@ -1,6 +1,6 @@
 defmodule LexingTests.BaselineTest do
   use ExUnit.Case
-  alias CSV.Lexer
+  alias CSV.Decoding.Lexer
 
   doctest Lexer
 

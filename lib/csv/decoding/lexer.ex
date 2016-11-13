@@ -1,6 +1,6 @@
-defmodule CSV.Lexer do
+defmodule CSV.Decoding.Lexer do
   use CSV.Defaults
-  alias CSV.Lexer.EncodingError
+  alias CSV.EncodingError
 
   @moduledoc ~S"""
   RFC 4180 compatible CSV lexer. Lexes tokens and sends them to the parser process.

@@ -1,6 +1,7 @@
 defmodule EncodingTests.BaselineTest do
   use ExUnit.Case
-  alias CSV.Encoder, as: Encoder
+  alias CSV.Encoding.Encoder
+
   doctest Encoder
 
   test "encodes streams to csv strings" do

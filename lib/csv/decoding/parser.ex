@@ -1,5 +1,5 @@
-defmodule CSV.Parser do
-  alias CSV.Parser.SyntaxError
+defmodule CSV.Decoding.Parser do
+  alias CSV.SyntaxError
 
   @moduledoc ~S"""
   The CSV Parser module - parses tokens coming from the lexer and parses them

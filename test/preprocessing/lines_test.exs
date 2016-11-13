@@ -2,57 +2,36 @@ defmodule PreprocessingTests.LinesTest do
   use ExUnit.Case
   import TestSupport.StreamHelpers
 
-  alias CSV.Preprocessors.Lines
+  alias CSV.Preprocessing.Lines
 
   test "does not aggregate normal lines" do
-    stream = ["g,h", "i,j", "k,l"] |> to_stream
+    stream = ~w(g,h i,j k,l) |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
-    assert aggregated == [
-      "g,h",
-      "i,j",
-      "k,l"
-    ]
+    assert aggregated == ~w(g,h i,j k,l)
   end
 
   test "does not aggregate escaped normal lines" do
-    stream = ["\"g\",h", "\"i\",j", "k,\"l\""] |> to_stream
+    stream = ~w("g",h "i",j k,"l") |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
-    assert aggregated == [
-      "\"g\",h",
-      "\"i\",j",
-      "k,\"l\""
-    ]
+    assert aggregated == ~w("g",h "i",j k,"l")
   end
 
   test "does not aggregate escaped normal lines with escaped quotes" do
-    stream = ["\"g\"\"\",\"\"\"h\"", "\"i\",j", "k,\"\"\"l\""] |> to_stream
+    stream = ~w("g""","""h" "i",j k,"""l") |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
-    assert aggregated == [
-      "\"g\"\"\",\"\"\"h\"",
-      "\"i\",j",
-      "k,\"\"\"l\""
-    ]
+    assert aggregated == ~w("g""","""h" "i",j k,"""l")
   end
 
   test "does not aggregate empty lines" do
-    stream = ["g,", ",", ",l"] |> to_stream
+    stream = ~w(g, , ,l) |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
-    assert aggregated == [
-      "g,",
-      ",",
-      ",l"
-    ]
+    assert aggregated == ~w(g, , ,l)
   end
 
   test "does not aggregate partially empty lines with escape sequences" do
-    stream = ["g,", ",\"\"\"\"", ",l", "\"\",\"\""] |> to_stream
+    stream = ~w(g, ,"""" ,l "","")
     aggregated = stream |> Lines.process |> Enum.to_list
-    assert aggregated == [
-      "g,",
-      ",\"\"\"\"",
-      ",l",
-      "\"\",\"\""
-    ]
+    assert aggregated == ~w(g, ,"""" ,l "","")
   end
 
   test "does not aggregate terminated escape sequences" do

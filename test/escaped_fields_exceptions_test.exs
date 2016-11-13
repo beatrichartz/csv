@@ -2,15 +2,14 @@ defmodule DecodingTests.EscapedFieldsExceptionsTest do
   use ExUnit.Case
   import TestSupport.StreamHelpers
 
-  alias CSV.Decoder
-  alias CSV.Preprocessors.CorruptStreamError
+  alias CSV.CorruptStreamError
 
   @moduletag timeout: 1000
 
   test "parses strings unless they contain unfinished escape sequences" do
     stream = ["a,be", "\"c,d"] |> to_stream
     assert_raise CorruptStreamError, fn ->
-      Decoder.decode!(stream, headers: [:a, :b]) |> Enum.to_list
+      CSV.decode(stream, headers: [:a, :b]) |> Stream.run
     end
   end
 
@@ -18,7 +17,7 @@ defmodule DecodingTests.EscapedFieldsExceptionsTest do
     stream = [",ci,\"\"\"", ",c,d"] |> to_stream
 
     assert_raise CorruptStreamError, fn ->
-      Decoder.decode!(stream) |> Stream.run
+      CSV.decode(stream) |> Stream.run
     end
   end
 

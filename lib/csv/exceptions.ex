@@ -1,4 +1,4 @@
-defmodule CSV.Parser.SyntaxError do
+defmodule CSV.SyntaxError do
   @moduledoc """
   Raised at runtime when the CSV syntax is invalid.
   """
@@ -16,7 +16,7 @@ defmodule CSV.Parser.SyntaxError do
   end
 end
 
-defmodule CSV.Lexer.EncodingError do
+defmodule CSV.EncodingError do
   @moduledoc """
   Raised at runtime when the CSV encoding is invalid.
   """
@@ -34,7 +34,7 @@ defmodule CSV.Lexer.EncodingError do
   end
 end
 
-defmodule CSV.Decoder.RowLengthError do
+defmodule CSV.RowLengthError do
   @moduledoc """
   Raised at runtime when the CSV has rows of variable length.
   """
@@ -52,7 +52,7 @@ defmodule CSV.Decoder.RowLengthError do
   end
 end
 
-defmodule CSV.Preprocessors.CorruptStreamError do
+defmodule CSV.CorruptStreamError do
   @moduledoc """
   Raised at runtime when the CSV stream ends with unfinished escape sequences
   """

@@ -1,7 +1,7 @@
-defmodule CSV.Preprocessors.Codepoints do
+defmodule CSV.Preprocessing.Codepoints do
   use CSV.Defaults
 
-  alias CSV.Preprocessors.CorruptStreamError
+  alias CSV.CorruptStreamError
 
   @moduledoc ~S"""
   The CSV codepoints preprocessor module - collects lines out of a stream of codepoints.
@@ -34,13 +34,13 @@ defmodule CSV.Preprocessors.Codepoints do
                 message: "Stream halted with escape sequence spanning more than #{escape_max_lines} lines. Use the escape_max_lines option to increase this threshold."
   end
   defp collect_codepoint({ line, true, num_lines }, _, << @newline :: utf8 >>) do
-    { [], { line <> "\n", true, num_lines + 1 } }
+    { [], { line <> << @newline :: utf8 >>, true, num_lines + 1 } }
   end
   defp collect_codepoint({ line, false, num_lines }, _, << @newline :: utf8 >>) do
     { [line], { "", false, num_lines } }
   end
   defp collect_codepoint({ line, escaped, num_lines }, _, << @double_quote :: utf8 >>) do
-    { [], { line <> "\"", !escaped, num_lines } }
+    { [], { line <> << @double_quote :: utf8 >>, !escaped, num_lines } }
   end
   defp collect_codepoint({ line, escaped, num_lines }, _, codepoint) do
     { [], { line <> codepoint, escaped, num_lines } }

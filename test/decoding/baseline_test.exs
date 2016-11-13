@@ -2,51 +2,51 @@ defmodule DecodingTests.BaselineTest do
   use ExUnit.Case
   import TestSupport.StreamHelpers
 
-  alias CSV.Decoder
+  alias CSV.Decoding.Decoder
 
-  doctest Decoder
+  doctest CSV.Decoding.Decoder
 
   @moduletag timeout: 1000
 
-  test "parses strings into a list of token tuples and emits them" do
+  test "parses lines into a list of fields" do
     stream = ["a,be", "c,d"] |> to_stream
-    result = Decoder.decode!(stream) |> Enum.to_list
+    result = Decoder.decode(stream) |> Enum.to_list
 
-    assert result == [~w(a be), ~w(c d)]
+    assert result == [ok: ~w(a be), ok: ~w(c d)]
   end
 
-  test "parses empty lines into a list of token tuples" do
+  test "parses empty lines into a list of empty fields" do
     stream = [",", "c,d"] |> to_stream
-    result = Decoder.decode!(stream) |> Enum.to_list
+    result = Decoder.decode(stream) |> Enum.to_list
 
-    assert result == [["", ""], ~w(c d)]
+    assert result == [ok: ["", ""], ok: ~w(c d)]
   end
 
-  test "parses partially populated lines into a list of token tuples" do
+  test "parses partially populated lines into a list of fields" do
     stream = [",ci,\"\"", ",c,d"] |> to_stream
-    result = Decoder.decode!(stream) |> Enum.to_list
+    result = Decoder.decode(stream) |> Enum.to_list
 
-    assert result == [["", "ci", ""], ["", "c", "d"]]
+    assert result == [ok: ["", "ci", ""], ok: ["", "c", "d"]]
   end
 
 
   test "parses strings that contain single double quotes" do
     stream = ["a,be", "\"c\"\"\",d"] |> to_stream
-    result = Decoder.decode!(stream) |> Enum.to_list
+    result = Decoder.decode(stream) |> Enum.to_list
 
-    assert result == [["a", "be"], ["c\"", "d"]]
+    assert result == [ok: ["a", "be"], ok: ["c\"", "d"]]
   end
 
   test "parses strings that contain multi-byte unicode characters" do
     stream = ["a,b", "c,ಠ_ಠ"] |> to_stream
-    result = CSV.decode!(stream) |> Enum.to_list
+    result = Decoder.decode(stream) |> Enum.to_list
 
-    assert result == [["a", "b"], ["c", "ಠ_ಠ"]]
+    assert result == [ok: ["a", "b"], ok: ["c", "ಠ_ಠ"]]
   end
 
   test "delivers the correct number of rows" do
     stream = ["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"] |> to_stream
-    result = Decoder.decode!(stream) |> Enum.count
+    result = Decoder.decode(stream) |> Enum.count
 
     assert result == 6
   end
@@ -67,22 +67,22 @@ defmodule DecodingTests.BaselineTest do
       "w,x",
       "y,z"
     ] |> to_stream
-    result = Decoder.decode!(stream, num_workers: 3) |> Enum.to_list
+    result = Decoder.decode(stream, num_workers: 3) |> Enum.to_list
 
     assert result ==  [
-      ~w(a be),
-      ~w(c d),
-      ~w(e f),
-      ~w(g h),
-      ~w(i j),
-      ~w(k l),
-      ~w(m n),
-      ~w(o p),
-      ~w(q r),
-      ~w(s t),
-      ~w(u v),
-      ~w(w x),
-      ~w(y z),
+      ok: ~w(a be),
+      ok: ~w(c d),
+      ok: ~w(e f),
+      ok: ~w(g h),
+      ok: ~w(i j),
+      ok: ~w(k l),
+      ok: ~w(m n),
+      ok: ~w(o p),
+      ok: ~w(q r),
+      ok: ~w(s t),
+      ok: ~w(u v),
+      ok: ~w(w x),
+      ok: ~w(y z),
     ]
   end
 

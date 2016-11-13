@@ -1,4 +1,4 @@
-defmodule CSV.Decoder do
+defmodule CSV.Decoding.Decoder do
 
   @moduledoc ~S"""
   The Decoder CSV module sends lines of delimited values from a stream to the parser and converts
@@ -6,11 +6,10 @@ defmodule CSV.Decoder do
   In setup, it parallelises lexing and parsing, as well as different lexer/parser pairs as workers.
   The number of workers can be controlled via options.
   """
-  alias CSV.Preprocessors
-  alias CSV.Parser
-  alias CSV.Lexer
+  alias CSV.Decoding.Parser
+  alias CSV.Decoding.Lexer
   alias CSV.Defaults
-  alias CSV.Decoder.RowLengthError
+  alias CSV.RowLengthError
 
   @doc """
   Decode a stream of comma-separated lines into a table.
@@ -38,28 +37,28 @@ defmodule CSV.Decoder do
 
   Convert a filestream into a stream of rows:
 
-      iex> \"../../test/fixtures/docs.csv\"
+      iex> \"../../../test/fixtures/docs.csv\"
       ...> |> Path.expand(__DIR__)
       ...> |> File.stream!
-      ...> |> CSV.Decoder.decode!
+      ...> |> CSV.Decoding.Decoder.decode
       ...> |> Enum.take(2)
-      [[\"a\", \"b\", \"c\"], [\"d\", \"e\", \"f\"]]
+      [{:ok, [\"a\", \"b\", \"c\"]}, {:ok, [\"d\", \"e\", \"f\"]}]
 
   Map an existing stream of lines separated by a token to a stream of rows with a header row:
 
       iex> [\"a;b\",\"c;d\", \"e;f\"]
       ...> |> Stream.map(&(&1))
-      ...> |> CSV.Decoder.decode!(separator: ?;, headers: true)
+      ...> |> CSV.Decoding.Decoder.decode(separator: ?;, headers: true)
       ...> |> Enum.take(2)
-      [%{\"a\" => \"c\", \"b\" => \"d\"}, %{\"a\" => \"e\", \"b\" => \"f\"}]
+      [{:ok, %{\"a\" => \"c\", \"b\" => \"d\"}}, {:ok, %{\"a\" => \"e\", \"b\" => \"f\"}}]
 
   Map an existing stream of lines separated by a token to a stream of rows with a given header row:
 
       iex> [\"a;b\",\"c;d\", \"e;f\"]
       ...> |> Stream.map(&(&1))
-      ...> |> CSV.Decoder.decode!(separator: ?;, headers: [:x, :y])
+      ...> |> CSV.Decoding.Decoder.decode(separator: ?;, headers: [:x, :y])
       ...> |> Enum.take(2)
-      [%{:x => \"a\", :y => \"b\"}, %{:x => \"c\", :y => \"d\"}]
+      [{:ok, %{:x => \"a\", :y => \"b\"}}, {:ok, %{:x => \"c\", :y => \"d\"}}]
 
   Decode a CSV string
 
@@ -67,30 +66,16 @@ defmodule CSV.Decoder do
       ...> {:ok, out} = csv_string |> StringIO.open
       ...> out
       ...> |> IO.binstream(:line)
-      ...> |> CSV.Decoder.decode!(headers: true)
+      ...> |> CSV.Decoding.Decoder.decode(headers: true)
       ...> |> Enum.map(&(&1))
-      [%{\"id\" => \"1\", \"name\" => \"Jane\"}, %{\"id\" => \"2\", \"name\" => \"George\"}, %{\"id\" => \"3\", \"name\" => \"John\"}]
+      [{:ok, %{\"id\" => \"1\", \"name\" => \"Jane\"}}, {:ok, %{\"id\" => \"2\", \"name\" => \"George\"}}, {:ok, %{\"id\" => \"3\", \"name\" => \"John\"}}]
 
   """
 
-  def decode!(stream, options \\ []) do
-    stream
-    |> decode_stream(options)
-    |> raise_errors!
-  end
-
   def decode(stream, options \\ []) do
-    stream
-    |> decode_stream(options)
-    |> simplify_errors
-  end
-
-  defp decode_stream(stream, options) do
-    options = options
-              |> with_defaults
+    options = options |> with_defaults
 
     stream
-    |> aggregate(options)
     |> Stream.with_index
     |> with_headers(options)
     |> with_row_length(options)
@@ -99,8 +84,10 @@ defmodule CSV.Decoder do
 
   defp with_defaults(options) do
     options
-    |> Keyword.merge(num_workers: options |> Keyword.get(:num_workers, Defaults.num_workers),
-                     headers: options |> Keyword.get(:headers, false))
+    |> Keyword.merge(
+        num_workers: options |> Keyword.get(:num_workers, Defaults.num_workers),
+        headers: options |> Keyword.get(:headers, false)
+       )
   end
 
   defp decode_rows(stream, options) do
@@ -113,17 +100,13 @@ defmodule CSV.Decoder do
   end
   defp decode_row({ line, index, headers, row_length }, options) do
     with { :ok, parsed, _ } <- parse_row({ line, index }, options),
-    { :ok, _ } <- validate_row_length({ parsed, index }, row_length),
+         { :ok, _ } <- validate_row_length({ parsed, index }, row_length),
     do: build_row(parsed, headers)
   end
 
   defp parse_row({ line, index}, options) do
     with { :ok, lex, _ } <- Lexer.lex({ line, index }, options),
     do: Parser.parse({ lex, index }, options)
-  end
-
-  defp aggregate(stream, options) do
-    stream |> Preprocessors.lines(options)
   end
 
   defp build_row(data, headers) when is_list(headers) do
@@ -175,31 +158,13 @@ defmodule CSV.Decoder do
     { [{ line, index, headers, row_length }], { row_length, options } }
   end
 
-  defp validate_row_length({ data, _}, false), do: { :ok, data }
-  defp validate_row_length({ data, _}, nil), do: { :ok, data }
+  defp validate_row_length({ data, _ }, false ), do: { :ok, data }
+  defp validate_row_length({ data, _ }, nil ), do: { :ok, data }
   defp validate_row_length({ data, index }, expected_length) do
     case data |> Enum.count do
       ^expected_length -> { :ok, data }
-      actual_length -> { :error, RowLengthError, "Encountered a row with length #{actual_length} instead of #{expected_length}", index }
+      actual_length -> { :error, RowLengthError, "Row has length #{actual_length} - expected length #{expected_length}", index }
     end
   end
-
-  defp raise_errors!(stream) do
-    stream |> Stream.map(&monad_value!/1)
-  end
-
-  defp monad_value!({ :error, mod, message, index }) do
-    raise mod, message: message, line: index + 1
-  end
-  defp monad_value!({ :ok, row }), do: row
-
-  defp simplify_errors(stream) do
-    stream |> Stream.map(&simplify_error/1)
-  end
-
-  defp simplify_error({ :error, _, message, _ }) do
-    { :error, message }
-  end
-  defp simplify_error(monad), do: monad
 
 end

@@ -1,8 +1,8 @@
 defmodule ParsingTests.ExceptionsTest do
   use ExUnit.Case
 
-  alias CSV.Parser
-  alias CSV.Parser.SyntaxError
+  alias CSV.Decoding.Parser
+  alias CSV.SyntaxError
 
   test "raises a syntax error when given an invalid sequence of tokens" do
     parsed = Enum.map [

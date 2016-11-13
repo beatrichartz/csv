@@ -2,8 +2,8 @@ defmodule PreprocessingTests.LinesExceptionsTest do
   use ExUnit.Case
   import TestSupport.StreamHelpers
 
-  alias CSV.Preprocessors.Lines
-  alias CSV.Preprocessors.CorruptStreamError
+  alias CSV.Preprocessing.Lines
+  alias CSV.CorruptStreamError
 
   test "fails on open escape sequences" do
     stream = ["a,\"be\"\"", "c,d", "e,f\",\"super,cool\"", "g,h,i", "i,j,\"k", "k,l,m"] |> to_stream

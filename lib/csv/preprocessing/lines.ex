@@ -1,7 +1,7 @@
-defmodule CSV.Preprocessors.Lines do
+defmodule CSV.Preprocessing.Lines do
   use CSV.Defaults
 
-  alias CSV.Preprocessors.CorruptStreamError
+  alias CSV.CorruptStreamError
 
   @moduledoc ~S"""
   The CSV lines preprocessor module - aggregates lines in a stream that are part

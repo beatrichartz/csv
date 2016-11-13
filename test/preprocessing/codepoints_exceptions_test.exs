@@ -1,11 +1,9 @@
 defmodule PreprocessingTests.CodepointsExceptionsTest do
   use ExUnit.Case
-  alias CSV.Preprocessors.Codepoints
-  alias CSV.Preprocessors.CorruptStreamError
+  import TestSupport.StreamHelpers
 
-  defp to_codepoints_stream(string) do
-    string |> String.codepoints |> Stream.map(&(&1))
-  end
+  alias CSV.Preprocessing.Codepoints
+  alias CSV.CorruptStreamError
 
   test "fails on open escape sequences with escaped quotes" do
     stream = "a,\"\"\"be\"\"\"\"c,d" |> to_codepoints_stream

@@ -2,25 +2,17 @@ defmodule DecodingTests.BaselineExceptionsTest do
   use ExUnit.Case
   import TestSupport.StreamHelpers
 
-  alias CSV.Decoder
-  alias CSV.Lexer.EncodingError
-  alias CSV.Decoder.RowLengthError
+  alias CSV.Decoding.Decoder
+  alias CSV.RowLengthError
+  alias CSV.EncodingError
 
   @moduletag timeout: 1000
 
   defp filter_errors(stream) do
     stream |> Stream.filter(fn
-      { :error, _ } -> true
+      { :error, _, _, _ } -> true
       _ -> false
     end)
-  end
-
-  test "raises meaningful errors for non-unicode files" do
-    stream = "../fixtures/broken-encoding.csv" |> Path.expand(__DIR__) |> File.stream!
-
-    assert_raise EncodingError, fn ->
-      CSV.decode!(stream) |> Enum.to_list |> Enum.sort
-    end
   end
 
   test "produces meaningful errors for non-unicode files" do
@@ -28,43 +20,34 @@ defmodule DecodingTests.BaselineExceptionsTest do
 
     errors = stream |> Decoder.decode |> filter_errors |> Enum.to_list
     assert errors == [
-      error: "Invalid encoding"
+      {:error, EncodingError, "Invalid encoding", 0}
     ]
   end
 
   test "discards any state in the current message queues when halted" do
     stream = ["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"] |> to_stream
-    result = Decoder.decode!(stream) |> Enum.take(2)
+    result = Decoder.decode(stream) |> Enum.take(2)
 
-    assert result == [~w(a be), ~w(c d)]
+    assert result == [ok: ~w(a be), ok: ~w(c d)]
 
-    next_result = Decoder.decode!(stream) |> Enum.take(2)
-    assert next_result == [~w(a be), ~w(c d)]
+    next_result = Decoder.decode(stream) |> Enum.take(2)
+    assert next_result == [ok: ~w(a be), ok: ~w(c d)]
   end
 
   test "empty stream input produces an empty stream as output" do
     stream = [] |> to_stream
-              |> Decoder.decode!
-    assert stream |> Enum.to_list == []
+    assert stream |> Decoder.decode |> Enum.to_list == []
   end
 
   test "can reuse the same stream" do
     stream = ["a,be", "c,d", "e,f", "g,h", "i,j", "k,l"] |> to_stream
-             |> Decoder.decode!
+             |> Decoder.decode
     result = stream |> Enum.take(2)
 
-    assert result == [~w(a be), ~w(c d)]
+    assert result == [ok: ~w(a be), ok: ~w(c d)]
 
     next_result = stream |> Enum.take(2)
-    assert next_result == [~w(a be), ~w(c d)]
-  end
-
-  test "raises an error if rows are of variable length" do
-    stream = ["a,\"be\"", ",c,d", "e,f", "g,,h", "i,j", "k,l"] |> to_stream
-
-    assert_raise RowLengthError, fn ->
-      Decoder.decode!(stream) |> Stream.run
-    end
+    assert next_result == [ok: ~w(a be), ok: ~w(c d)]
   end
 
   test "includes an error for rows with variable length" do
@@ -72,13 +55,13 @@ defmodule DecodingTests.BaselineExceptionsTest do
 
     errors = stream |> Decoder.decode |> filter_errors |> Enum.to_list
     assert errors == [
-      error: "Encountered a row with length 3 instead of 2",
-      error: "Encountered a row with length 3 instead of 2"
+      { :error, RowLengthError, "Row has length 3 - expected length 2", 1 },
+      { :error, RowLengthError, "Row has length 3 - expected length 2", 3 }
     ]
   end
 
   def encode_decode_loop(l) do
-    l |> CSV.encode |> CSV.decode! |> Enum.to_list
+    l |> CSV.encode |> Decoder.decode |> Enum.to_list
   end
   test "does not get corrupted after an error" do
     assert_raise Protocol.UndefinedError, fn ->
@@ -88,9 +71,9 @@ defmodule DecodingTests.BaselineExceptionsTest do
     result_b = [~w(b)] |> encode_decode_loop
     result_c = [~w(b)] |> encode_decode_loop
 
-    assert result_a == [~w(b)]
-    assert result_b == [~w(b)]
-    assert result_c == [~w(b)]
+    assert result_a == [ok: ~w(b)]
+    assert result_b == [ok: ~w(b)]
+    assert result_c == [ok: ~w(b)]
   end
 
 end

@@ -1,6 +1,6 @@
 defmodule DecodingTests.NonRepeatableStreamTest do
   use ExUnit.Case
-  alias CSV.Decoder
+  alias CSV.Decoding.Decoder
 
   @moduletag timeout: 1000
 
@@ -11,10 +11,10 @@ defmodule DecodingTests.NonRepeatableStreamTest do
 
     result = out
              |> IO.binstream(:line)
-             |> Decoder.decode!
+             |> Decoder.decode
              |> Enum.to_list
 
-    assert result == [~w(a b c), ~w(d e f)]
+    assert result == [ok: ~w(a b c), ok: ~w(d e f)]
   end
 
   test "decodes with headers from a non-repeatable stream" do
@@ -24,12 +24,12 @@ defmodule DecodingTests.NonRepeatableStreamTest do
 
     result = out
              |> IO.binstream(:line)
-             |> Decoder.decode!(headers: true)
+             |> Decoder.decode(headers: true)
              |> Enum.to_list
 
     assert result == [
-      %{"a" => "d", "b" => "e", "c" => "f"},
-      %{"a" => "g", "b" => "h", "c" => "i"}
+      ok: %{"a" => "d", "b" => "e", "c" => "f"},
+      ok: %{"a" => "g", "b" => "h", "c" => "i"}
     ]
   end
 end
