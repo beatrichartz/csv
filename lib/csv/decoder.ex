@@ -3,8 +3,8 @@ defmodule CSV.Decoder do
   @moduledoc ~S"""
   The Decoder CSV module sends lines of delimited values from a stream to the parser and converts
   rows coming from the CSV parser module to a consumable stream.
-  In setup, it parallelises lexing and parsing, as well as different lexer/parser pairs as pipes.
-  The number of pipes can be controlled via options.
+  In setup, it parallelises lexing and parsing, as well as different lexer/parser pairs as workers.
+  The number of workers can be controlled via options.
   """
   alias CSV.Preprocessors
   alias CSV.Parser
@@ -14,7 +14,7 @@ defmodule CSV.Decoder do
 
   @doc """
   Decode a stream of comma-separated lines into a table.
-  You can control the number of parallel operations via the option `:num_pipes` -
+  You can control the number of parallel operations via the option `:num_workers` -
   default is the number of erlang schedulers times 3.
 
   ## Options
@@ -25,7 +25,6 @@ defmodule CSV.Decoder do
     * `:delimiter`   – The delimiter token to use, defaults to `\\r\\n`. Must be a string.
     * `:strip_fields` – When set to true, will strip whitespace from fields. Defaults to false.
     * `:escape_max_lines` – How many lines to maximally aggregate for multiline escapes. Defaults to a 1000.
-    * `:num_pipes`   – Will be deprecated in 2.0 - see num_workers
     * `:num_workers` – The number of parallel operations to run when producing the stream.
     * `:worker_work_ratio` – The available work per worker, defaults to 5. Higher rates will mean more work sharing, but might also lead to work fragmentation slowing down the queues.
     * `:headers`     – When set to `true`, will take the first row of the csv and use it as
@@ -99,11 +98,8 @@ defmodule CSV.Decoder do
   end
 
   defp with_defaults(options) do
-    num_pipes = options |> Keyword.get(:num_pipes, Defaults.num_workers)
-
     options
-    |> Keyword.merge(num_pipes: num_pipes,
-                     num_workers: options |> Keyword.get(:num_workers, num_pipes),
+    |> Keyword.merge(num_workers: options |> Keyword.get(:num_workers, Defaults.num_workers),
                      headers: options |> Keyword.get(:headers, false))
   end
 

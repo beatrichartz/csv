@@ -67,7 +67,7 @@ defmodule DecodingTests.BaselineTest do
       "w,x",
       "y,z"
     ] |> to_stream
-    result = Decoder.decode!(stream, num_pipes: 3) |> Enum.to_list
+    result = Decoder.decode!(stream, num_workers: 3) |> Enum.to_list
 
     assert result ==  [
       ~w(a be),

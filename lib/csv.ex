@@ -43,7 +43,7 @@ defmodule CSV do
       iex> \"../test/fixtures/docs.csv\"
       iex> |> Path.expand(__DIR__)
       iex> |> File.stream!
-      iex> |> CSV.decode!(num_pipes: 1)
+      iex> |> CSV.decode!(num_workers: 1)
       iex> |> Enum.take(2)
       [[\"a\",\"b\",\"c\"], [\"d\",\"e\",\"f\"]]
 
