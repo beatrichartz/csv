@@ -3,8 +3,12 @@ defmodule PreprocessingTests.CodepointsTest do
 
   alias CSV.Preprocessors.Codepoints
 
+  defp to_codepoints_stream(stream) do
+    stream |> String.codepoints |> Stream.map(&(&1))
+  end
+
   test "does collect normal lines" do
-    stream = "g,h\ni,j\nk,l\n" |> String.codepoints |> Stream.map(&(&1))
+    stream = "g,h\ni,j\nk,l\n" |> to_codepoints_stream
     aggregated = stream |> Codepoints.process |> Enum.to_list
     assert aggregated == [
       "g,h",
@@ -14,7 +18,7 @@ defmodule PreprocessingTests.CodepointsTest do
   end
 
   test "does collect lines with escaped fields" do
-    stream = "g,h\ni,j\nk,\"l\"\n" |> String.codepoints |> Stream.map(&(&1))
+    stream = "g,h\ni,j\nk,\"l\"\n" |> to_codepoints_stream
     aggregated = stream |> Codepoints.process |> Enum.to_list
     assert aggregated == [
       "g,h",
@@ -24,7 +28,7 @@ defmodule PreprocessingTests.CodepointsTest do
   end
 
   test "does collect lines with empty fields" do
-    stream = "g,h\ni,j\nk,\n" |> String.codepoints |> Stream.map(&(&1))
+    stream = "g,h\ni,j\nk,\n" |> to_codepoints_stream
     aggregated = stream |> Codepoints.process |> Enum.to_list
     assert aggregated == [
       "g,h",
@@ -34,7 +38,7 @@ defmodule PreprocessingTests.CodepointsTest do
   end
 
   test "collects lines with escape sequences containing newlines" do
-    stream = "g,h\ni,\"j\nk,\"\n" |> String.codepoints |> Stream.map(&(&1))
+    stream = "g,h\ni,\"j\nk,\"\n" |> to_codepoints_stream
     aggregated = stream |> Codepoints.process |> Enum.to_list
     assert aggregated == [
       "g,h",
@@ -43,7 +47,7 @@ defmodule PreprocessingTests.CodepointsTest do
   end
 
   test "collects lines with escape sequences containing newlines and quotes" do
-    stream = "g,h\ni,\"\"\"j\n\"\"k,\"\"\"\n" |> String.codepoints |> Stream.map(&(&1))
+    stream = "g,h\ni,\"\"\"j\n\"\"k,\"\"\"\n" |> to_codepoints_stream
     aggregated = stream |> Codepoints.process |> Enum.to_list
     assert aggregated == [
       "g,h",

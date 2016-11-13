@@ -75,7 +75,6 @@ defmodule CSV.Preprocessors.Lines do
   defp is_open?(line, separator) do
     is_open?(line, "", false, separator)
   end
-
   defp is_open?(<< @double_quote :: utf8 >> <> tail, last_token, false, separator) when last_token == << separator :: utf8 >> do
     is_open?(tail, @double_quote, true, separator)
   end
