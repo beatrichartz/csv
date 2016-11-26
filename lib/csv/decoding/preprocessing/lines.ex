@@ -1,7 +1,7 @@
 defmodule CSV.Decoding.Preprocessing.Lines do
   use CSV.Defaults
 
-  alias CSV.CorruptStreamError
+  alias CSV.Decoding.Preprocessing.Codepoints
 
   @moduledoc ~S"""
   The CSV lines preprocessor module - aggregates lines in a stream that are part
@@ -20,80 +20,42 @@ defmodule CSV.Decoding.Preprocessing.Lines do
   """
 
   def process(stream, options \\ []) do
-    separator = options |> Keyword.get(:separator, @separator)
-    escape_max_lines = options |> Keyword.get(:escape_max_lines, @escape_max_lines)
-
-    stream |> Stream.transform(fn -> { [], 0 } end, fn line, { collected, collected_size } ->
-      case collected do
-        [] -> start_aggregate(line, separator)
-        _ when collected_size < escape_max_lines ->
-          continue_aggregate(collected, collected_size + 1, line, separator)
-        _ -> raise CorruptStreamError,
-                   message: "Stream halted with escape sequence spanning more than #{escape_max_lines} lines. Use the escape_max_lines option to increase this threshold."
-      end
-    end, fn { collected, _ } ->
-      case collected do
-        [] -> :ok
-        _ -> raise CorruptStreamError,
-                   message: "Stream halted with unterminated escape sequence"
-      end
+    stream
+    |> Stream.transform(0, fn line, num ->
+      { line |> codepoints, num + 1 }
     end)
-  end
-  defp start_aggregate(line, separator) do
-    cond do
-      is_open?(line, separator) ->
-        { [], { [line], 1 } }
-      true ->
-        { [line], { [], 0 } }
-    end
-  end
-  defp continue_aggregate(collected, collected_size, line, separator) do
-    { is_closing, tail } = is_closing?(line, separator)
-    cond do
-      is_closing && is_open?(tail, separator) ->
-        { [], { collected ++ [line], collected_size } }
-      is_closing ->
-        { [collected ++ [line] |> Enum.join(@delimiter)], { [], collected_size } }
-      true ->
-        { [], { collected ++ [line], collected_size } }
-    end
+    |> Codepoints.process(options)
   end
 
-  defp is_closing?(line, separator) do
-    is_closing?(line, "", true, separator)
+  defp next_codepoint(<< @newline::utf8, ""::binary >>) do
+    {<< @newline::utf8 >>, ""}
   end
 
-  defp is_closing?(<< @double_quote :: utf8 >> <> tail, _, quoted, separator) do
-    is_closing?(tail, << @double_quote :: utf8 >>, !quoted, separator)
-  end
-  defp is_closing?(<< head :: utf8 >> <> tail, _, quoted, separator) do
-    is_closing?(tail, << head :: utf8 >>, quoted, separator)
-  end
-  defp is_closing?("", _, quoted, _) do
-    { !quoted, "" }
+  defp next_codepoint(<<cp::utf8, ""::binary>>) do
+    {<<cp::utf8>>, << @newline::utf8 >>}
   end
 
-  defp is_open?(line, separator) do
-    is_open?(line, "", false, separator)
-  end
-  defp is_open?(<< @double_quote :: utf8 >> <> tail, last_token, false, separator) when last_token == << separator :: utf8 >> do
-    is_open?(tail, @double_quote, true, separator)
-  end
-  defp is_open?(<< @double_quote :: utf8 >> <> tail, "", false, separator) do
-    is_open?(tail, @double_quote, true, separator)
-  end
-  defp is_open?(<< @double_quote :: utf8 >> <> tail, _, quoted, separator) do
-    is_open?(tail, @double_quote, !quoted, separator)
-  end
-  defp is_open?(<< head :: utf8 >> <> tail, _, quoted, separator) do
-    is_open?(tail, << head :: utf8 >>, quoted, separator)
-  end
-  defp is_open?(<< head >> <> tail, _, quoted, separator) do
-    is_open?(tail, << head >>, quoted, separator)
-  end
-  defp is_open?("", _, quoted, _) do
-    quoted
+  defp next_codepoint(<<cp::utf8, rest::binary>>) do
+    {<<cp::utf8>>, rest}
   end
 
+  defp next_codepoint(<<>>) do
+    nil
+  end
 
+  defp codepoints("") do
+    [<< @newline :: utf8 >>]
+  end
+
+  defp codepoints(binary) when is_binary(binary) do
+    do_codepoints(next_codepoint(binary))
+  end
+
+  defp do_codepoints({c, rest}) do
+    [c | do_codepoints(next_codepoint(rest))]
+  end
+
+  defp do_codepoints(nil) do
+    []
+  end
 end

@@ -29,7 +29,7 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
   end
 
   test "does not aggregate partially empty lines with escape sequences" do
-    stream = ~w(g, ,"""" ,l "","")
+    stream = ~w(g, ,"""" ,l "","") |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == ~w(g, ,"""" ,l "","")
   end
@@ -48,7 +48,7 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
     stream = ["a,\"be\"\"", "c,\"\"d", "e,f\"", "\"g\",\"h\"\",\"", "\"i\",\"j\""] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
-      "a,\"be\"\"\r\nc,\"\"d\r\ne,f\"",
+      "a,\"be\"\"\nc,\"\"d\ne,f\"",
       "\"g\",\"h\"\",\"",
       "\"i\",\"j\""
     ]
@@ -59,7 +59,7 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
     stream = ["a,\"be", "c,d", "e,f\"", "g,h"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
-      "a,\"be\r\nc,d\r\ne,f\"",
+      "a,\"be\nc,d\ne,f\"",
       "g,h"
     ]
   end
@@ -68,7 +68,7 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
     stream = ["a,\"", "\"", "c,d"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
-      "a,\"\r\n\"",
+      "a,\"\n\"",
       "c,d"
     ]
   end
@@ -77,7 +77,7 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
     stream = ["a\t\"be", "c\td", "e\tf\"", "g\th"] |> to_stream
     aggregated = stream |> Lines.process(separator: ?\t) |> Enum.to_list
     assert aggregated == [
-      "a\t\"be\r\nc\td\r\ne\tf\"",
+      "a\t\"be\nc\td\ne\tf\"",
       "g\th",
     ]
   end
@@ -86,7 +86,7 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
     stream = ["a,\"\"\"be", "c,d", "e,f\"", "g,h"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
-      "a,\"\"\"be\r\nc,d\r\ne,f\"",
+      "a,\"\"\"be\nc,d\ne,f\"",
       "g,h"
     ]
   end
@@ -95,7 +95,7 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
     stream = ["\"\"\"be", "c,d", "e,f\",g", "g,h"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
-      "\"\"\"be\r\nc,d\r\ne,f\",g",
+      "\"\"\"be\nc,d\ne,f\",g",
       "g,h"
     ]
   end
@@ -104,8 +104,8 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
     stream = ["a,\"be\"\"", "c,\"\"d", "e,f\"", "g,\"h\"\"\"\"", "i,j\"", "k,l"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
-      "a,\"be\"\"\r\nc,\"\"d\r\ne,f\"",
-      "g,\"h\"\"\"\"\r\ni,j\"",
+      "a,\"be\"\"\nc,\"\"d\ne,f\"",
+      "g,\"h\"\"\"\"\ni,j\"",
       "k,l"
     ]
   end
@@ -114,8 +114,8 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
     stream = ["a,\"be\"\"", "c,\"\"d", "e,f\"", "g,\"h\"\",\"\"", "i,j\"", "k,l"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
-      "a,\"be\"\"\r\nc,\"\"d\r\ne,f\"",
-      "g,\"h\"\",\"\"\r\ni,j\"",
+      "a,\"be\"\"\nc,\"\"d\ne,f\"",
+      "g,\"h\"\",\"\"\ni,j\"",
       "k,l"
     ]
   end
@@ -124,8 +124,8 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
     stream = [",,\"be", "c,d", "e,f\"", "g,,\"h\"\"\"\"", "i,,j\"", "k,l,"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
-      ",,\"be\r\nc,d\r\ne,f\"",
-      "g,,\"h\"\"\"\"\r\ni,,j\"",
+      ",,\"be\nc,d\ne,f\"",
+      "g,,\"h\"\"\"\"\ni,,j\"",
       "k,l,"
     ]
   end
@@ -135,7 +135,7 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
     stream = ["a,\"be\"\"", "c,d", "e,f\",\"super,cool\"", "g,h,i"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
-      "a,\"be\"\"\r\nc,d\r\ne,f\",\"super,cool\"",
+      "a,\"be\"\"\nc,d\ne,f\",\"super,cool\"",
       "g,h,i"
     ]
   end
@@ -144,7 +144,7 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
     stream = ["a,\"be\"\"", "c,d", "e,f,\",\"super,cool\"", "g,h,i"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
-      "a,\"be\"\"\r\nc,d\r\ne,f,\",\"super,cool\"",
+      "a,\"be\"\"\nc,d\ne,f,\",\"super,cool\"",
       "g,h,i"
     ]
   end
@@ -153,7 +153,7 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
     stream = ["a,be,\"", "c,d\"", "g,h,i"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
-      "a,be,\"\r\nc,d\"",
+      "a,be,\"\nc,d\"",
       "g,h,i"
     ]
   end
@@ -162,7 +162,7 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
     stream = ["a,be,\"", "c,\"\"d", "\"\"\"", "g,h,i"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
-      "a,be,\"\r\nc,\"\"d\r\n\"\"\"",
+      "a,be,\"\nc,\"\"d\n\"\"\"",
       "g,h,i"
     ]
   end
@@ -171,16 +171,16 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
     stream = ["a,be,\"", "c", "\"\"d", "e", "\"\"\",f", "g,h,i,k"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
-      "a,be,\"\r\nc\r\n\"\"d\r\ne\r\n\"\"\",f",
+      "a,be,\"\nc\n\"\"d\ne\n\"\"\",f",
       "g,h,i,k"
     ]
   end
 
   test "aggregates lines with escape sequences that are containing a linebreak" do
-    stream = ["a,be,\"\n", "c,\"\"d", "\"\"\"", "g,h,i"] |> to_stream
+    stream = ["a,be,\"", "c,\"\"d", "\"\"\"", "g,h,i"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
-      "a,be,\"\n\r\nc,\"\"d\r\n\"\"\"",
+      "a,be,\"\nc,\"\"d\n\"\"\"",
       "g,h,i"
     ]
   end
@@ -189,8 +189,8 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
     stream = ["a,\"be\"\"", "c,d", "e,f\",\"super,cool\"", "g,\"h,i", "i,j\",k", "k,l,m"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
-      "a,\"be\"\"\r\nc,d\r\ne,f\",\"super,cool\"",
-      "g,\"h,i\r\ni,j\",k",
+      "a,\"be\"\"\nc,d\ne,f\",\"super,cool\"",
+      "g,\"h,i\ni,j\",k",
       "k,l,m"
     ]
   end
@@ -199,8 +199,8 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
     stream = ["a,\"be\"\"", "c,d", "e,f\",\",\",\"super,cool", "g,\"", "h,\"i,l", "\",\"j\",k", "k,l,m"] |> to_stream
     aggregated = stream |> Lines.process |> Enum.to_list
     assert aggregated == [
-      "a,\"be\"\"\r\nc,d\r\ne,f\",\",\",\"super,cool\r\ng,\"",
-      "h,\"i,l\r\n\",\"j\",k",
+      "a,\"be\"\"\nc,d\ne,f\",\",\",\"super,cool\ng,\"",
+      "h,\"i,l\n\",\"j\",k",
       "k,l,m"
     ]
   end
