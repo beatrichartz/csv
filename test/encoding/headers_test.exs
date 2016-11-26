@@ -8,7 +8,7 @@ defmodule EncodingTests.HeadersTest do
   end
 
   test "inserts specified headers as first row and uses them to order columns" do
-    result = Encoder.encode([%{"b" => 2}], headers: ["a", "b"]) |> Enum.to_list
-    assert result == ["a,b\r\n", ",2\r\n"]
+    result = Encoder.encode([%{"c" => 1, "b" => 2}], headers: ["c", "b", "a"]) |> Enum.to_list
+    assert result == ["c,b,a\r\n", "1,2,\r\n"]
   end
 end
