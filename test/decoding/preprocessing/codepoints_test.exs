@@ -52,4 +52,14 @@ defmodule DecodingTests.PreprocessingTests.CodepointsTest do
     ]
   end
 
+  test "does collect the last line ending without a newline" do
+    stream = "g,h\ni,j\nk,i" |> to_codepoints_stream
+    aggregated = stream |> Codepoints.process |> Enum.to_list
+    assert aggregated == [
+      "g,h",
+      "i,j",
+      "k,i"
+    ]
+  end
+
 end
