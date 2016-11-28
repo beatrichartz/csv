@@ -4,8 +4,6 @@ defmodule DecodingTests.HeadersTest do
 
   alias CSV.Decoding.Decoder
 
-  @moduletag timeout: 1000
-
   test "parses strings into maps when headers are set to true" do
     stream = ["a,be", "c,d", "e,f"] |> to_stream
     result = Decoder.decode(stream, headers: true) |> Enum.to_list

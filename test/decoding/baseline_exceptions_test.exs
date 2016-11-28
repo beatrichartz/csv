@@ -6,8 +6,6 @@ defmodule DecodingTests.BaselineExceptionsTest do
   alias CSV.RowLengthError
   alias CSV.EncodingError
 
-  @moduletag timeout: 1000
-
   defp filter_errors(stream) do
     stream |> Stream.filter(fn
       { :error, _, _, _ } -> true

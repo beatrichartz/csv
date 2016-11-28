@@ -4,8 +4,6 @@ defmodule DecodingTests.EscapedFieldsExceptionsTest do
 
   alias CSV.UnfinishedEscapeSequenceError
 
-  @moduletag timeout: 1000
-
   test "parses strings unless they contain unfinished escape sequences" do
     stream = ["a,be", "\"c,d"] |> to_stream
     assert_raise UnfinishedEscapeSequenceError, fn ->

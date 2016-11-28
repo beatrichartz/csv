@@ -2,8 +2,6 @@ defmodule DecodingTests.NonRepeatableStreamTest do
   use ExUnit.Case
   alias CSV.Decoding.Decoder
 
-  @moduletag timeout: 1000
-
   test "decodes from a non-repeatable stream" do
     {:ok, out} =
       "a,b,c\nd,e,f"

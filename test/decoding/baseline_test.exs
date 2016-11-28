@@ -6,8 +6,6 @@ defmodule DecodingTests.BaselineTest do
 
   doctest CSV.Decoding.Decoder
 
-  @moduletag timeout: 1000
-
   test "parses lines into a list of fields" do
     stream = ["a,be", "c,d"] |> to_stream
     result = Decoder.decode(stream) |> Enum.to_list

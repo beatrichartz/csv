@@ -2,8 +2,6 @@ defmodule EscapedFieldsTest do
   use ExUnit.Case
   import TestSupport.StreamHelpers
 
-  @moduletag timeout: 1000
-
   test "collects rows with fields spanning multiple lines" do
     stream = ~w(a,"be c,d e,f" g,h i,j k,l) |> to_stream
     result = CSV.decode!(stream) |> Enum.take(2)

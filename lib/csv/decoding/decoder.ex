@@ -21,7 +21,6 @@ defmodule CSV.Decoding.Decoder do
   These are the options:
 
     * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + (your separator)).
-    * `:delimiter`   – The delimiter token to use, defaults to `\\r\\n`. Must be a string.
     * `:strip_fields` – When set to true, will strip whitespace from fields. Defaults to false.
     * `:escape_max_lines` – How many lines to maximally aggregate for multiline escapes. Defaults to a 1000.
     * `:num_workers` – The number of parallel operations to run when producing the stream.
