@@ -1,5 +1,5 @@
 defmodule CSV.Decoding.Parser do
-  alias CSV.SyntaxError
+  alias CSV.EscapeSequenceError
 
   @moduledoc ~S"""
   The CSV Parser module - parses tokens coming from the lexer and parses them
@@ -37,7 +37,7 @@ defmodule CSV.Decoding.Parser do
     end
   end
   defp parse(_, field, [], true, _, _) do
-    { :error, SyntaxError, "Unterminated escape sequence near '#{field}'" }
+    { :error, EscapeSequenceError, field }
   end
   defp parse(row, "", [token | tokens], false, after_unquote, options) do
     case token do

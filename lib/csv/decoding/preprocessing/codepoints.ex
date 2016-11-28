@@ -1,7 +1,7 @@
 defmodule CSV.Decoding.Preprocessing.Codepoints do
   use CSV.Defaults
 
-  alias CSV.UnfinishedEscapeSequenceError
+  alias CSV.EscapeSequenceError
 
   @moduledoc ~S"""
   The CSV codepoints preprocessor module - collects lines out of a stream of codepoints.
@@ -28,7 +28,7 @@ defmodule CSV.Decoding.Preprocessing.Codepoints do
       collect_codepoint(line, escape_max_lines, codepoint)
     end, fn { _, escaped_part, escaped, num_lines } ->
       if escaped do
-        raise UnfinishedEscapeSequenceError,
+        raise EscapeSequenceError,
                    line: num_lines + 1,
                    escape_sequence: escaped_part,
                    escape_max_lines: escape_max_lines,
@@ -38,7 +38,7 @@ defmodule CSV.Decoding.Preprocessing.Codepoints do
   end
 
   defp collect_codepoint({ _, escaped_part, true, num_lines }, escape_max_lines, << @newline :: utf8 >>) when escape_max_lines == num_lines do
-    raise UnfinishedEscapeSequenceError,
+    raise EscapeSequenceError,
                  line: num_lines + 1,
                  escape_sequence: escaped_part,
                  escape_max_lines: escape_max_lines,

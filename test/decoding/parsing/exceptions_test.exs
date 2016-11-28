@@ -2,9 +2,9 @@ defmodule DecodingTests.ParsingTests.ExceptionsTest do
   use ExUnit.Case
 
   alias CSV.Decoding.Parser
-  alias CSV.SyntaxError
+  alias CSV.EscapeSequenceError
 
-  test "raises a syntax error when given an invalid sequence of tokens" do
+  test "raises a escape sequence error when given an invalid sequence of tokens" do
     parsed = Enum.map [
       {[
           {:double_quote, "\""},
@@ -26,12 +26,12 @@ defmodule DecodingTests.ParsingTests.ExceptionsTest do
     ], &Parser.parse/1
 
     assert parsed == [
-      {:error, SyntaxError, "Unterminated escape sequence near '\r\nc,d'", 1},
+      {:error, EscapeSequenceError, "\r\nc,d", 1},
       {:ok, ["a", "b\"c,"], 2},
     ]
   end
 
-  test "raises a syntax error when halted in an escape sequence" do
+  test "raises an escape sequence error when halted in an escape sequence" do
     parsed = Enum.map [
       {[
           {:content, "a"},
@@ -54,7 +54,7 @@ defmodule DecodingTests.ParsingTests.ExceptionsTest do
 
     assert parsed == [
       {:ok, ["a", "b\"c,"], 1},
-      {:error, SyntaxError, "Unterminated escape sequence near '\r\nc,d'", 2},
+      {:error, EscapeSequenceError, "\r\nc,d", 2},
     ]
   end
 

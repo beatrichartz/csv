@@ -1,10 +1,10 @@
 defmodule ExceptionsTest do
   use ExUnit.Case
 
-  alias CSV.UnfinishedEscapeSequenceError
+  alias CSV.EscapeSequenceError
 
   test "exception messaging about unfinished escape sequences" do
-    exception = UnfinishedEscapeSequenceError.
+    exception = EscapeSequenceError.
                   exception(
                     line: 1,
                     escape_sequence: "SEQUENCE END",
@@ -16,7 +16,7 @@ defmodule ExceptionsTest do
   end
 
   test "exception messaging about unfinished escape sequences spanning multiple lines" do
-    exception = UnfinishedEscapeSequenceError.
+    exception = EscapeSequenceError.
                   exception(
                     line: 1,
                     escape_sequence: "SEQUENCE END",
@@ -28,7 +28,7 @@ defmodule ExceptionsTest do
   end
 
   test "exception messaging about unfinished escape sequences will include options hint if escape sequence hit max lines" do
-    exception = UnfinishedEscapeSequenceError.
+    exception = EscapeSequenceError.
                   exception(
                     line: 1,
                     escape_sequence: "SEQUENCE END",

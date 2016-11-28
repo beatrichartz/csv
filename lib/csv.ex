@@ -2,6 +2,7 @@ defmodule CSV do
   alias CSV.Decoding.Preprocessing
   alias CSV.Decoding.Decoder
   alias CSV.Encoding.Encoder
+  alias CSV.EscapeSequenceError
 
   @moduledoc ~S"""
   RFC 4180 compliant CSV parsing and encoding for Elixir. Allows to specify other separators,
@@ -16,7 +17,6 @@ defmodule CSV do
   These are the options:
 
     * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + (your separator)).
-    * `:delimiter`   – The delimiter token to use, defaults to `\\r\\n`. Must be a string.
     * `:strip_fields` – When set to true, will strip whitespace from cells. Defaults to false.
     * `:escape_max_lines` – How many lines to maximally aggregate for multiline escapes. Defaults to a 1000.
     * `:num_workers` – The number of parallel operations to run when producing the stream.
@@ -89,6 +89,9 @@ defmodule CSV do
     stream |> Stream.map(&yield_or_raise!/1)
   end
 
+  defp yield_or_raise!({ :error, EscapeSequenceError, escape_sequence, index }) do
+    raise EscapeSequenceError, escape_sequence: escape_sequence, line: index + 1, escape_max_lines: -1
+  end
   defp yield_or_raise!({ :error, mod, message, index }) do
     raise mod, message: message, line: index + 1
   end
@@ -98,6 +101,9 @@ defmodule CSV do
     stream |> Stream.map(&yield_or_inline!/1)
   end
 
+  defp yield_or_inline!({ :error, EscapeSequenceError, escape_sequence, index }) do
+    { :error, EscapeSequenceError.exception(escape_sequence: escape_sequence, line: index + 1, escape_max_lines: -1).message }
+  end
   defp yield_or_inline!({ :error, errormod, message, index }) do
     { :error, errormod.exception(message: message, line: index + 1).message }
   end

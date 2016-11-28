@@ -1,21 +1,3 @@
-defmodule CSV.SyntaxError do
-  @moduledoc """
-  Raised at runtime when the CSV syntax is invalid.
-  """
-
-  defexception [:line, :message]
-
-  def exception(options) do
-    line    = options |> Keyword.fetch!(:line)
-    message = options |> Keyword.fetch!(:message)
-
-    %__MODULE__{
-      line: line,
-      message: message <> " on line " <> Integer.to_string(line)
-    }
-  end
-end
-
 defmodule CSV.EncodingError do
   @moduledoc """
   Raised at runtime when the CSV encoding is invalid.
@@ -52,7 +34,7 @@ defmodule CSV.RowLengthError do
   end
 end
 
-defmodule CSV.UnfinishedEscapeSequenceError do
+defmodule CSV.EscapeSequenceError do
   @moduledoc """
   Raised at runtime when the CSV stream ends with unfinished escape sequences
   """
@@ -62,8 +44,8 @@ defmodule CSV.UnfinishedEscapeSequenceError do
   def exception(options) do
     line = options |> Keyword.fetch!(:line)
     escape_sequence = options |> Keyword.fetch!(:escape_sequence)
-    num_escaped_lines = options |> Keyword.fetch!(:num_escaped_lines)
     escape_max_lines = options |> Keyword.fetch!(:escape_max_lines)
+    num_escaped_lines = options |> Keyword.get(:num_escaped_lines, 0)
 
     message = "Escape sequence started on line #{line} " <>
         "near \"#{escape_sequence |> String.slice(0..9)}\" " <>
