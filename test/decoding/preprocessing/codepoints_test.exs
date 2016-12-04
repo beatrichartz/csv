@@ -4,8 +4,28 @@ defmodule DecodingTests.PreprocessingTests.CodepointsTest do
 
   alias CSV.Decoding.Preprocessing.Codepoints
 
-  test "does collect normal lines" do
+  test "does collect lines ending in LF" do
     stream = "g,h\ni,j\nk,l\n" |> to_codepoints_stream
+    aggregated = stream |> Codepoints.process |> Enum.to_list
+    assert aggregated == [
+      "g,h",
+      "i,j",
+      "k,l"
+    ]
+  end
+
+  test "does collect lines ending in CRLF" do
+    stream = "g,h\r\ni,j\r\nk,l\r\n" |> to_codepoints_stream
+    aggregated = stream |> Codepoints.process |> Enum.to_list
+    assert aggregated == [
+      "g,h",
+      "i,j",
+      "k,l"
+    ]
+  end
+
+  test "does collect lines ending in CR" do
+    stream = "g,h\ri,j\rk,l\r" |> to_codepoints_stream
     aggregated = stream |> Codepoints.process |> Enum.to_list
     assert aggregated == [
       "g,h",
@@ -34,12 +54,30 @@ defmodule DecodingTests.PreprocessingTests.CodepointsTest do
     ]
   end
 
-  test "collects lines with escape sequences containing newlines" do
+  test "collects lines with escape sequences containing LF" do
     stream = "g,h\ni,\"j\nk,\"\n" |> to_codepoints_stream
     aggregated = stream |> Codepoints.process |> Enum.to_list
     assert aggregated == [
       "g,h",
       "i,\"j\nk,\"",
+    ]
+  end
+
+  test "collects lines with escape sequences containing CR" do
+    stream = "g,h\ni,\"j\rk,\"\n" |> to_codepoints_stream
+    aggregated = stream |> Codepoints.process |> Enum.to_list
+    assert aggregated == [
+      "g,h",
+      "i,\"j\rk,\"",
+    ]
+  end
+
+  test "collects lines with escape sequences containing CRLF" do
+    stream = "g,h\ni,\"j\r\nk,\"\n" |> to_codepoints_stream
+    aggregated = stream |> Codepoints.process |> Enum.to_list
+    assert aggregated == [
+      "g,h",
+      "i,\"j\r\nk,\"",
     ]
   end
 

@@ -24,9 +24,9 @@ defmodule CSV.Decoding.Preprocessing.Codepoints do
 
     stream
         |> Stream.concat([@stream_end])
-        |> Stream.transform(fn -> { "", "", false, 0 } end, fn codepoint, line ->
+        |> Stream.transform(fn -> { "", nil, "", false, 0 } end, fn codepoint, line ->
       collect_codepoint(line, escape_max_lines, codepoint)
-    end, fn { _, escaped_part, escaped, num_lines } ->
+    end, fn { _, _, escaped_part, escaped, num_lines } ->
       if escaped do
         raise EscapeSequenceError,
                    line: num_lines + 1,
@@ -37,35 +37,41 @@ defmodule CSV.Decoding.Preprocessing.Codepoints do
     end)
   end
 
-  defp collect_codepoint({ _, escaped_part, true, num_lines }, escape_max_lines, << @newline :: utf8 >>) when escape_max_lines == num_lines do
+  defp collect_codepoint({ _, _, escaped_part, true, num_lines }, escape_max_lines, << @newline :: utf8 >>) when escape_max_lines == num_lines do
     raise EscapeSequenceError,
                  line: num_lines + 1,
                  escape_sequence: escaped_part,
                  escape_max_lines: escape_max_lines,
                  num_escaped_lines: num_lines
   end
-  defp collect_codepoint({ line, escaped_part, true, num_lines }, _, << @newline :: utf8 >>) do
-    { [], { line <> << @newline :: utf8 >>, escaped_part <> << @newline :: utf8 >>, true, num_lines + 1 } }
+  defp collect_codepoint({ line, _, escaped_part, true, num_lines }, _, << @newline :: utf8 >>) do
+    { [], { line <> << @newline :: utf8 >>, << @newline :: utf8 >>, escaped_part <> << @newline :: utf8 >>, true, num_lines + 1 } }
   end
-  defp collect_codepoint({ "", _, false, num_lines }, _, @stream_end) do
-    { [], { "", "", false, num_lines } }
+  defp collect_codepoint({ "", _, _, false, num_lines }, _, @stream_end) do
+    { [], { "", @stream_end, "", false, num_lines } }
   end
-  defp collect_codepoint({ line, _, false, num_lines }, _, @stream_end) do
-    { [line], { "", "", false, num_lines } }
+  defp collect_codepoint({ line, _, _, false, num_lines }, _, @stream_end) do
+    { [line], { "", @stream_end, "", false, num_lines } }
   end
-  defp collect_codepoint({ line, _, false, num_lines }, _, << @newline :: utf8 >>) do
-    { [line], { "", "", false, num_lines } }
+  defp collect_codepoint({ line, _, _, false, num_lines }, _, << @carriage_return :: utf8 >>) do
+    { [line], { "", << @carriage_return :: utf8 >>, "", false, num_lines } }
   end
-  defp collect_codepoint({ line, escaped_part, true, num_lines }, _, << @double_quote :: utf8 >>) do
-    { [], { line <> << @double_quote :: utf8 >>, escaped_part <> << @newline :: utf8 >>, false, num_lines } }
+  defp collect_codepoint({ _, << @carriage_return :: utf8 >>, _, false, num_lines }, _, << @newline :: utf8 >>) do
+    { [], { "", << @newline :: utf8 >>, "", false, num_lines } }
   end
-  defp collect_codepoint({ line, _, false, num_lines }, _, << @double_quote :: utf8 >>) do
-    { [], { line <> << @double_quote :: utf8 >>, "", true, num_lines } }
+  defp collect_codepoint({ line, _, _, false, num_lines }, _, << @newline :: utf8 >>) do
+    { [line], { "", << @newline :: utf8 >>, "", false, num_lines } }
   end
-  defp collect_codepoint({ line, escaped_part, true, num_lines }, _, codepoint) do
-    { [], { line <> codepoint, escaped_part <> codepoint, true, num_lines } }
+  defp collect_codepoint({ line, _, escaped_part, true, num_lines }, _, << @double_quote :: utf8 >>) do
+    { [], { line <> << @double_quote :: utf8 >>, << @double_quote :: utf8 >>, escaped_part <> << @newline :: utf8 >>, false, num_lines } }
   end
-  defp collect_codepoint({ line, _, false, num_lines }, _, codepoint) do
-    { [], { line <> codepoint, "", false, num_lines } }
+  defp collect_codepoint({ line, _, _, false, num_lines }, _, << @double_quote :: utf8 >>) do
+    { [], { line <> << @double_quote :: utf8 >>, << @double_quote :: utf8 >>, "", true, num_lines } }
+  end
+  defp collect_codepoint({ line, _, escaped_part, true, num_lines }, _, codepoint) do
+    { [], { line <> codepoint, codepoint, escaped_part <> codepoint, true, num_lines } }
+  end
+  defp collect_codepoint({ line, _, _, false, num_lines }, _, codepoint) do
+    { [], { line <> codepoint, codepoint, "", false, num_lines } }
   end
 end
