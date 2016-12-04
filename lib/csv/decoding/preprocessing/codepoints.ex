@@ -8,7 +8,7 @@ defmodule CSV.Decoding.Preprocessing.Codepoints do
   """
 
   @doc """
-  Collects lines respsecting common escape sequences of a stream.
+  Collects lines respecting common escape sequences of a stream.
 
   ## Options
 

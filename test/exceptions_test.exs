@@ -1,7 +1,14 @@
 defmodule ExceptionsTest do
   use ExUnit.Case
 
+  alias CSV.EncodingError
   alias CSV.EscapeSequenceError
+
+  test "exception messaging about encoding errors" do
+    exception = EncodingError.exception(line: 1, message: "BAD ENCODING")
+
+    assert exception.message == "BAD ENCODING on line 1"
+  end
 
   test "exception messaging about unfinished escape sequences" do
     exception = EscapeSequenceError.

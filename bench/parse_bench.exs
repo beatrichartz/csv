@@ -42,7 +42,7 @@ defmodule ParseBench do
   def path do
     case System.get_env("CSV_BENCH_FILE_PATH") do
       nil ->
-        Path.expand("./files/benchfile.csv", __DIR__) 
+        Path.expand("./files/benchfile.csv", __DIR__)
       p ->
         p
     end

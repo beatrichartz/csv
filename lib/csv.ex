@@ -23,8 +23,6 @@ defmodule CSV do
     * `:worker_work_ratio` – The available work per worker, defaults to 5. Higher rates will mean more work sharing, but might also lead to work fragmentation slowing down the queues.
     * `:headers`     – When set to `true`, will take the first row of the csv and use it as
       header values.
-      Defaults to number of erlang schedulers times 3
-      header values.
       When set to a list, will use the given list as header values.
       When set to `false` (default), will use no header values.
       When set to anything but `false`, the resulting rows in the matrix will
