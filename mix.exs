@@ -6,14 +6,14 @@ defmodule CSV.Mixfile do
         app: :csv,
         version: "2.0.0",
         elixir: "~> 1.1",
-        deps: deps,
-        package: package,
+        deps: deps(),
+        package: package(),
         docs: &docs/0,
         name: "CSV",
         consolidate_protocols: true,
         source_url: "https://github.com/beatrichartz/csv",
         description: "CSV Decoding and Encoding for Elixir",
-        elixirc_paths: elixirc_paths,
+        elixirc_paths: elixirc_paths(),
         test_coverage: [tool: ExCoveralls],
         preferred_cli_env: ["coveralls": :test, "coveralls.detail": :test, "coveralls.post": :test]
     ]
