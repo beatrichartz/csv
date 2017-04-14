@@ -22,6 +22,7 @@ defmodule CSV.Decoding.Decoder do
 
     * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + (your separator)).
     * `:strip_fields` – When set to true, will strip whitespace from fields. Defaults to false.
+    * `:quoting` – When set to true, will remove double quotes from output. Defaults to true.
     * `:escape_max_lines` – How many lines to maximally aggregate for multiline escapes. Defaults to a 1000.
     * `:num_workers` – The number of parallel operations to run when producing the stream.
     * `:worker_work_ratio` – The available work per worker, defaults to 5. Higher rates will mean more work sharing, but might also lead to work fragmentation slowing down the queues.
