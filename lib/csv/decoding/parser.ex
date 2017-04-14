@@ -41,6 +41,7 @@ defmodule CSV.Decoding.Parser do
     { :error, EscapeSequenceError, field }
   end
   defp parse(row, "", [token | tokens], false, after_unquote, options) do
+    quoting = options |> Keyword.get(:quoting, true)
     case token do
       {:content, content} ->
         parse(row, content, tokens, false, false, options)
@@ -48,6 +49,8 @@ defmodule CSV.Decoding.Parser do
         parse(row ++ [""], "", tokens, false, false, options)
       {:delimiter, _} ->
         parse(row, "", tokens, false, false, options)
+      {:double_quote, content} when not quoting ->
+          parse(row, content, tokens, false, false, options)
       {:double_quote, content} when after_unquote ->
         parse(row, content, tokens, true, false, options)
       {:double_quote, _} ->
@@ -55,7 +58,7 @@ defmodule CSV.Decoding.Parser do
     end
   end
   defp parse(row, field, [token | tokens], false, after_unquote, options) do
-      quoting = options |> Keyword.get(:quoting, true)
+    quoting = options |> Keyword.get(:quoting, true)
     case token do
       {:content, content} ->
         parse(row, field <> content, tokens, false, false, options)
@@ -63,7 +66,9 @@ defmodule CSV.Decoding.Parser do
         parse(row ++ [field |> strip(options)], "", tokens, false, false, options)
       {:delimiter, _} ->
         parse(row, field, tokens, false, false, options)
-      {:double_quote, content} when after_unquote or not quoting ->
+      {:double_quote, content} when not quoting ->
+          parse(row, field <> content, tokens, false, false, options)
+      {:double_quote, content} when after_unquote ->
         parse(row, field <> content, tokens, true, false, options)
       {:double_quote, _} ->
         parse(row, field, tokens, true, false, options)
