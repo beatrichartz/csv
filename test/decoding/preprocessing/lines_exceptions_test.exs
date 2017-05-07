@@ -8,7 +8,7 @@ defmodule DecodingTests.PreprocessingTests.LinesExceptionsTest do
   test "fails on open escape sequences" do
     stream = ["a,\"be\"\"", "c,d", "e,f\",\"super,cool\"", "g,h,i", "i,j,\"k", "k,l,m"] |> to_stream
     assert_raise EscapeSequenceError,
-      "Escape sequence started on line 5 near \"k\nk,l,m\n\" spanning 4 lines did not terminate", fn ->
+      "Escape sequence started on line 5 near \"k\r\nk,l,m\" spanning 2 lines did not terminate", fn ->
       stream |> Lines.process |> Stream.run
     end
   end

@@ -18,6 +18,10 @@ defmodule CSV do
 
     * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + (your separator)).
     * `:strip_fields` – When set to true, will strip whitespace from cells. Defaults to false.
+    * `:preprocessor` – Which preprocessor to use:
+        :lines (default) -> Will preprocess line by line input respecting escape sequences
+        :codepoints -> Will preprocess codepoint by codepoint input respecting escape sequences
+        :none -> Will not preprocess input and expects line by line input with multiple line escape sequences aggregated to one line
     * `:escape_max_lines` – How many lines to maximally aggregate for multiline escapes. Defaults to a 1000.
     * `:num_workers` – The number of parallel operations to run when producing the stream.
     * `:worker_work_ratio` – The available work per worker, defaults to 5. Higher rates will mean more work sharing, but might also lead to work fragmentation slowing down the queues.
@@ -30,9 +34,18 @@ defmodule CSV do
 
   ## Examples
 
-  Convert a filestream into a stream of rows:
+  Convert a filestream into a stream of rows, inlining errors into the stream:
 
-      iex> \"../test/fixtures/docs.csv\"
+      iex> \"../test/fixtures/docs/valid.csv\"
+      iex> |> Path.expand(__DIR__)
+      iex> |> File.stream!
+      iex> |> CSV.decode
+      iex> |> Enum.take(2)
+      [{:ok, [\"a\",\"b\",\"c\"]}, {:ok, [\"d\",\"e\",\"f\"]}]
+
+  Convert a filestream into a stream of rows, throwing an error on invalid rows:
+
+      iex> \"../test/fixtures/docs/valid.csv\"
       iex> |> Path.expand(__DIR__)
       iex> |> File.stream!
       iex> |> CSV.decode!
@@ -41,7 +54,7 @@ defmodule CSV do
 
   Convert a filestream into a stream of rows in order of the given stream:
 
-      iex> \"../test/fixtures/docs.csv\"
+      iex> \"../test/fixtures/docs/valid.csv\"
       iex> |> Path.expand(__DIR__)
       iex> |> File.stream!
       iex> |> CSV.decode!(num_workers: 1)
@@ -75,7 +88,7 @@ defmodule CSV do
   end
 
   defp preprocess(stream, options) do
-    case options |> Keyword.get(:mode) do
+    case options |> Keyword.get(:preprocessor) do
       :codepoints ->
           stream |> Preprocessing.Codepoints.process(options)
       _ ->

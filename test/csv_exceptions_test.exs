@@ -17,7 +17,7 @@ defmodule CSVExceptionsTest do
   test "decodes codepoints in normal mode emitting errors with rows" do
     stream = "a,be\na\nc,d\n" |> to_codepoints_stream
 
-    result = CSV.decode(stream, mode: :codepoints) |> Enum.to_list
+    result = CSV.decode(stream, preprocessor: :codepoints) |> Enum.to_list
     assert result == [
       ok: ~w(a be),
       error: "Row has length 1 - expected length 2 on line 2",
@@ -37,7 +37,7 @@ defmodule CSVExceptionsTest do
     stream = "a,be\na\nc,d\n" |> to_codepoints_stream
 
     assert_raise RowLengthError, fn ->
-      CSV.decode!(stream, mode: :codepoints) |> Stream.run
+      CSV.decode!(stream, preprocessor: :codepoints) |> Stream.run
     end
   end
 end

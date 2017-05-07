@@ -17,7 +17,7 @@ defmodule CSVTest do
 
   test "decodes a codepoints stream emitting rows as lists" do
     stream = "a,be\r\nc,d\r\n" |> to_codepoints_stream
-    result = CSV.decode!(stream, mode: :codepoints) |> Enum.to_list
+    result = CSV.decode!(stream, preprocessor: :codepoints) |> Enum.to_list
     assert result == [
       ~w(a be),
       ~w(c d),
@@ -35,7 +35,7 @@ defmodule CSVTest do
 
   test "decodes a codepoints stream in normal mode emitting tuples containing rows" do
     stream = "a,be\r\nc,d\n" |> to_codepoints_stream
-    result = CSV.decode(stream, mode: :codepoints) |> Enum.to_list
+    result = CSV.decode(stream, preprocessor: :codepoints) |> Enum.to_list
     assert result == [
       ok: ~w(a be),
       ok: ~w(c d),

@@ -15,6 +15,7 @@ defmodule CSV.Decoding.Decoder do
   Decode a stream of comma-separated lines into a table.
   You can control the number of parallel operations via the option `:num_workers` -
   default is the number of erlang schedulers times 3.
+  The Decoder expects line by line input of valid csv lines with inlined escape sequences.
 
   ## Options
 
@@ -22,7 +23,6 @@ defmodule CSV.Decoding.Decoder do
 
     * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + (your separator)).
     * `:strip_fields` – When set to true, will strip whitespace from fields. Defaults to false.
-    * `:escape_max_lines` – How many lines to maximally aggregate for multiline escapes. Defaults to a 1000.
     * `:num_workers` – The number of parallel operations to run when producing the stream.
     * `:worker_work_ratio` – The available work per worker, defaults to 5. Higher rates will mean more work sharing, but might also lead to work fragmentation slowing down the queues.
     * `:headers`     – When set to `true`, will take the first row of the csv and use it as
@@ -34,14 +34,13 @@ defmodule CSV.Decoding.Decoder do
 
   ## Examples
 
-  Convert a filestream into a stream of rows:
+  Convert a stream of lines with inlined escape sequences into a stream of rows:
 
-      iex> \"../../../test/fixtures/docs.csv\"
-      ...> |> Path.expand(__DIR__)
-      ...> |> File.stream!
+      iex> [\"a,b\",\"c,d\"]
+      ...> |> Stream.map(&(&1))
       ...> |> CSV.Decoding.Decoder.decode
       ...> |> Enum.take(2)
-      [{:ok, [\"a\", \"b\", \"c\"]}, {:ok, [\"d\", \"e\", \"f\"]}]
+      [{:ok, [\"a\", \"b\"]}, {:ok, [\"c\", \"d\"]}]
 
   Map an existing stream of lines separated by a token to a stream of rows with a header row:
 
