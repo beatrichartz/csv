@@ -1,4 +1,6 @@
 defmodule CSV do
+  use CSV.Defaults
+
   alias CSV.Decoding.Preprocessing
   alias CSV.Decoding.Decoder
   alias CSV.Encoding.Encoder
@@ -20,7 +22,6 @@ defmodule CSV do
     * `:strip_fields` – When set to true, will strip whitespace from cells. Defaults to false.
     * `:preprocessor` – Which preprocessor to use:
         :lines (default) -> Will preprocess line by line input respecting escape sequences
-        :codepoints -> Will preprocess codepoint by codepoint input respecting escape sequences
         :none -> Will not preprocess input and expects line by line input with multiple line escape sequences aggregated to one line
     * `:escape_max_lines` – How many lines to maximally aggregate for multiline escapes. Defaults to a 1000.
     * `:num_workers` – The number of parallel operations to run when producing the stream.
@@ -80,45 +81,44 @@ defmodule CSV do
   """
 
   def decode(stream, options \\ []) do
-    stream |> preprocess(options) |> Decoder.decode(options) |> inline_errors!
+    stream |> preprocess(options) |> Decoder.decode(options) |> inline_errors!(options)
   end
 
   def decode!(stream, options \\ []) do
-    stream |> preprocess(options) |> Decoder.decode(options) |> raise_errors!
+    stream |> preprocess(options) |> Decoder.decode(options) |> raise_errors!(options)
   end
 
   defp preprocess(stream, options) do
-    case options |> Keyword.get(:preprocessor) do
-      :codepoints ->
-          stream |> Preprocessing.Codepoints.process(options)
-      _ ->
-          stream |> Preprocessing.Lines.process(options)
-    end
+    stream |> Preprocessing.Lines.process(options)
   end
 
-  defp raise_errors!(stream) do
-    stream |> Stream.map(&yield_or_raise!/1)
+  defp raise_errors!(stream, options) do
+    escape_max_lines = options |> Keyword.get(:escape_max_lines, @escape_max_lines)
+
+    stream |> Stream.map(&yield_or_raise!(&1, escape_max_lines))
   end
 
-  defp yield_or_raise!({ :error, EscapeSequenceError, escape_sequence, index }) do
-    raise EscapeSequenceError, escape_sequence: escape_sequence, line: index + 1, escape_max_lines: -1
+  defp yield_or_raise!({ :error, EscapeSequenceError, escape_sequence, index }, escape_max_lines) do
+    raise EscapeSequenceError, escape_sequence: escape_sequence, line: index + 1, escape_max_lines: escape_max_lines 
   end
-  defp yield_or_raise!({ :error, mod, message, index }) do
+  defp yield_or_raise!({ :error, mod, message, index }, _) do
     raise mod, message: message, line: index + 1
   end
-  defp yield_or_raise!({ :ok, row }), do: row
+  defp yield_or_raise!({ :ok, row }, _), do: row
 
-  defp inline_errors!(stream) do
-    stream |> Stream.map(&yield_or_inline!/1)
+  defp inline_errors!(stream, options) do
+    escape_max_lines = options |> Keyword.get(:escape_max_lines, @escape_max_lines)
+
+    stream |> Stream.map(&yield_or_inline!(&1, escape_max_lines))
   end
 
-  defp yield_or_inline!({ :error, EscapeSequenceError, escape_sequence, index }) do
-    { :error, EscapeSequenceError.exception(escape_sequence: escape_sequence, line: index + 1, escape_max_lines: -1).message }
+  defp yield_or_inline!({ :error, EscapeSequenceError, escape_sequence, index }, escape_max_lines) do
+    { :error, EscapeSequenceError.exception(escape_sequence: escape_sequence, line: index + 1, escape_max_lines: escape_max_lines).message }
   end
-  defp yield_or_inline!({ :error, errormod, message, index }) do
+  defp yield_or_inline!({ :error, errormod, message, index }, _) do
     { :error, errormod.exception(message: message, line: index + 1).message }
   end
-  defp yield_or_inline!(value), do: value
+  defp yield_or_inline!(value, _), do: value
 
   @doc """
   Encode a table stream into a stream of RFC 4180 compliant CSV lines for writing to a file

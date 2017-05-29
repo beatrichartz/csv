@@ -3,28 +3,38 @@ defmodule DecodingTests.PreprocessingTests.LinesExceptionsTest do
   import TestSupport.StreamHelpers
 
   alias CSV.Decoding.Preprocessing.Lines
-  alias CSV.EscapeSequenceError
 
-  test "fails on open escape sequences" do
+  test "passes on open escape sequences at the end of the stream" do
     stream = ["a,\"be\"\"", "c,d", "e,f\",\"super,cool\"", "g,h,i", "i,j,\"k", "k,l,m"] |> to_stream
-    assert_raise EscapeSequenceError,
-      "Escape sequence started on line 5 near \"k\r\nk,l,m\" spanning 2 lines did not terminate", fn ->
-      stream |> Lines.process |> Stream.run
-    end
+    processed = stream |> Lines.process |> Enum.to_list
+
+    assert processed == [
+      "a,\"be\"\"\r\nc,d\r\ne,f\",\"super,cool\"",
+      "g,h,i", "i,j,\"k", "k,l,m"
+    ]
   end
 
-  test "fails if the multiline escape exceeds the maximum number of lines allowed to be aggregated" do
+  test "passes on if the multiline escape exceeds the maximum number of lines allowed to be aggregated" do
     stream = ["a,\"be\"\"", "c,d", "e,f", "g,h", "i,k", "\",b", "k,l,m"] |> to_stream
-    assert_raise EscapeSequenceError, fn ->
-      stream |> Lines.process(escape_max_lines: 2) |> Stream.run
-    end
+    processed = stream |> Lines.process(escape_max_lines: 2) |> Enum.to_list
+
+    assert processed == ["a,\"be\"\"", "c,d", "e,f", "g,h", "i,k", "\",b", "k,l,m"]
   end
 
-  test "fails on open escape sequences with escaped quotes" do
+  test "passes on open escape sequences with escaped quotes" do
     stream = ["a,\"\"\"be\"\"", "\"\"c,d"] |> to_stream
-    assert_raise EscapeSequenceError, fn ->
-      stream |> Lines.process |> Stream.run
-    end
+    processed = stream |> Lines.process |> Enum.to_list
+
+    assert processed == ["a,\"\"\"be\"\"", "\"\"c,d"]
   end
 
+  test "passes on open escape sequences but processes subsequent escape sequences" do
+    stream = ["a,\"be\"\"", "c,d", "e,f", "g,\"h", "i,k", "\",b", "k,l,m"] |> to_stream
+    processed = stream |> Lines.process(escape_max_lines: 3) |> Enum.to_list
+
+    assert processed == [
+      "a,\"be\"\"", "c,d", "e,f",
+      "g,\"h\r\ni,k\r\n\",b", "k,l,m"
+    ]
+  end
 end
