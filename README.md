@@ -35,12 +35,16 @@ end
 ### From 1.x to 2.x - the tasty :tm: update.
 
 2.x has some nice new features like the separation between hair- and error-raising
-`decode!` and the zen of `decode`, better error messages and an easier to understand
-codebase for you to contribute.
+[`decode!`](https://hexdocs.pm/csv/CSV.html#decode!/2) and the zen of
+[`decode`](https://hexdocs.pm/csv/CSV.html#decode!/2), better error messages
+and an easier to understand codebase for you to contribute.
 
 The only thing you _have_ to do to upgrade to 2.x is to change your calls to
-`decode` to `decode!`, and adjust your exceptions-catching code to catch the right
-exceptions still. But why not take full advantage and convert to the new tuple stream?
+`decode` to [`decode!`](https://hexdocs.pm/csv/CSV.html#decode!/2),
+and adjust your exceptions-catching code to catch the
+[right exceptions](https://hexdocs.pm/csv/overview.html#exceptions_summary)
+still. But why not take full advantage and convert to
+[`decode` and the new tuple stream?](https://hexdocs.pm/csv/CSV.html#decode/2)
 
 ![](https://media-cdn.tripadvisor.com/media/photo-s/07/2a/55/ee/icecream-selection.jpg)
 
@@ -150,3 +154,6 @@ There is more to know about everything :tm: - [Check the doc](http://hexdocs.pm/
 MIT
 
 ## Contributions & Bugfixes are most welcome!
+Please make sure to add tests. I will not look at PRs that are
+either failing or lowering coverage. Also, solve one problem at
+a time.
