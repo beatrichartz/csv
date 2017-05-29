@@ -37,7 +37,8 @@ end
 2.x has some nice new features like the separation between hair- and error-raising
 [`decode!`](https://hexdocs.pm/csv/CSV.html#decode!/2) and the zen of
 [`decode`](https://hexdocs.pm/csv/CSV.html#decode!/2), better error messages
-and an easier to understand codebase for you to contribute.
+and an easier to understand codebase
+[for you to contribute](https://github.com/beatrichartz/csv#contributions--bugfixes-are-most-welcome).
 
 The only thing you _have_ to do to upgrade to 2.x is to change your calls to
 `decode` to [`decode!`](https://hexdocs.pm/csv/CSV.html#decode!/2),
@@ -63,17 +64,17 @@ Do this to decode:
 File.stream!("data.csv") |> CSV.decode
 ````
 
-And you'll get a stream of rows:
+And you'll get a stream of row tuples:
 ````elixir
 [ok: ["a", "b"], ok: ["c", "d"]]
 ````
 
-And, potentially errors:
+And, potentially error tuples:
 ````elixir
 [error: "Row has length 3 - expected length 2 on line 1", ok: ["c", "d"]]
 ````
 
-Use the bang to decode into a two-dimensional list, raising errors as they
+Use the bang to decode! into a two-dimensional list, raising errors as they
 occur:
 ````elixir
 File.stream!("data.csv") |> CSV.decode!

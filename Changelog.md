@@ -1,11 +1,39 @@
+## 2.0.0
+- Make [`decode`](https://hexdocs.pm/csv/CSV.html#decode/2) return row and
+  error tuples instead of raising errors directly
+- Make old behaviour of raising errors directly available
+  via [`decode!`](https://hexdocs.pm/csv/CSV.html#decode!/2)
+- Improve error messages for escape sequences
+- Rewrite parts of the pipeline to be more modular
+
+## 1.4.4
+- Load [`parallel_stream`](https://github.com/beatrichartz/parallel_stream)
+  as an app dependency to avoid load level errors.
+  See [issue #56](https://github.com/beatrichartz/csv/issues/56) reported
+  by [@luk3thomas](https://github.com/luk3thomas)
+
+## 1.4.3
+- Fix a case where lines would not be aggregated correctly
+  [see #52](https://github.com/beatrichartz/csv/issues/52) reported by 
+  [@yury-dimov](https://github.com/yury-dymov)
+
+## 1.4.2
+- Update dependency on [`parallel_stream`](https://github.com/beatrichartz/parallel_stream)
+
+## 1.4.1
+- Fix condition where rows would be dropped when decoding from stateful streams.
+  [See #39](https://github.com/beatrichartz/csv/issues/39) reported by
+  [@moxley](https://github.com/moxley)
+
 ## 1.4.0
 
-- Add option to specify headers in encode - added in #34 by
-  [@barruumrex](https://github.com/barruumrex)
+- add option to specify headers in encode - added [in #34](https://github.com/beatrichartz/csv/issues/34)
+  by [@barruumrex](https://github.com/barruumrex)
 
 ## 1.3.3
 
-- Fix empty streams raising a lexer error - raised in #28 by [@kiliancs](https://github.com/kiliancs)
+- Fix empty streams raising a lexer error - raised [in #28](https://github.com/beatrichartz/csv/issues/28)
+  by [@kiliancs](https://github.com/kiliancs)
 
 ## 1.3.2
 
