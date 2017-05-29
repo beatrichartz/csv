@@ -14,7 +14,8 @@ defmodule CSV.Decoding.Parser do
 
   Options get transferred from the decoder. They are:
 
-    * `:strip_fields` – When set to true, will strip whitespace from fields. Defaults to false.
+    * `:strip_fields` – When set to true, will strip whitespace from fields. 
+      Defaults to false.
   """
 
   def parse(message, options \\ [])

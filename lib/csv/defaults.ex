@@ -14,10 +14,16 @@ defmodule CSV.Defaults do
     end
   end
 
+  @doc """
+  The default worker / work ratio.
+  """
   def worker_work_ratio do
     5
   end
 
+  @doc """
+  The default number of workers used.
+  """
   def num_workers do
     :erlang.system_info(:schedulers) * 3
   end

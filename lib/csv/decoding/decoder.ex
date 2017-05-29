@@ -1,10 +1,11 @@
 defmodule CSV.Decoding.Decoder do
 
   @moduledoc ~S"""
-  The Decoder CSV module sends lines of delimited values from a stream to the parser and converts
-  rows coming from the CSV parser module to a consumable stream.
-  In setup, it parallelises lexing and parsing, as well as different lexer/parser pairs as workers.
-  The number of workers can be controlled via options.
+  The Decoder CSV module sends lines of delimited values from a stream to the
+  parser and converts rows coming from the CSV parser module to a consumable
+  stream. In setup, it parallelises lexing and parsing, as well as different
+  lexer/parser pairs as workers. The number of workers can be controlled via
+  options.
   """
   alias CSV.Decoding.Parser
   alias CSV.Decoding.Lexer
@@ -12,21 +13,27 @@ defmodule CSV.Decoding.Decoder do
   alias CSV.RowLengthError
 
   @doc """
-  Decode a stream of comma-separated lines into a table.
-  You can control the number of parallel operations via the option `:num_workers` -
-  default is the number of erlang schedulers times 3.
-  The Decoder expects line by line input of valid csv lines with inlined escape sequences.
+  Decode a stream of comma-separated lines into a stream of rows.
+  You can control the number of parallel work streams via the option
+  `:num_workers` - default is the number of erlang schedulers times 3.
+  The Decoder expects line by line input of valid csv lines with inlined
+  escape sequences if you use it directly.
 
   ## Options
 
   These are the options:
 
-    * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + (your separator)).
-    * `:strip_fields` – When set to true, will strip whitespace from fields. Defaults to false.
-    * `:num_workers` – The number of parallel operations to run when producing the stream.
-    * `:worker_work_ratio` – The available work per worker, defaults to 5. Higher rates will mean more work sharing, but might also lead to work fragmentation slowing down the queues.
-    * `:headers`     – When set to `true`, will take the first row of the csv and use it as
-      header values.
+  * `:separator`   – The separator token to use, defaults to `?,`.
+      Must be a codepoint (syntax: ? + (your separator)).
+  * `:strip_fields` – When set to true, will strip whitespace from fields.
+      Defaults to false.
+  * `:num_workers` – The number of parallel operations to run when producing
+      the stream.
+  * `:worker_work_ratio` – The available work per worker, defaults to 5.
+      Higher rates will mean more work sharing, but might also lead to work
+      fragmentation slowing down the queues.
+  * `:headers`     – When set to `true`, will take the first row of the csv
+      and use it as header values.
       When set to a list, will use the given list as header values.
       When set to `false` (default), will use no header values.
       When set to anything but `false`, the resulting rows in the matrix will
@@ -40,25 +47,33 @@ defmodule CSV.Decoding.Decoder do
       ...> |> Stream.map(&(&1))
       ...> |> CSV.Decoding.Decoder.decode
       ...> |> Enum.take(2)
-      [{:ok, [\"a\", \"b\"]}, {:ok, [\"c\", \"d\"]}]
+      [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
 
-  Map an existing stream of lines separated by a token to a stream of rows with a header row:
+  Map an existing stream of lines separated by a token to a stream of rows with 
+  a header row:
 
       iex> [\"a;b\",\"c;d\", \"e;f\"]
       ...> |> Stream.map(&(&1))
       ...> |> CSV.Decoding.Decoder.decode(separator: ?;, headers: true)
       ...> |> Enum.take(2)
-      [{:ok, %{\"a\" => \"c\", \"b\" => \"d\"}}, {:ok, %{\"a\" => \"e\", \"b\" => \"f\"}}]
+      [
+        ok: %{\"a\" => \"c\", \"b\" => \"d\"},
+        ok: %{\"a\" => \"e\", \"b\" => \"f\"}
+      ]
 
-  Map an existing stream of lines separated by a token to a stream of rows with a given header row:
+  Map an existing stream of lines separated by a token to a stream of rows
+  with a given header row:
 
       iex> [\"a;b\",\"c;d\", \"e;f\"]
       ...> |> Stream.map(&(&1))
       ...> |> CSV.Decoding.Decoder.decode(separator: ?;, headers: [:x, :y])
       ...> |> Enum.take(2)
-      [{:ok, %{:x => \"a\", :y => \"b\"}}, {:ok, %{:x => \"c\", :y => \"d\"}}]
+      [
+        ok: %{:x => \"a\", :y => \"b\"},
+        ok: %{:x => \"c\", :y => \"d\"}
+      ]
 
-  Decode a CSV string
+  Decode a CSV string:
 
       iex> csv_string = \"id,name\\r\\n1,Jane\\r\\n2,George\\r\\n3,John\"
       ...> {:ok, out} = csv_string |> StringIO.open
@@ -66,7 +81,11 @@ defmodule CSV.Decoding.Decoder do
       ...> |> IO.binstream(:line)
       ...> |> CSV.Decoding.Decoder.decode(headers: true)
       ...> |> Enum.map(&(&1))
-      [{:ok, %{\"id\" => \"1\", \"name\" => \"Jane\"}}, {:ok, %{\"id\" => \"2\", \"name\" => \"George\"}}, {:ok, %{\"id\" => \"3\", \"name\" => \"John\"}}]
+      [
+        ok: %{\"id\" => \"1\", \"name\" => \"Jane\"},
+        ok: %{\"id\" => \"2\", \"name\" => \"George\"},
+        ok: %{\"id\" => \"3\", \"name\" => \"John\"}
+      ]
 
   """
 

@@ -18,21 +18,40 @@ Now.
 
 Add
 ```elixir
-{:csv, "~> 1.4.2"}
+{:csv, "~> 2.0.0"}
 ```
 to your deps in `mix.exs` like so:
 
 ```elixir
 defp deps do
   [
-    {:csv, "~> 1.4.2"}
+    {:csv, "~> 2.0.0"}
   ]
 end
 ```
 
-Note: Elixir `1.1.0` is required for all versions above `1.1.5`.
+> Note: Elixir `1.1.0` is required for all versions above `1.1.5`.
+
+### From 1.x to 2.x - the tasty :tm: update.
+
+2.x has some nice new features like the separation between hair- and error-raising
+`decode!` and the zen of `decode`, better error messages and an easier to understand
+codebase for you to contribute.
+
+The only thing you _have_ to do to upgrade to 2.x is to change your calls to
+`decode` to `decode!`, and adjust your exceptions-catching code to catch the right
+exceptions still. But why not take full advantage and convert to the new tuple stream?
+
+![](https://media-cdn.tripadvisor.com/media/photo-s/07/2a/55/ee/icecream-selection.jpg)
+
+You know you want it.
 
 ## Great! How do I use it right now?
+
+There are two interesting things you want to do regarding csvs - 
+encoding end decoding.
+
+### Decoding
 
 Do this to decode:
 
@@ -40,16 +59,26 @@ Do this to decode:
 File.stream!("data.csv") |> CSV.decode
 ````
 
-And you'll get a stream of rows. So, this is upcasing the text in each cell of
-a tab separated file because someone is angry:
-
+And you'll get a stream of rows:
 ````elixir
-File.stream!("data.csv") |>
-CSV.decode(separator: ?\t) |>
-Enum.map(fn row ->
-  Enum.map(row, &String.upcase/1)
-end)
+[ok: ["a", "b"], ok: ["c", "d"]]
 ````
+
+And, potentially errors:
+````elixir
+[error: "Row has length 3 - expected length 2 on line 1", ok: ["c", "d"]]
+````
+
+Use the bang to decode into a two-dimensional list, raising errors as they
+occur:
+````elixir
+File.stream!("data.csv") |> CSV.decode!
+````
+
+Be sure to [read more about `decode`](https://hexdocs.pm/csv/CSV.html#decode/2)
+and [its angry sibling `decode!`](https://hexdocs.pm/csv/CSV.html#decode!/2)
+
+### Encoding
 
 Do this to encode a table (two-dimensional list):
 
@@ -87,6 +116,8 @@ the right place:
 [%{"a" => "value!"}] |> CSV.encode(headers: ["z", "a"])
 # ["z,a\\r\\n", ",value!\\r\\n"]
 ````
+
+You'll surely appreciate some [more info on `encode`](https://hexdocs.pm/csv/CSV.html#encode/2)
 
 ## Polymorphic encoding
 

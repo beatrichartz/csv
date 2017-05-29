@@ -2,26 +2,28 @@ defmodule CSV.Encoding.Encoder do
   use CSV.Defaults
 
   @moduledoc ~S"""
-  The Encoder CSV module takes a table stream and transforms it into RFC 4180 compliant
-  stream of lines for writing to a CSV File or other IO.
+  The Encoder CSV module takes a table stream and transforms it into RFC 4180
+  compliant stream of lines for writing to a CSV File or other IO.
   """
 
   @doc """
-  Encode a table stream into a stream of RFC 4180 compliant CSV lines for writing to a file
-  or other IO.
+  Encode a table stream into a stream of RFC 4180 compliant CSV lines for
+  writing to a file or other IO.
 
   ## Options
 
   These are the options:
 
-    * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint (syntax: ? + your separator token).
+    * `:separator`   – The separator token to use, defaults to `?,`.
+      Must be a codepoint (syntax: ? + your separator token).
     * `:delimiter`   – The delimiter token to use, defaults to `\"\\r\\n\"`.
-    * `:headers`     – When set to `true`, uses the keys of the first map as the first element in the stream. All
-      subsequent elements are the values of the maps.
-      When set to a list, will use the given list as the first element in the stream and order all subsequent
-      elements using that list.
+    * `:headers`     – When set to `true`, uses the keys of the first map as
+      the first element in the stream. All subsequent elements are the values
+      of the maps. When set to a list, will use the given list as the first
+      element in the stream and order all subsequent elements using that list.
       When set to `false` (default), will use the raw inputs as elements.
-      When set to anything but `false`, all elements in the input stream are assumed to be maps.
+      When set to anything but `false`, all elements in the input stream are
+      assumed to be maps.
 
   ## Examples
 
@@ -39,7 +41,8 @@ defmodule CSV.Encoding.Encoder do
       iex> |> Enum.to_list()
       [\"a,b\\r\\n\", \"1,2\\r\\n\", \"3,4\\r\\n\"]
 
-  Convert a stream of rows with cells with escape sequences into a stream of lines:
+  Convert a stream of rows with cells with escape sequences into a stream of
+  lines:
 
       iex> [[\"a\\nb\", \"\\tc\"], [\"de\", \"\\tf\\\"\"]]
       iex> |> CSV.Encoding.Encoder.encode(separator: ?\\t, delimiter: \"\\n\")

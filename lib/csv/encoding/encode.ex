@@ -5,16 +5,16 @@ defprotocol CSV.Encode do
   """
 
   @doc """
-  The encode function to implement, gets passed the data and env as a keyword list containing
-  the currently used separator and delimiter.
+  The encode function to implement, gets passed the data and env as a keyword
+  list containing the currently used separator and delimiter.
   """
   def encode(data, env \\ [])
 end
 
 defimpl CSV.Encode, for: Any do
   @doc """
-  Default encoding implementation, uses the string protocol and feeds into the string encode
-  implementation
+  Default encoding implementation, uses the string protocol and feeds into the
+  string encode implementation
   """
 
   def encode(data, env \\ []) do
@@ -26,7 +26,8 @@ defimpl CSV.Encode, for: BitString do
   use CSV.Defaults
 
   @doc """
-  Standard string encoding implementation, escaping cells with double quotes where necessary.
+  Standard string encoding implementation, escaping cells with double quotes
+  where necessary.
   """
 
   def encode(data, env \\ []) do

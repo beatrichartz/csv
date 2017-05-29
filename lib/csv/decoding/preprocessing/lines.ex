@@ -14,7 +14,8 @@ defmodule CSV.Decoding.Preprocessing.Lines do
   Options get transferred from the decoder. They are:
 
     * `:separator` – The field separator
-    * `:escape_max_lines` – The maximum number of lines to collect in an escaped field
+    * `:escape_max_lines` – The maximum number of lines to collect in an
+    escaped field
   """
 
 def process(stream, options \\ []) do
@@ -23,27 +24,21 @@ def process(stream, options \\ []) do
     d_process(options)
   end
 
-  defp d_process(stream, options \\ []) do
+  defp d_process(stream, options) do
     separator = options |> Keyword.get(:separator, @separator)
     escape_max_lines = options |> Keyword.get(:escape_max_lines, @escape_max_lines)
 
     stream |>
     Stream.with_index |>
-    Stream.transform(fn -> { [], "", 0, 0 } end, fn
-      { :stream_end, _ }, { escaped_lines, _, _, _ } ->
-        { escaped_lines, { [], "", 0, 0 } }
-      { line, line_index }, { [], _, _, _ } ->
-        start_sequence(line, line_index, separator)
-      { line, line_index }, { escaped_lines, sequence_start, sequence_start_index, num_escaped_lines } when num_escaped_lines < escape_max_lines ->
-        continue_sequence(escaped_lines, num_escaped_lines + 1, line, line_index, separator, sequence_start, sequence_start_index)
-      { line, _ }, { escaped_lines, _, _, _ } ->
-        reprocess(escaped_lines ++ [line], separator, escape_max_lines)
-    end, fn _ -> end)
+    Stream.transform(
+      fn -> { [], "", 0, 0 } end,
+      &do_process(&1, &2, separator, escape_max_lines),
+      fn _ -> :ok end)
   end
-  defp do_process({ :stream_end, _ }, { escaped_lines, _, _, _ }, separator, escape_max_lines) do
+  defp do_process({ :stream_end, _ }, { escaped_lines, _, _, _ }, _, _) do
     { escaped_lines, { [], "", 0, 0 } }
   end
-  defp do_process({ line, line_index }, { [], _, _, _ }, separator, escape_max_lines) do
+  defp do_process({ line, line_index }, { [], _, _, _ }, separator, _) do
     start_sequence(line, line_index, separator)
   end
   defp do_process({ line, line_index }, { escaped_lines, sequence_start, sequence_start_index, num_escaped_lines }, separator, escape_max_lines) when num_escaped_lines < escape_max_lines do

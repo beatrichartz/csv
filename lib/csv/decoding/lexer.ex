@@ -3,18 +3,20 @@ defmodule CSV.Decoding.Lexer do
   alias CSV.EncodingError
 
   @moduledoc ~S"""
-  RFC 4180 compatible CSV lexer. Lexes tokens and sends them to the parser process.
+  RFC 4180 compatible CSV lexer. Lexes tokens and sends them to the parser
+  process.
   """
 
   @doc """
-  Lexes strings received from a sender (the decoder) and sends the resulting tokens to
-  the parser process / the receiver.
+  Lexes strings received from a sender (the decoder) and sends the resulting
+  tokens to the parser process / the receiver.
 
   ## Options
 
   Options get transferred from the decoder. They are:
 
-    * `:separator`   – The separator token to use, defaults to `?,`. Must be a codepoint.
+    * `:separator`   – The separator token to use, defaults to `?,`. Must be a
+      codepoint.
   """
 
   def lex({ line, index }, options \\ []) when is_list(options) do
