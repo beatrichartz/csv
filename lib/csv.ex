@@ -181,7 +181,12 @@ option: https://hexdocs.pm/csv/CSV.html#decode/2"
   end
 
   defp preprocess(stream, options) do
-    stream |> Preprocessing.Lines.process(options)
+    case options |> Keyword.get(:preprocessor) do
+      :none ->
+        stream |> Preprocessing.None.process(options)
+      _ ->
+        stream |> Preprocessing.Lines.process(options)
+    end
   end
 
   defp raise_errors!(stream, options) do
