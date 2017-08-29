@@ -52,9 +52,6 @@ defmodule CSV.Decoding.Lexer do
   defp lex(tokens, { :content, value }, << head :: utf8 >> <> tail, separator) do
     lex(tokens, { :content, value <> << head :: utf8 >> }, tail, separator)
   end
-  defp lex(tokens, nil, << head :: utf8 >> <> tail, separator) do
-    lex(tokens, { :content, << head :: utf8 >> }, tail, separator)
-  end
   defp lex(tokens, current_token, << head :: utf8 >> <> tail, separator) do
     lex(tokens |> add_token(current_token), { :content, << head :: utf8 >> }, tail, separator)
   end
