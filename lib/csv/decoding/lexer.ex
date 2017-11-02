@@ -18,7 +18,7 @@ defmodule CSV.Decoding.Lexer do
     * `:separator`   – The separator token to use, defaults to `?,`. Must be a
       codepoint.
 
-    * `:replacer`    – The replacement string to use when replacing bad
+    * `:replacer`    – The replacement string to use where lines have bad
       encoding. Defaults to `nil`, which disables replacement.
   """
 
