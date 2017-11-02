@@ -11,7 +11,7 @@ defmodule CSV.Defaults do
       @delimiter          << @carriage_return :: utf8 >> <> << @newline :: utf8 >>
       @double_quote       ?"
       @escape_max_lines   1000
-      @replacement           nil
+      @replacement        nil
     end
   end
 
