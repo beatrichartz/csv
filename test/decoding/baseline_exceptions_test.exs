@@ -13,13 +13,6 @@ defmodule DecodingTests.BaselineExceptionsTest do
     end)
   end
 
-  defp filter_nonerrors(stream) do
-    stream |> Stream.filter(fn
-      { :error, _, _, _ } -> false
-      _ -> true
-    end)
-  end
-
   test "produces meaningful errors for non-unicode files" do
     stream = "../fixtures/broken-encoding.csv" |> Path.expand(__DIR__) |> File.stream!
 
@@ -30,17 +23,10 @@ defmodule DecodingTests.BaselineExceptionsTest do
   end
 
   test "invalid encoding can be replaced" do
-    stream = "../fixtures/broken-encoding.csv" |> Path.expand(__DIR__) |> File.stream!
+    stream = [<<"a,", 255>>, "c,d"] |> to_stream
+    result = Decoder.decode(stream, replacer: "?") |> Enum.take(2)
 
-    errors = stream |> Decoder.decode(replacer: "?") |> filter_errors |> Enum.to_list
-    assert errors != [
-      {:error, EncodingError, "Invalid encoding", 0}
-    ]
-
-    nonerrors = stream |> Decoder.decode(replacer: "?") |> filter_nonerrors |> Enum.to_list
-    assert nonerrors == [
-      {:ok, ~w(a b c d e c ?_?)}
-    ]
+    assert result == [ok: ~w(a ?), ok: ~w(c d)]
   end
 
   test "discards any state in the current message queues when halted" do
