@@ -38,6 +38,8 @@ defmodule CSV.Decoding.Decoder do
       When set to `false` (default), will use no header values.
       When set to anything but `false`, the resulting rows in the matrix will
       be maps instead of lists.
+  * `:replacer`   – The replacement string to use where lines have bad encoding
+      , defaults to `nil` which disables replacement.
 
   ## Examples
 
