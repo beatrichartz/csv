@@ -18,18 +18,18 @@ defmodule CSV.Decoding.Lexer do
     * `:separator`   – The separator token to use, defaults to `?,`. Must be a
       codepoint.
 
-    * `:replacer`    – The replacement string to use where lines have bad
+    * `:replacement`    – The replacement string to use where lines have bad
       encoding. Defaults to `nil`, which disables replacement.
   """
 
   def lex({ line, index }, options \\ []) when is_list(options) do
     separator = options |> Keyword.get(:separator, @separator)
-    replacer = options |> Keyword.get(:replacer, @replacer)
+    replacement = options |> Keyword.get(:replacement, @replacement)
 
     case String.valid?(line) do
       false ->
-        if replacer do
-          replace_bad_encoding(line, replacer) |> lex(index, separator)
+        if replacement do
+          replace_bad_encoding(line, replacement) |> lex(index, separator)
         else
           { :error, EncodingError, "Invalid encoding", index }
         end
@@ -78,10 +78,10 @@ defmodule CSV.Decoding.Lexer do
     tokens ++ [token]
   end
 
-  defp replace_bad_encoding(line, replacer) do
+  defp replace_bad_encoding(line, replacement) do
     line
     |> String.codepoints
-    |> Enum.map(fn codepoint -> if String.valid?(codepoint), do: codepoint, else: replacer end)
+    |> Enum.map(fn codepoint -> if String.valid?(codepoint), do: codepoint, else: replacement end)
     |> Enum.join
   end
 end

@@ -24,7 +24,7 @@ defmodule DecodingTests.BaselineExceptionsTest do
 
   test "invalid encoding can be replaced" do
     stream = [<<"a,", 255>>, "c,d"] |> to_stream
-    result = Decoder.decode(stream, replacer: "?") |> Enum.take(2)
+    result = Decoder.decode(stream, replacement: "?") |> Enum.take(2)
 
     assert result == [ok: ~w(a ?), ok: ~w(c d)]
   end
