@@ -75,7 +75,7 @@ defmodule CSV.Decoding.Parser do
   defp strip(field, options) do
     strip_fields = options |> Keyword.get(:strip_fields, false)
     case strip_fields do
-      true -> field |> String.strip
+      true -> field |> String.trim
       _ -> field
     end
   end
