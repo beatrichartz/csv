@@ -47,7 +47,7 @@ defmodule CSV.Mixfile do
       {:ex_csv, ">= 0.0.0", only: :bench},
       {:csvlixir, ">= 0.0.0", only: :bench},
       {:cesso, ">= 0.0.0", only: :bench},
-      {:ex_doc, "~> 0.16", only: :docs},
+      {:ex_doc, "~> 0.18", only: :docs},
       {:inch_ex, "~> 0.5", only: :docs},
       {:earmark, "~> 1.2", only: :docs}
     ]
@@ -58,7 +58,7 @@ defmodule CSV.Mixfile do
 
     [
         source_ref: ref,
-        main: "overview"
+        main: "CSV"
     ]
   end
 end
