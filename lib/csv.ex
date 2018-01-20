@@ -63,10 +63,10 @@ defmodule CSV do
       [
         ok: [\"a\",\"b\",\"c\"],
         error: "Escape sequence started on line 2 near \\"\\\\d,e,f\\n\\" did \
-not terminate.\\n\\nEscape sequences are allowed to span up to 1000 lines. \
-This threshold avoids collecting the whole file into memory when an escape \
-sequence does not terminate. You can change it using the escape_max_lines \
-option: https://hexdocs.pm/csv/CSV.html#decode/2"
+  not terminate.\\n\\nEscape sequences are allowed to span up to 1000 lines. \
+  This threshold avoids collecting the whole file into memory when an escape \
+  sequence does not terminate. You can change it using the escape_max_lines \
+  option: https://hexdocs.pm/csv/CSV.html#decode/2"
       ]
 
   Map an existing stream of lines separated by a token to a stream of rows
