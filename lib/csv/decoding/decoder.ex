@@ -162,9 +162,13 @@ defmodule CSV.Decoding.Decoder do
   end
 
   defp with_row_length(stream, options) do
-    stream |> Stream.transform({nil, options}, &add_row_length/2)
+    row_length_option = options |> Keyword.get(:row_length, nil)
+    stream |> Stream.transform({row_length_option, options}, &add_row_length/2)
   end
 
+  defp add_row_length({line, index, headers}, {:variable, options}) do
+    {[{line, index, headers, false}], {:variable, options}}
+  end
   defp add_row_length({line, 0, false}, {row_length, options}) do
     case parse_row({line, 0}, options) do
       {:ok, row, _} ->

@@ -15,6 +15,16 @@ defmodule CSVExceptionsTest do
            ]
   end
 
+  test "decodes in normal mode not emitting errors with rows using row_length variable" do
+    stream = ~w(a,be a c,d) |> to_stream
+    result = CSV.decode(stream,[row_length: :variable]) |> Enum.to_list
+    assert result == [
+      ok: ~w(a be),
+      ok: ~w(a),
+      ok: ~w(c d)
+    ]
+  end
+
   test "decodes in strict mode raising errors" do
     stream = ~w(a,be a c,d) |> to_stream
 
@@ -22,4 +32,11 @@ defmodule CSVExceptionsTest do
       CSV.decode!(stream) |> Stream.run()
     end
   end
+
+  test "decodes in strict mode not raising errors using row_length variable" do
+    stream = ~w(a,be a c,d) |> to_stream
+
+    CSV.decode!(stream,[row_length: :variable]) |> Stream.run
+  end
+
 end
