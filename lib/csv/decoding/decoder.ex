@@ -105,13 +105,19 @@ defmodule CSV.Decoding.Decoder do
     options
     |> Keyword.merge(
         num_workers: options |> Keyword.get(:num_workers, Defaults.num_workers),
-        headers: options |> Keyword.get(:headers, false)
+        headers: options |> Keyword.get(:headers, false),
+        row_length: options |> Keyword.get(:row_length, :fixed)
        )
   end
 
   defp decode_rows(stream, options) do
     stream
-    |> ParallelStream.map(&(decode_row(&1, options)), options)
+    |> ParallelStream.map(cond do
+		Keyword.get(options, :row_length)==:variable -> 
+			&(decode_row_variable(&1, options))
+		true -> 
+			&(decode_row(&1, options))
+	end, options)
   end
 
   defp decode_row({ nil, 0 }, _) do
@@ -121,6 +127,13 @@ defmodule CSV.Decoding.Decoder do
     with { :ok, parsed, _ } <- parse_row({ line, index }, options),
          { :ok, _ } <- validate_row_length({ parsed, index }, row_length),
     do: build_row(parsed, headers)
+  end
+  defp decode_row_variable({ nil, 0 }, _) do
+    { :ok, [] }
+  end
+  defp decode_row_variable({ line, index, headers, _ }, options) do
+	with { :ok, parsed, _ } <- parse_row({ line, index }, options), 
+	do: build_row(parsed, headers)
   end
 
   defp parse_row({ line, index}, options) do
