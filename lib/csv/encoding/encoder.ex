@@ -57,14 +57,23 @@ defmodule CSV.Encoding.Encoder do
   end
 
   defp encode_stream(stream, false, options) do
-    stream |> Stream.transform(0, fn row, acc ->
-      {[encode_row(row, options)], acc + 1} end)
+    stream
+    |> Stream.transform(0, fn row, acc ->
+      {[encode_row(row, options)], acc + 1}
+    end)
   end
+
   defp encode_stream(stream, headers, options) do
-    stream |> Stream.transform(0, fn
-      row, 0 -> {[encode_row(get_headers(row, headers), options),
-                  encode_row(get_values(row, headers), options)], 1}
-      row, acc -> {[encode_row(get_values(row, headers), options)], acc + 1}
+    stream
+    |> Stream.transform(0, fn
+      row, 0 ->
+        {[
+           encode_row(get_headers(row, headers), options),
+           encode_row(get_values(row, headers), options)
+         ], 1}
+
+      row, acc ->
+        {[encode_row(get_values(row, headers), options)], acc + 1}
     end)
   end
 
@@ -78,9 +87,10 @@ defmodule CSV.Encoding.Encoder do
     separator = options |> Keyword.get(:separator, @separator)
     delimiter = options |> Keyword.get(:delimiter, @delimiter)
 
-    encoded = row
+    encoded =
+      row
       |> Enum.map(&encode_cell(&1, separator, delimiter))
-      |> Enum.join(<< separator :: utf8 >>)
+      |> Enum.join(<<separator::utf8>>)
 
     encoded <> delimiter
   end
@@ -88,5 +98,4 @@ defmodule CSV.Encoding.Encoder do
   defp encode_cell(cell, separator, delimiter) do
     CSV.Encode.encode(cell, separator: separator, delimiter: delimiter)
   end
-
 end

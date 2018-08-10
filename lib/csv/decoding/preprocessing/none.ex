@@ -12,5 +12,4 @@ defmodule CSV.Decoding.Preprocessing.None do
   def process(stream, _ \\ []) do
     stream
   end
-
 end

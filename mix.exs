@@ -3,24 +3,24 @@ defmodule CSV.Mixfile do
 
   def project do
     [
-        app: :csv,
-        version: "2.1.1",
-        elixir: "~> 1.1",
-        deps: deps(),
-        package: package(),
-        docs: &docs/0,
-        name: "CSV",
-        consolidate_protocols: true,
-        source_url: "https://github.com/beatrichartz/csv",
-        description: "CSV Decoding and Encoding for Elixir",
-        elixirc_paths: elixirc_paths(),
-        test_coverage: [tool: ExCoveralls],
-        preferred_cli_env: ["coveralls": :test, "coveralls.detail": :test, "coveralls.post": :test]
+      app: :csv,
+      version: "2.1.1",
+      elixir: "~> 1.1",
+      deps: deps(),
+      package: package(),
+      docs: &docs/0,
+      name: "CSV",
+      consolidate_protocols: true,
+      source_url: "https://github.com/beatrichartz/csv",
+      description: "CSV Decoding and Encoding for Elixir",
+      elixirc_paths: elixirc_paths(),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [coveralls: :test, "coveralls.detail": :test, "coveralls.post": :test]
     ]
   end
 
   defp elixirc_paths do
-    if Mix.env == :test do
+    if Mix.env() == :test do
       ["lib", "test/support"]
     else
       ["lib"]
@@ -33,9 +33,9 @@ defmodule CSV.Mixfile do
 
   defp package do
     [
-        maintainers: ["Beat Richartz"],
-        licenses: ["MIT"],
-        links: %{github: "https://github.com/beatrichartz/csv" }
+      maintainers: ["Beat Richartz"],
+      licenses: ["MIT"],
+      links: %{github: "https://github.com/beatrichartz/csv"}
     ]
   end
 
@@ -57,8 +57,8 @@ defmodule CSV.Mixfile do
     {ref, 0} = System.cmd("git", ["rev-parse", "--verify", "--quiet", "HEAD"])
 
     [
-        source_ref: ref,
-        main: "CSV"
+      source_ref: ref,
+      main: "CSV"
     ]
   end
 end

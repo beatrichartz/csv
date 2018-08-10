@@ -184,6 +184,7 @@ defmodule CSV do
     case options |> Keyword.get(:preprocessor) do
       :none ->
         stream |> Preprocessing.None.process(options)
+
       _ ->
         stream |> Preprocessing.Lines.process(options)
     end
@@ -195,13 +196,18 @@ defmodule CSV do
     stream |> Stream.map(&yield_or_raise!(&1, escape_max_lines))
   end
 
-  defp yield_or_raise!({ :error, EscapeSequenceError, escape_sequence, index }, escape_max_lines) do
-    raise EscapeSequenceError, escape_sequence: escape_sequence, line: index + 1, escape_max_lines: escape_max_lines 
+  defp yield_or_raise!({:error, EscapeSequenceError, escape_sequence, index}, escape_max_lines) do
+    raise EscapeSequenceError,
+      escape_sequence: escape_sequence,
+      line: index + 1,
+      escape_max_lines: escape_max_lines
   end
-  defp yield_or_raise!({ :error, mod, message, index }, _) do
+
+  defp yield_or_raise!({:error, mod, message, index}, _) do
     raise mod, message: message, line: index + 1
   end
-  defp yield_or_raise!({ :ok, row }, _), do: row
+
+  defp yield_or_raise!({:ok, row}, _), do: row
 
   defp inline_errors!(stream, options) do
     escape_max_lines = options |> Keyword.get(:escape_max_lines, @escape_max_lines)
@@ -209,12 +215,19 @@ defmodule CSV do
     stream |> Stream.map(&yield_or_inline!(&1, escape_max_lines))
   end
 
-  defp yield_or_inline!({ :error, EscapeSequenceError, escape_sequence, index }, escape_max_lines) do
-    { :error, EscapeSequenceError.exception(escape_sequence: escape_sequence, line: index + 1, escape_max_lines: escape_max_lines).message }
+  defp yield_or_inline!({:error, EscapeSequenceError, escape_sequence, index}, escape_max_lines) do
+    {:error,
+     EscapeSequenceError.exception(
+       escape_sequence: escape_sequence,
+       line: index + 1,
+       escape_max_lines: escape_max_lines
+     ).message}
   end
-  defp yield_or_inline!({ :error, errormod, message, index }, _) do
-    { :error, errormod.exception(message: message, line: index + 1).message }
+
+  defp yield_or_inline!({:error, errormod, message, index}, _) do
+    {:error, errormod.exception(message: message, line: index + 1).message}
   end
+
   defp yield_or_inline!(value, _), do: value
 
   @doc """
@@ -251,5 +264,4 @@ defmodule CSV do
   def encode(stream, options \\ []) do
     Encoder.encode(stream, options)
   end
-
 end

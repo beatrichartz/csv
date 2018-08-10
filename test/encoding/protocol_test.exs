@@ -18,7 +18,6 @@ defmodule EncodingTests.ProtocolTest do
   end
 
   test "it falls back to to_string for lists" do
-    assert CSV.Encode.encode([1,2,3]) == <<1, 2, 3>>
+    assert CSV.Encode.encode([1, 2, 3]) == <<1, 2, 3>>
   end
-
 end
