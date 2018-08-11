@@ -6,12 +6,12 @@ defmodule DecodingTests.PreprocessingTests.NoneTest do
 
   test "does pass the input to the output directly" do
     stream = ~w(g,h i,j k,l) |> to_stream
-    aggregated = stream |> None.process |> Enum.to_list
-    assert aggregated == [
-      "g,h",
-      "i,j",
-      "k,l"
-    ]
-  end
+    aggregated = stream |> None.process() |> Enum.to_list()
 
+    assert aggregated == [
+             "g,h",
+             "i,j",
+             "k,l"
+           ]
+  end
 end

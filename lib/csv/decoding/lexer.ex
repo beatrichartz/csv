@@ -22,7 +22,7 @@ defmodule CSV.Decoding.Lexer do
       encoding. Defaults to `nil`, which disables replacement.
   """
 
-  def lex({ line, index }, options \\ []) when is_list(options) do
+  def lex({line, index}, options \\ []) when is_list(options) do
     separator = options |> Keyword.get(:separator, @separator)
     replacement = options |> Keyword.get(:replacement, @replacement)
 
@@ -31,57 +31,78 @@ defmodule CSV.Decoding.Lexer do
         if replacement do
           replace_bad_encoding(line, replacement) |> lex(index, separator)
         else
-          { :error, EncodingError, "Invalid encoding", index }
+          {:error, EncodingError, "Invalid encoding", index}
         end
-      true -> lex(line, index, separator)
+
+      true ->
+        lex(line, index, separator)
     end
   end
 
   defp lex(line, index, separator) do
     case lex([], nil, line, separator) do
-      { :ok, tokens } -> { :ok, tokens, index }
+      {:ok, tokens} -> {:ok, tokens, index}
     end
   end
 
-  defp lex(tokens, { :delimiter, value }, << @newline :: utf8 >> <> tail, separator) do
-    lex(tokens, { :delimiter, value <> << @newline :: utf8 >> }, tail, separator)
+  defp lex(tokens, {:delimiter, value}, <<@newline::utf8>> <> tail, separator) do
+    lex(tokens, {:delimiter, value <> <<@newline::utf8>>}, tail, separator)
   end
-  defp lex(tokens, current_token, << @newline :: utf8 >> <> tail, separator) do
-    lex(tokens |> add_token(current_token), { :delimiter, << @newline :: utf8 >> }, tail, separator)
+
+  defp lex(tokens, current_token, <<@newline::utf8>> <> tail, separator) do
+    lex(tokens |> add_token(current_token), {:delimiter, <<@newline::utf8>>}, tail, separator)
   end
-  defp lex(tokens, current_token, << @carriage_return :: utf8 >> <> tail, separator) do
-    lex(tokens |> add_token(current_token), { :delimiter, << @carriage_return :: utf8 >> }, tail, separator)
+
+  defp lex(tokens, current_token, <<@carriage_return::utf8>> <> tail, separator) do
+    lex(
+      tokens |> add_token(current_token),
+      {:delimiter, <<@carriage_return::utf8>>},
+      tail,
+      separator
+    )
   end
-  defp lex(tokens, current_token, << @double_quote :: utf8 >> <> tail, separator) do
-    lex(tokens |> add_token(current_token), { :double_quote, << @double_quote :: utf8 >> }, tail, separator)
+
+  defp lex(tokens, current_token, <<@double_quote::utf8>> <> tail, separator) do
+    lex(
+      tokens |> add_token(current_token),
+      {:double_quote, <<@double_quote::utf8>>},
+      tail,
+      separator
+    )
   end
-  defp lex(tokens, current_token, << head :: utf8 >> <> tail, separator) when head == separator do
-    lex(tokens |> add_token(current_token), { :separator, << separator :: utf8 >> }, tail, separator)
+
+  defp lex(tokens, current_token, <<head::utf8>> <> tail, separator) when head == separator do
+    lex(tokens |> add_token(current_token), {:separator, <<separator::utf8>>}, tail, separator)
   end
-  defp lex(tokens, { :content, value }, << head :: utf8 >> <> tail, separator) do
-    lex(tokens, { :content, value <> << head :: utf8 >> }, tail, separator)
+
+  defp lex(tokens, {:content, value}, <<head::utf8>> <> tail, separator) do
+    lex(tokens, {:content, value <> <<head::utf8>>}, tail, separator)
   end
-  defp lex(tokens, nil, << head :: utf8 >> <> tail, separator) do
-    lex(tokens, { :content, << head :: utf8 >> }, tail, separator)
+
+  defp lex(tokens, nil, <<head::utf8>> <> tail, separator) do
+    lex(tokens, {:content, <<head::utf8>>}, tail, separator)
   end
-  defp lex(tokens, current_token, << head :: utf8 >> <> tail, separator) do
-    lex(tokens |> add_token(current_token), { :content, << head :: utf8 >> }, tail, separator)
+
+  defp lex(tokens, current_token, <<head::utf8>> <> tail, separator) do
+    lex(tokens |> add_token(current_token), {:content, <<head::utf8>>}, tail, separator)
   end
+
   defp lex(tokens, current_token, "", _) do
-    { :ok, tokens |> add_token(current_token) }
+    {:ok, tokens |> add_token(current_token)}
   end
 
   defp add_token(tokens, nil) do
     tokens
   end
+
   defp add_token(tokens, token) do
     tokens ++ [token]
   end
 
   defp replace_bad_encoding(line, replacement) do
     line
-    |> String.codepoints
+    |> String.codepoints()
     |> Enum.map(fn codepoint -> if String.valid?(codepoint), do: codepoint, else: replacement end)
-    |> Enum.join
+    |> Enum.join()
   end
 end

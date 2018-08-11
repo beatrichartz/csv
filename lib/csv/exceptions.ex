@@ -6,7 +6,7 @@ defmodule CSV.EncodingError do
   defexception [:line, :message]
 
   def exception(options) do
-    line    = options |> Keyword.fetch!(:line)
+    line = options |> Keyword.fetch!(:line)
     message = options |> Keyword.fetch!(:message)
 
     %__MODULE__{
@@ -24,7 +24,7 @@ defmodule CSV.RowLengthError do
   defexception [:line, :message]
 
   def exception(options) do
-    line    = options |> Keyword.fetch!(:line)
+    line = options |> Keyword.fetch!(:line)
     message = options |> Keyword.fetch!(:message)
 
     %__MODULE__{
@@ -46,7 +46,8 @@ defmodule CSV.EscapeSequenceError do
     escape_sequence = options |> Keyword.fetch!(:escape_sequence)
     escape_max_lines = options |> Keyword.fetch!(:escape_max_lines)
 
-    message = "Escape sequence started on line #{line} " <>
+    message =
+      "Escape sequence started on line #{line} " <>
         "near \"#{escape_sequence |> String.slice(0..9)}\" did not terminate.\n\n" <>
         "Escape sequences are allowed to span up to #{escape_max_lines} lines. " <>
         "This threshold avoids collecting the whole file into memory " <>
