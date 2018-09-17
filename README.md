@@ -18,14 +18,14 @@ Now.
 
 Add
 ```elixir
-{:csv, "~> 2.0.0"}
+{:csv, "~> 2.1"}
 ```
 to your deps in `mix.exs` like so:
 
 ```elixir
 defp deps do
   [
-    {:csv, "~> 2.0.0"}
+    {:csv, "~> 2.1"}
   ]
 end
 ```
