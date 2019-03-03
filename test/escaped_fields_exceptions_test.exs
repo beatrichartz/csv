@@ -32,4 +32,12 @@ defmodule DecodingTests.EscapedFieldsExceptionsTest do
              ok: ["", "c", "d"]
            ]
   end
+
+  test "raises errors for unfinished escape sequences in strict mode" do
+    stream = [",ci,\"\"\"", ",c,d"] |> to_stream
+
+    assert_raise CSV.EscapeSequenceError, fn ->
+      CSV.decode!(stream) |> Stream.run()
+    end
+  end
 end
