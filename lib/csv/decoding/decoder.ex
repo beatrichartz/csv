@@ -162,29 +162,28 @@ defmodule CSV.Decoding.Decoder do
   end
 
   defp with_row_length(stream, options) do
-    row_length_option = options |> Keyword.get(:row_length, nil)
-    stream |> Stream.transform({row_length_option, options}, &add_row_length/2)
+    validate_row_length_option = options |> Keyword.get(:validate_row_length, true)
+
+    stream |> Stream.transform({validate_row_length_option, options}, &add_row_length/2)
   end
 
-  defp add_row_length({line, index, headers}, {:variable, options}) do
-    {[{line, index, headers, false}], {:variable, options}}
+  defp add_row_length({line, index, headers}, {false, options}) do
+    {[{line, index, headers, false}], {false, options}}
   end
-  defp add_row_length({line, 0, false}, {row_length, options}) do
+  defp add_row_length({line, 0, false}, {true, options}) do
     case parse_row({line, 0}, options) do
       {:ok, row, _} ->
         row_length = row |> Enum.count()
         {[{line, 0, false, row_length}], {row_length, options}}
 
       _ ->
-        {[{line, 0, false, false}], {row_length, options}}
+        {[{line, 0, false, false}], {false, options}}
     end
   end
-
-  defp add_row_length({line, _, headers}, {nil, options}) when is_list(headers) do
+  defp add_row_length({line, _, headers}, {true, options}) when is_list(headers) do
     row_length = headers |> Enum.count()
     {[{line, 0, headers, row_length}], {row_length, options}}
   end
-
   defp add_row_length({line, index, headers}, {row_length, options}) do
     {[{line, index, headers, row_length}], {row_length, options}}
   end

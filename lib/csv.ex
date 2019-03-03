@@ -28,6 +28,9 @@ defmodule CSV do
         escape sequences
         :none -> Will not preprocess input and expects line by line input
         with multiple line escape sequences aggregated to one line
+  * `:validate_row_length` – If set to `false`, will disable validation for
+      row length. This will allow for rows with variable length. Defaults to
+      `true`
     * `:escape_max_lines` – How many lines to maximally aggregate for multiline
       escapes. Defaults to a 1000.
     * `:num_workers` – The number of parallel operations to run when
@@ -118,6 +121,9 @@ defmodule CSV do
         with multiple line escape sequences aggregated to one line
     * `:escape_max_lines` – How many lines to maximally aggregate for multiline
       escapes. Defaults to a 1000.
+    * `:validate_row_length` – If set to `false`, will disable validation for
+      row length. This will allow for rows with variable length. Defaults to
+      `true`
     * `:num_workers` – The number of parallel operations to run when
       producing the stream.
     * `:worker_work_ratio` – The available work per worker, defaults to 5.
