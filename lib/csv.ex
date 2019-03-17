@@ -5,6 +5,7 @@ defmodule CSV do
   alias CSV.Decoding.Decoder
   alias CSV.Encoding.Encoder
   alias CSV.EscapeSequenceError
+  alias CSV.StrayQuoteError
 
   @moduledoc ~S"""
   RFC 4180 compliant CSV parsing and encoding for Elixir. Allows to specify
@@ -65,7 +66,7 @@ defmodule CSV do
       iex> |> Enum.take(2)
       [
         ok: [\"a\",\"b\",\"c\"],
-        error: "Escape sequence started on line 2 near \\"\\\\d,e,f\\n\\" did \
+        error: "Escape sequence started on line 2 near \\"d,e,f\\n\\" did \
   not terminate.\\n\\nEscape sequences are allowed to span up to 1000 lines. \
   This threshold avoids collecting the whole file into memory when an escape \
   sequence does not terminate. You can change it using the escape_max_lines \
@@ -227,6 +228,14 @@ defmodule CSV do
        escape_sequence: escape_sequence,
        line: index + 1,
        escape_max_lines: escape_max_lines
+     ).message}
+  end
+
+  defp yield_or_inline!({:error, StrayQuoteError, field, index}, _) do
+    {:error,
+     StrayQuoteError.exception(
+       field: field,
+       line: index + 1
      ).message}
   end
 

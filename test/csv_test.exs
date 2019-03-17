@@ -64,10 +64,9 @@ defmodule CSVTest do
                  escape_max_lines: @escape_max_lines
                ).message,
              error:
-               CSV.EscapeSequenceError.exception(
-                 escape_sequence: "j",
-                 line: 2,
-                 escape_max_lines: @escape_max_lines
+               CSV.StrayQuoteError.exception(
+                 field: "j\"",
+                 line: 2
                ).message,
              ok: ["k", "l"]
            ]

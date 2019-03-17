@@ -3,6 +3,7 @@ defmodule DecodingTests.ParsingTests.ExceptionsTest do
 
   alias CSV.Decoding.Parser
   alias CSV.EscapeSequenceError
+  alias CSV.StrayQuoteError
 
   test "raises a escape sequence error when given an invalid sequence of tokens" do
     parsed =
@@ -64,6 +65,38 @@ defmodule DecodingTests.ParsingTests.ExceptionsTest do
 
     assert parsed == [
              {:ok, ["a", "b\"c,"], 1},
+             {:error, EscapeSequenceError, "\r\nc,d", 2}
+           ]
+  end
+
+  test "raises a stray quote error when encountering unescaped quotes in the middle of fields" do
+    parsed =
+      Enum.map(
+        [
+          {[
+             {:content, "a"},
+             {:double_quote, "\""},
+             {:separator, ","},
+             {:content, "b"},
+             {:double_quote, "\""},
+             {:double_quote, "\""},
+             {:content, "c"},
+             {:separator, ","},
+             {:double_quote, "\""}
+           ], 1},
+          {[
+             {:double_quote, "\""},
+             {:delimiter, "\r\n"},
+             {:content, "c"},
+             {:separator, ","},
+             {:content, "d"}
+           ], 2}
+        ],
+        &Parser.parse/1
+      )
+
+    assert parsed == [
+             {:error, StrayQuoteError, "a\"", 1},
              {:error, EscapeSequenceError, "\r\nc,d", 2}
            ]
   end

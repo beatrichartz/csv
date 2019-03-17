@@ -34,6 +34,27 @@ defmodule CSV.RowLengthError do
   end
 end
 
+defmodule CSV.StrayQuoteError do
+  @moduledoc """
+  Raised at runtime when the CSV row has stray quotes.
+  """
+
+  defexception [:line, :message]
+
+  def exception(options) do
+    line = options |> Keyword.fetch!(:line)
+    field = options |> Keyword.fetch!(:field)
+
+    message = "Stray quote on line " <>
+      Integer.to_string(line) <> " near \""  <> field <> "\""
+
+    %__MODULE__{
+      line: line,
+      message: message
+    }
+  end
+end
+
 defmodule CSV.EscapeSequenceError do
   @moduledoc """
   Raised at runtime when the CSV stream ends with unfinished escape sequences

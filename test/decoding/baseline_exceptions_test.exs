@@ -4,6 +4,8 @@ defmodule DecodingTests.BaselineExceptionsTest do
 
   alias CSV.Decoding.Decoder
   alias CSV.RowLengthError
+  alias CSV.EscapeSequenceError
+  alias CSV.StrayQuoteError
   alias CSV.EncodingError
 
   defp filter_errors(stream) do
@@ -68,6 +70,16 @@ defmodule DecodingTests.BaselineExceptionsTest do
     assert errors == [
              {:error, RowLengthError, "Row has length 3 - expected length 2", 1},
              {:error, RowLengthError, "Row has length 3 - expected length 2", 3}
+           ]
+  end
+
+  test "includes an error for rows with unescaped quotes" do
+    stream = ["a\",\"be", "\"c,d"] |> to_stream
+    errors = stream |> Decoder.decode() |> Enum.to_list()
+
+    assert errors == [
+             {:error, StrayQuoteError, "a\"", 0},
+             {:error, EscapeSequenceError, "c,d", 1}
            ]
   end
 
