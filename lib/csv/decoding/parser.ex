@@ -100,8 +100,8 @@ defmodule CSV.Decoding.Parser do
       {:delimiter, _} ->
         parse(row, field, tokens, :unescaped, options)
 
-      {:double_quote, content} ->
-        parse(row, field <> content, tokens, :inline_quote, options)
+      {:double_quote, _} ->
+        parse(row, field, tokens, :inline_quote, options)
     end
   end
 

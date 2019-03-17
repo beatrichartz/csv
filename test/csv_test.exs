@@ -65,7 +65,7 @@ defmodule CSVTest do
                ).message,
              error:
                CSV.StrayQuoteError.exception(
-                 field: "j\"",
+                 field: "j",
                  line: 2
                ).message,
              ok: ["k", "l"]

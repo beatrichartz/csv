@@ -85,8 +85,8 @@ defmodule DecodingTests.ParsingTests.ExceptionsTest do
              {:double_quote, "\""}
            ], 1},
           {[
+             {:content, "c"},
              {:double_quote, "\""},
-             {:delimiter, "\r\n"},
              {:content, "c"},
              {:separator, ","},
              {:content, "d"}
@@ -96,8 +96,8 @@ defmodule DecodingTests.ParsingTests.ExceptionsTest do
       )
 
     assert parsed == [
-             {:error, StrayQuoteError, "a\"", 1},
-             {:error, EscapeSequenceError, "\r\nc,d", 2}
+             {:error, StrayQuoteError, "a", 1},
+             {:error, StrayQuoteError, "c", 2}
            ]
   end
 

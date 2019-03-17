@@ -74,12 +74,13 @@ defmodule DecodingTests.BaselineExceptionsTest do
   end
 
   test "includes an error for rows with unescaped quotes" do
-    stream = ["a\",\"be", "\"c,d"] |> to_stream
+    stream = ["a\",\"be", "\"c,d", "\"e,f\"g\",h"] |> to_stream
     errors = stream |> Decoder.decode() |> Enum.to_list()
 
     assert errors == [
-             {:error, StrayQuoteError, "a\"", 0},
-             {:error, EscapeSequenceError, "c,d", 1}
+             {:error, StrayQuoteError, "a", 0},
+             {:error, EscapeSequenceError, "c,d", 1},
+             {:error, StrayQuoteError, "e,f", 2}
            ]
   end
 

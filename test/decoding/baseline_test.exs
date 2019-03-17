@@ -34,6 +34,13 @@ defmodule DecodingTests.BaselineTest do
     assert result == [ok: ["a", "be"], ok: ["c\"", "d"]]
   end
 
+  test "parses strings that contain escaped double quotes" do
+    stream = ["a,be", "c\"\",d"] |> to_stream
+    result = Decoder.decode(stream) |> Enum.to_list()
+
+    assert result == [ok: ["a", "be"], ok: ["c\"", "d"]]
+  end
+
   test "parses strings that contain multi-byte unicode characters" do
     stream = ["a,b", "c,ಠ_ಠ"] |> to_stream
     result = Decoder.decode(stream) |> Enum.to_list()
