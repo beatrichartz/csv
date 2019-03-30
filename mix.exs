@@ -42,7 +42,7 @@ defmodule CSV.Mixfile do
   defp deps do
     [
       {:parallel_stream, "~> 1.0.4"},
-      {:excoveralls, "~> 0.6", only: :test},
+      {:excoveralls, "~> 0.5", only: :test},
       {:benchfella, ">= 0.0.0", only: :bench},
       {:ex_csv, ">= 0.0.0", only: :bench},
       {:csvlixir, ">= 0.0.0", only: :bench},
