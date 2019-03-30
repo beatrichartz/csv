@@ -4,9 +4,9 @@ pushd $DIR/.. > /dev/null
 
 MIX_ENV=test
 
-ELIXIR_IS_1_4=$(elixir -v | grep 1.4)
+ELIXIR_IS_1_8=$(elixir -v | grep 1.8)
 
-if [ -n "$ELIXIR_IS_1_4" ]; then
+if [ -n "$ELIXIR_IS_1_8" ]; then
   mix coveralls.travis
 fi
 
