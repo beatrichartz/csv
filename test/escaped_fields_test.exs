@@ -9,6 +9,13 @@ defmodule EscapedFieldsTest do
     assert result == [["a", "be\r\nc,d\r\ne,f"], ~w(g h)]
   end
 
+  test "does parse escape sequences in each field correctly" do
+    stream = ["a,\"b\",\"c\"\n", "\"d\",e,\"f\"\"\"\n"] |> to_stream
+    result = CSV.decode(stream) |> Enum.take(2)
+
+    assert result == [ok: ["a", "b", "c"], ok: ["d", "e", "f\""]]
+  end
+
   test "collects rows with fields and escape sequences spanning multiple lines" do
     stream =
       [

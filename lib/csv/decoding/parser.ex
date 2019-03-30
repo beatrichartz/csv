@@ -50,6 +50,9 @@ defmodule CSV.Decoding.Parser do
       {:separator, _} ->
         parse(row ++ [field |> strip(options)], "", tokens, :unescaped, options)
 
+      {:delimiter, _} ->
+        parse(row, field, tokens, :unescaped, options)
+
       _ ->
         {:error, StrayQuoteError, field}
     end
