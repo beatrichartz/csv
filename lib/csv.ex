@@ -29,7 +29,7 @@ defmodule CSV do
         escape sequences
         :none -> Will not preprocess input and expects line by line input
         with multiple line escape sequences aggregated to one line
-  * `:validate_row_length` – If set to `false`, will disable validation for
+    * `:validate_row_length` – If set to `false`, will disable validation for
       row length. This will allow for rows with variable length. Defaults to
       `true`
     * `:escape_max_lines` – How many lines to maximally aggregate for multiline
