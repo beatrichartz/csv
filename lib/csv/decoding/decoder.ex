@@ -180,9 +180,9 @@ defmodule CSV.Decoding.Decoder do
         {[{line, 0, false, false}], {false, options}}
     end
   end
-  defp add_row_length({line, _, headers}, {true, options}) when is_list(headers) do
+  defp add_row_length({line, index, headers}, {true, options}) when is_list(headers) do
     row_length = headers |> Enum.count()
-    {[{line, 0, headers, row_length}], {row_length, options}}
+    {[{line, index, headers, row_length}], {row_length, options}}
   end
   defp add_row_length({line, index, headers}, {row_length, options}) do
     {[{line, index, headers, row_length}], {row_length, options}}

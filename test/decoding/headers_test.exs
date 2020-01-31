@@ -33,4 +33,42 @@ defmodule DecodingTests.HeadersTest do
              ok: %{:a => "c", :b => "d"}
            ]
   end
+
+  test "reports correct error when headers is false" do
+    stream = ["a,b", "c"] |> to_stream()
+    result = Decoder.decode(stream, headers: false) |> Enum.to_list()
+
+    assert result == [
+      {:ok, ["a", "b"]},
+      {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 1}
+    ]
+  end
+
+  test "reports correct error index when headers is true, error on index 1" do
+    stream = ["a,b", "c"] |> to_stream()
+    result = Decoder.decode(stream, headers: true) |> Enum.to_list()
+
+    assert result == [
+      {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 1}
+    ]
+  end
+
+  test "reports correct error index when headers is true, error on index 2" do
+    stream = ["a,b", "c,d", "e"] |> to_stream()
+    result = Decoder.decode(stream, headers: true) |> Enum.to_list()
+
+    assert result == [
+      {:ok, %{"a" => "c", "b" => "d"}},
+      {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 2}
+    ]
+  end
+
+  test "reports correct error index when headers is a list" do
+    stream = ["a"] |> to_stream()
+    result = Decoder.decode(stream, headers: [:a, :b]) |> Enum.to_list()
+
+    assert result == [
+      {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 0}
+    ]
+  end
 end
