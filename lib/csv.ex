@@ -247,7 +247,7 @@ defmodule CSV do
      EscapeSequenceError.exception(
        escape_sequence: escape_sequence,
        line: index + 1,
-       escape_max_lines: escape_max_lines,
+       escape_max_lines: escape_max_lines
      ).message, raw_line}
   end
 
