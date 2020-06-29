@@ -45,6 +45,8 @@ defmodule CSV do
       When set to `false` (default), will use no header values.
       When set to anything but `false`, the resulting rows in the matrix will
       be maps instead of lists.
+    * `:raw_line_on_error` – When set to true, raw csv line will be returned on
+      error tuples. Defaults to false.
 
   ## Examples
 
@@ -209,9 +211,19 @@ defmodule CSV do
       line: index + 1,
       escape_max_lines: escape_max_lines
   end
+  defp yield_or_raise!({:error, EscapeSequenceError, escape_sequence, index, raw_line}, escape_max_lines) do
+    raise EscapeSequenceError,
+      escape_sequence: escape_sequence,
+      line: index + 1,
+      escape_max_lines: escape_max_lines,
+      raw_line: raw_line
+  end
 
   defp yield_or_raise!({:error, mod, message, index}, _) do
     raise mod, message: message, line: index + 1
+  end
+  defp yield_or_raise!({:error, mod, message, index, raw_line}, _) do
+    raise mod, message: message, line: index + 1, raw_line: raw_line
   end
 
   defp yield_or_raise!({:ok, row}, _), do: row
@@ -230,6 +242,14 @@ defmodule CSV do
        escape_max_lines: escape_max_lines
      ).message}
   end
+  defp yield_or_inline!({:error, EscapeSequenceError, escape_sequence, index, raw_line}, escape_max_lines) do
+    {:error,
+     EscapeSequenceError.exception(
+       escape_sequence: escape_sequence,
+       line: index + 1,
+       escape_max_lines: escape_max_lines,
+     ).message, raw_line}
+  end
 
   defp yield_or_inline!({:error, StrayQuoteError, field, index}, _) do
     {:error,
@@ -238,9 +258,19 @@ defmodule CSV do
        line: index + 1
      ).message}
   end
+  defp yield_or_inline!({:error, StrayQuoteError, field, index, raw_line}, _) do
+    {:error,
+     StrayQuoteError.exception(
+       field: field,
+       line: index + 1
+     ).message, raw_line}
+  end
 
   defp yield_or_inline!({:error, errormod, message, index}, _) do
     {:error, errormod.exception(message: message, line: index + 1).message}
+  end
+  defp yield_or_inline!({:error, errormod, message, index, raw_line}, _) do
+    {:error, errormod.exception(message: message, line: index + 1).message, raw_line}
   end
 
   defp yield_or_inline!(value, _), do: value
