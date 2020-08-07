@@ -129,7 +129,23 @@ defmodule CSV.Decoding.Decoder do
   end
 
   defp build_row(data, headers) when is_list(headers) do
-    {:ok, headers |> Enum.zip(data) |> Enum.into(%{})}
+    zipped_data =
+      headers
+      |> Enum.zip(data)
+      |> Enum.reduce(%{}, fn {k, v}, acc ->
+        case Map.get(acc, k, :default_value) do
+          arr when is_list(arr) ->
+            Map.put(acc, k, arr ++ [v])
+
+          :default_value ->
+            Map.put(acc, k, v)
+
+          x ->
+            Map.put(acc, k, [x, v])
+        end
+      end)
+
+    {:ok, zipped_data |> Enum.into(%{})}
   end
 
   defp build_row(data, _), do: {:ok, data}
