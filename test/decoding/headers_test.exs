@@ -36,14 +36,14 @@ defmodule DecodingTests.HeadersTest do
 
   test "parses strings into maps when there are duplicate headers" do
     stream = [
-      "a,b,c,c,d",
-      "a1,b1,c1,c2,d1"
+      "a,b,c,c,d,d,d",
+      "a1,b1,c1,c2,d1,d2,d3"
     ] |> to_stream
 
     result = Decoder.decode(stream, headers: true) |> Enum.to_list()
 
     assert result |> Enum.sort() == [
-             ok: %{"a" => "a1", "b" => "b1", "c" => ["c1", "c2"], "d" => "d1"}
+             ok: %{"a" => "a1", "b" => "b1", "c" => ["c1", "c2"], "d" => ["d1","d2","d3"]}
            ]
   end
 
