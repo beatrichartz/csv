@@ -47,7 +47,7 @@ defmodule CSV.Encoding.Encoder do
       iex> [[\"a\\nb\", \"\\tc\"], [\"de\", \"\\tf\\\"\"]]
       iex> |> CSV.Encoding.Encoder.encode(separator: ?\\t, delimiter: \"\\n\")
       iex> |> Enum.take(2)
-      [\"\\\"a\\\\nb\\\"\\t\\\"\\\\tc\\\"\\n\", \"de\\t\\\"\\\\tf\\\"\\\"\\\"\\n\"]
+      [\"\\\"a\\nb\\\"\\t\\\"\\tc\\\"\\n\", \"de\\t\\\"\\tf\\\"\\\"\\\"\\n\"]
   """
 
   def encode(stream, options \\ []) do
