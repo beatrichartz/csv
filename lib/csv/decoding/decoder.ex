@@ -39,6 +39,8 @@ defmodule CSV.Decoding.Decoder do
       be maps instead of lists.
   * `:replacement`   – The replacement string to use where lines have bad
       encoding. Defaults to `nil`, which disables replacement.
+  * `:raw_line_on_error` – When set to true, raw csv line will be returned on
+      error tuples. Defaults to false.
 
   ## Examples
 
@@ -131,13 +133,16 @@ defmodule CSV.Decoding.Decoder do
 
   defp decode_row({line, index, headers, row_length}, options) do
     with {:ok, parsed, _} <- parse_row({line, index}, options),
-         {:ok, _} <- validate_row_length({parsed, index}, row_length),
+         {:ok, _} <- validate_row_length({parsed, line, index}, row_length, options),
          do: build_row(parsed, headers)
   end
 
   defp parse_row({line, index}, options) do
-    with {:ok, lex, _} <- Lexer.lex({line, index}, options),
-         do: Parser.parse({lex, index}, options)
+    with {:ok, lex, _} <- Lexer.lex({line, index}, options) do 
+      Parser.parse({lex, line, index}, options)
+    else
+      error -> Parser.append_raw_line?(error, line, options)
+    end
   end
 
   defp build_row(data, headers) when is_list(headers) do
@@ -216,17 +221,18 @@ defmodule CSV.Decoding.Decoder do
     {[{line, index, headers, row_length}], {row_length, options}}
   end
 
-  defp validate_row_length({data, _}, false), do: {:ok, data}
-  defp validate_row_length({data, _}, nil), do: {:ok, data}
+  defp validate_row_length({data, _, _}, false, _), do: {:ok, data}
+  defp validate_row_length({data, _, _}, nil, _), do: {:ok, data}
 
-  defp validate_row_length({data, index}, expected_length) do
+  defp validate_row_length({data, line, index}, expected_length, options) do
     case data |> Enum.count() do
       ^expected_length ->
         {:ok, data}
 
       actual_length ->
-        {:error, RowLengthError,
-         "Row has length #{actual_length} - expected length #{expected_length}", index}
+        message = "Row has length #{actual_length} - expected length #{expected_length}"
+        {:error, RowLengthError, message, index}
+        |> Parser.append_raw_line?(line, options)
     end
   end
 end

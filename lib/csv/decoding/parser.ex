@@ -17,14 +17,21 @@ defmodule CSV.Decoding.Parser do
 
     * `:strip_fields` – When set to true, will strip whitespace from fields.
       Defaults to false.
+    * `:raw_line_on_error` – When set to true, raw csv line will be returned on
+      error tuples. Defaults to false.
   """
 
   def parse(message, options \\ [])
 
-  def parse({tokens, index}, options) do
+  def parse({tokens, index}, options), 
+    do: parse({tokens, "", index}, options)
+
+  def parse({tokens, raw_line, index}, options) do
     case parse([], "", tokens, :unescaped, options) do
       {:ok, row} -> {:ok, row, index}
-      {:error, type, message} -> {:error, type, message, index}
+      {:error, type, message} -> 
+        {:error, type, message, index}
+        |> append_raw_line?(raw_line, options)
     end
   end
 
@@ -124,4 +131,13 @@ defmodule CSV.Decoding.Parser do
       _ -> field
     end
   end
+
+  @doc false
+  def append_raw_line?(error_tuple, raw_line, options) do
+    raw_line_on_error = options |> Keyword.get(:raw_line_on_error, false)
+    do_append_raw_line?(error_tuple, raw_line, raw_line_on_error)
+  end
+  defp do_append_raw_line?(error_tuple, raw_line, true = _raw_line_on_error),
+    do: Tuple.append(error_tuple, raw_line)
+  defp do_append_raw_line?(error_tuple, _raw_line, _raw_line_on_error), do: error_tuple
 end
