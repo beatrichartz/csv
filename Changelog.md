@@ -1,3 +1,6 @@
+## 2.4.1
+- Fix unnecessary escaping of delimiters when encoding [Fixes #70](https://github.com/beatrichartz/csv/issues/70)
+  reported by [@karmajunkie](https://github.com/karmajunkie)
 ## 2.4.0
 - Fix [StrayQuoteError](https://hexdocs.pm/csv/CSV.StrayQuoteError.html) not getting 
   passed the correct arguments in strict mode. [Fixes #96](https://github.com/beatrichartz/csv/issues/96).
