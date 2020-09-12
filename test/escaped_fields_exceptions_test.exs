@@ -40,4 +40,12 @@ defmodule DecodingTests.EscapedFieldsExceptionsTest do
       CSV.decode!(stream) |> Stream.run()
     end
   end
+
+  test "raises errors for stray quotes in strict mode" do
+    stream = [",ci\",", ",c,d"] |> to_stream
+
+    assert_raise CSV.StrayQuoteError, fn ->
+      CSV.decode!(stream) |> Stream.run()
+    end
+  end
 end

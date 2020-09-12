@@ -210,6 +210,12 @@ defmodule CSV do
       escape_max_lines: escape_max_lines
   end
 
+  defp yield_or_raise!({:error, StrayQuoteError, field, index}, _) do
+     raise StrayQuoteError,
+       field: field,
+       line: index + 1
+  end
+
   defp yield_or_raise!({:error, mod, message, index}, _) do
     raise mod, message: message, line: index + 1
   end
