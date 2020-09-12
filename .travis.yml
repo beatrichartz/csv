@@ -1,20 +1,30 @@
 language: elixir
-elixir:
-  - 1.10
-  - 1.9
-  - 1.8
-  - 1.7
-  - 1.6
-  - 1.5
-  - 1.4
-  - 1.3
+jobs:
+include:
+  - elixir: 1.10
+    otp_release: 23.0.4
+  - elixir: 1.9
+    otp_release: 22.3.4
+  - elixir: 1.8
+    otp_release: 21.3.8
+  - elixir: 1.7
+    otp_release: 21.3.8
+  - elixir: 1.6
+    otp_release: 20.3.8
+  - elixir: 1.5
+    otp_release: 19.3.6
+  - elixir: 1.4
+    otp_release: 18.3.4
+  - elixir: 1.3
+    otp_release: 18.3.4
+
 sudo: false
 before_script:
   - mix deps.get --only test
 env:
   - MIX_ENV=test
 script:
-  - ./scripts/
+  - ./scripts/ci
 after_script:
   - mix deps.get --only docs
   - MIX_ENV=docs mix inch.report
