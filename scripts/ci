@@ -1,0 +1,11 @@
+#!/bin/sh
+
+echo "OTP release is $TRAVIS_OTP_RELEASE"
+
+if echo $TRAVIS_OTP_RELEASE | grep -q -e '^\(21\|22\|23\).'; then
+  echo "Running with coverage enabled."
+  mix coveralls.travis
+else
+  echo "Running without coverage."
+  mix test
+fi
