@@ -62,6 +62,18 @@ defmodule CSV.Decoding.Decoder do
         ok: %{\"a\" => \"e\", \"b\" => \"f\"}
       ]
 
+  Map an existing stream of lines separated by a token to a stream of rows with 
+  a header row with duplications:
+
+      iex> [\"a;b;b\",\"c;d;e\", \"f;g;h\"]
+      ...> |> Stream.map(&(&1))
+      ...> |> CSV.Decoding.Decoder.decode(separator: ?;, headers: true)
+      ...> |> Enum.take(2)
+      [
+        ok: %{\"a\" => \"c\", \"b\" => [\"d\", \"e\"]},
+        ok: %{\"a\" => \"f\", \"b\" => [\"g\", \"h\"]}
+      ]
+
   Map an existing stream of lines separated by a token to a stream of rows
   with a given header row:
 
@@ -132,20 +144,20 @@ defmodule CSV.Decoding.Decoder do
     zipped_data =
       headers
       |> Enum.zip(data)
-      |> Enum.reduce(%{}, fn {k, v}, acc ->
-        case Map.get(acc, k, :default_value) do
-          arr when is_list(arr) ->
-            Map.put(acc, k, arr ++ [v])
-
+      |> Enum.reduce(%{}, fn {key, value}, row ->
+        case Map.get(row, key, :default_value) do
           :default_value ->
-            Map.put(acc, k, v)
+            Map.put(row, key, value)
 
-          x ->
-            Map.put(acc, k, [x, v])
+          multiple_values when is_list(multiple_values) ->
+            Map.put(row, key, multiple_values ++ [value])
+
+          existing_value ->
+            Map.put(row, key, [existing_value, value])
         end
       end)
 
-    {:ok, zipped_data |> Enum.into(%{})}
+    {:ok, zipped_data}
   end
 
   defp build_row(data, _), do: {:ok, data}
