@@ -1,6 +1,13 @@
+## 2.3.1
+- Fix [StrayQuoteError](https://hexdocs.pm/csv/CSV.StrayQuoteError.html) incorrectly getting raised when escape sequences end in new lines. [Fixes #89](https://github.com/beatrichartz/csv/issues/89).
+
+## 2.3.0
+- Add [StrayQuoteError](https://hexdocs.pm/csv/CSV.StrayQuoteError.html) which gets raised when a row has stray quotes rather than [EscapeSequenceError](https://hexdocs.pm/csv/CSV.EscapeSequenceError.html#content) to help with common encoding errors.
+
 ## 2.2.0
 - Make syntax compatible with latest Elixir releases
 - Add [`validate_row_length:` option](https://hexdocs.pm/csv/CSV.html#decode/2-options) defaulting to true to allow disabling validation of row length.
+
 ## 2.0.0
 - Make [`decode`](https://hexdocs.pm/csv/CSV.html#decode/2) return row and
   error tuples instead of raising errors directly
