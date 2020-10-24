@@ -150,6 +150,25 @@ to get good performance.
 
 There is more to know about everything :tm: - [Check the doc](http://hexdocs.pm/csv/)
 
+## Decoding with column headers
+
+When decoding, one may include optional params for headers and atomize them:
+````elixir
+File.stream!("data.csv") |> CSV.decode(headers: true)
+# [ok: %{"col_one" => "c", "col_two" => "d"},
+#  ok: %{"col_one" => "e", "col_two" => "f"}]
+
+# atomize_headers: :safe - exception will be thrown if limit of atoms is reached and no new atoms can be created
+File.stream!("data.csv") |> CSV.decode(headers: true, atomize_headers: :safe)
+# [ok: %{:col_one => "c", :col_two => "d"},
+#  ok: %{:col_one => "e", :col_two => "f"}]
+
+# atomize_headers: :unsafe - elixir application will be knoked out if limit of atoms is reached
+File.stream!("data.csv") |> CSV.decode(headers: true, atomize_headers: :unsafe)
+# [ok: %{:col_one => "c", :col_two => "d"},
+#  ok: %{:col_one => "e", :col_two => "f"}]
+````
+
 ## License
 
 MIT

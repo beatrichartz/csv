@@ -37,6 +37,11 @@ defmodule CSV.Decoding.Decoder do
       When set to `false` (default), will use no header values.
       When set to anything but `false`, the resulting rows in the matrix will
       be maps instead of lists.
+  * `:atomize_headers` – When used `headers: true`, user can additionally
+      convert column headers to atoms with `:safe` value for sanitized
+      conversion to String (throws erorr when atom limit is reached) or
+      `:unsafe` for conversion, which does not check atom limit for the
+      application
   * `:replacement`   – The replacement string to use where lines have bad
       encoding. Defaults to `nil`, which disables replacement.
 
@@ -98,6 +103,20 @@ defmodule CSV.Decoding.Decoder do
         ok: %{\"id\" => \"1\", \"name\" => \"Jane\"},
         ok: %{\"id\" => \"2\", \"name\" => \"George\"},
         ok: %{\"id\" => \"3\", \"name\" => \"John\"}
+      ]
+
+  Decode a CSV string and atomize the headers:
+
+      iex> csv_string = \"id,name\\r\\n1,Jane\\r\\n2,George\\r\\n3,John\"
+      ...> {:ok, out} = csv_string |> StringIO.open
+      ...> out
+      ...> |> IO.binstream(:line)
+      ...> |> CSV.Decoding.Decoder.decode(headers: true, atomize_headers: :safe)
+      ...> |> Enum.map(&(&1))
+      [
+        ok: %{:id => \"1\", :name => \"Jane\"},
+        ok: %{:id => \"2\", :name => \"George\"},
+        ok: %{:id => \"3\", :name => \"John\"}
       ]
 
   """
@@ -174,7 +193,30 @@ defmodule CSV.Decoding.Decoder do
   defp add_headers({line, 0}, {true, options}) do
     case parse_row({line, 0}, options) do
       {:ok, headers, _} ->
-        {[], {headers, options}}
+        case options[:atomize_headers] do
+          :safe ->
+            {
+              [],
+              {
+                headers
+                |> Enum.map(fn (header) -> String.to_existing_atom(header) end),
+                options
+              }
+            }
+          
+          :unsafe ->
+            {
+              [],
+              {
+                headers
+                |> Enum.map(fn (header) -> String.to_atom(header) end),
+                options
+              }
+            }
+          
+          _ ->
+            {[], {headers, options}}
+        end
 
       _ ->
         {[], {false, options}}
