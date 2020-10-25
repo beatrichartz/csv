@@ -78,10 +78,24 @@ defmodule CSV.Encoding.Encoder do
   end
 
   defp get_headers(row, true), do: Map.keys(row)
-  defp get_headers(_row, headers), do: headers
+
+  defp get_headers(_row, headers) do
+    if Keyword.keyword?(headers) do
+      Keyword.values(headers)
+    else
+      headers
+    end
+  end
 
   defp get_values(row, true), do: Map.values(row)
-  defp get_values(row, headers), do: headers |> Enum.map(&Map.get(row, &1))
+
+  defp get_values(row, headers) do
+    if Keyword.keyword?(headers) do
+      headers |> Enum.map(fn {k, _} -> Map.get(row, k) end)
+    else
+      headers |> Enum.map(&Map.get(row, &1))
+    end
+  end
 
   defp encode_row(row, options) do
     separator = options |> Keyword.get(:separator, @separator)
