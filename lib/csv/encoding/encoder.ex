@@ -80,6 +80,7 @@ defmodule CSV.Encoding.Encoder do
   end
 
   defp get_headers(row, true), do: Map.keys(row)
+
   defp get_headers(_row, headers) do
     if Keyword.keyword?(headers) do
       Keyword.values(headers)
@@ -89,6 +90,7 @@ defmodule CSV.Encoding.Encoder do
   end
 
   defp get_values(row, true), do: Map.values(row)
+
   defp get_values(row, headers) do
     if Keyword.keyword?(headers) do
       headers |> Enum.map(fn {k, _} -> Map.get(row, k) end)
