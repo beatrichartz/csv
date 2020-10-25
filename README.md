@@ -123,6 +123,14 @@ the right place:
 # ["z,a\\r\\n", ",value!\\r\\n"]
 ````
 
+You can also specify a keyword list, the keys of the list will be used as the keys for the rows, 
+but the values will be the value used for the header row name in CSV output
+
+````elixir
+[%{a: "value!"}] |> CSV.encode(headers: [a: "x", b: "y"])
+# ["x,y\\r\\n", "value!,\\r\\n"]
+````
+
 You'll surely appreciate some [more info on `encode`](https://hexdocs.pm/csv/CSV.html#encode/2).
 
 ## Polymorphic encoding
