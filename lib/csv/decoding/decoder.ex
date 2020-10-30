@@ -193,30 +193,18 @@ defmodule CSV.Decoding.Decoder do
   defp add_headers({line, 0}, {true, options}) do
     case parse_row({line, 0}, options) do
       {:ok, headers, _} ->
-        case options[:atomize_headers] do
-          :safe ->
-            {
-              [],
-              {
-                headers
-                |> Enum.map(fn (header) -> String.to_existing_atom(header) end),
-                options
-              }
-            }
-          
-          :unsafe ->
-            {
-              [],
-              {
-                headers
-                |> Enum.map(fn (header) -> String.to_atom(header) end),
-                options
-              }
-            }
-          
-          _ ->
-            {[], {headers, options}}
-        end
+        transform_headers =
+          case options[:atomize_headers] do
+            :safe ->
+              Enum.map(headers, &String.to_existing_atom/1)
+            
+            :unsafe ->
+              Enum.map(headers, &String.to_atom/1)
+            
+            _ ->
+              headers
+          end
+        {[], {transform_headers, options}}
 
       _ ->
         {[], {false, options}}
