@@ -84,4 +84,51 @@ defmodule DecodingTests.HeadersTest do
       {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 0}
     ]
   end
+
+  @tag :atomize_headers
+  test "parses strings into maps when headers are set to true and atomize_headers to safe" do
+    stream = ["a,be", "c,d", "e,f"] |> to_stream
+    result = Decoder.decode(stream, headers: true, atomize_headers: :safe) |> Enum.to_list()
+
+    assert result |> Enum.sort() == [
+             ok: %{:a => "c", :be => "d"},
+             ok: %{:a => "e", :be => "f"}
+           ]
+  end
+
+  @tag :atomize_headers
+  test "parses strings into maps when headers are set to true and atomize_headers to unsafe" do
+    stream = ["a,be", "c,d", "e,f"] |> to_stream
+    result = Decoder.decode(stream, headers: true, atomize_headers: :unsafe) |> Enum.to_list()
+
+    assert result |> Enum.sort() == [
+             ok: %{:a => "c", :be => "d"},
+             ok: %{:a => "e", :be => "f"}
+           ]
+  end
+
+  @tag :atomize_headers
+  test "parses strings into maps when headers (were not atomized yet) set to true and atomize_headers to unsafe" do
+    stream = ["p,o", "c,d", "e,f"] |> to_stream
+    result = Decoder.decode(stream, headers: true, atomize_headers: :unsafe) 
+            |> Enum.to_list()
+    
+    keys = result |> Enum.flat_map(fn {_k, v} -> Map.keys(v) end)
+
+    assert Enum.all?(keys, fn (k) -> is_atom(k) end)
+  end
+
+  @tag :atomize_headers
+  test "parses strings into maps when there are duplicate headers with atomized_headers" do
+    stream = [
+      "a,b,c,c,d,d,d",
+      "a1,b1,c1,c2,d1,d2,d3"
+    ] |> to_stream
+
+    result = Decoder.decode(stream, headers: true, atomize_headers: :safe) |> Enum.to_list()
+
+    assert result |> Enum.sort() == [
+             ok: %{:a => "a1", :b => "b1", :c => ["c1", "c2"], :d => ["d1","d2","d3"]}
+           ]
+  end
 end
