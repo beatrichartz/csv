@@ -1,6 +1,8 @@
 defmodule CSV.Mixfile do
   use Mix.Project
 
+  @source_url "https://github.com/beatrichartz/csv"
+
   def project do
     [
       app: :csv,
@@ -11,7 +13,7 @@ defmodule CSV.Mixfile do
       docs: &docs/0,
       name: "CSV",
       consolidate_protocols: true,
-      source_url: "https://github.com/beatrichartz/csv",
+      source_url: @source_url,
       description: "CSV Decoding and Encoding for Elixir",
       elixirc_paths: elixirc_paths(),
       test_coverage: [tool: ExCoveralls],
@@ -35,7 +37,7 @@ defmodule CSV.Mixfile do
     [
       maintainers: ["Beat Richartz"],
       licenses: ["MIT"],
-      links: %{github: "https://github.com/beatrichartz/csv"}
+      links: %{GitGub: @source_url}
     ]
   end
 
@@ -47,7 +49,7 @@ defmodule CSV.Mixfile do
       {:ex_csv, ">= 0.0.0", only: :bench},
       {:csvlixir, ">= 0.0.0", only: :bench},
       {:cesso, ">= 0.0.0", only: :bench},
-      {:ex_doc, "~> 0.18", only: :docs},
+      {:ex_doc, ">= 0.0.0", only: :docs},
       {:inch_ex, "~> 0.5", only: :docs},
       {:earmark, "~> 1.2", only: :docs}
     ]
@@ -57,8 +59,9 @@ defmodule CSV.Mixfile do
     {ref, 0} = System.cmd("git", ["rev-parse", "--verify", "--quiet", "HEAD"])
 
     [
-      source_ref: ref,
-      main: "CSV"
+      extras: ["CHANGELOG.md", "README.md"],
+      main: "readme",
+      source_ref: ref
     ]
   end
 end
