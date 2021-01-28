@@ -1,9 +1,10 @@
-# CSV [![Build Status](https://travis-ci.org/beatrichartz/csv.svg?branch=master)](https://travis-ci.org/beatrichartz/csv) [![Coverage Status](https://coveralls.io/repos/github/beatrichartz/csv/badge.svg?branch=master)](https://coveralls.io/github/beatrichartz/csv?branch=master) [![Inline docs](http://inch-ci.org/github/beatrichartz/csv.svg?branch=master)](http://inch-ci.org/github/beatrichartz/csv) [![Hex pm](http://img.shields.io/hexpm/v/csv.svg?style=flat)](https://hex.pm/packages/csv) [![Downloads](https://img.shields.io/hexpm/dw/csv.svg?style=flat)](https://hex.pm/packages/csv)
+# CSV [![Build Status](https://travis-ci.org/beatrichartz/csv.svg?branch=master)](https://travis-ci.org/beatrichartz/csv) [![Coverage Status](https://coveralls.io/repos/github/beatrichartz/csv/badge.svg?branch=master)](https://coveralls.io/github/beatrichartz/csv?branch=master) [![Inline docs](http://inch-ci.org/github/beatrichartz/csv.svg?branch=master)](http://inch-ci.org/github/beatrichartz/csv) [![Hex pm](http://img.shields.io/hexpm/v/csv.svg?style=flat)](https://hex.pm/packages/csv) [![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/csv/) [![License](https://img.shields.io/hexpm/l/csv.svg)](https://github.com/beatrichartz/csv/blob/master/LICENSE) [![Downloads](https://img.shields.io/hexpm/dw/csv.svg?style=flat)](https://hex.pm/packages/csv)
+
 [RFC 4180](http://tools.ietf.org/html/rfc4180) compliant CSV parsing and encoding for Elixir. Allows to specify other separators, so it could also be named: TSV. Why it is not idk, because of defaults I think.
 
 ## Why do we want it?
 
-It parses files which contain rows (in utf-8) separated by either commas or
+It parses files which contain rows (in UTF-8) separated by either commas or
 other separators.
 
 If that's not enough reason to absolutely :heart: :green_heart: :two_hearts: :heart: :revolving_hearts: :sparkling_heart: it,
@@ -53,7 +54,7 @@ You know you want it.
 
 ## Great! How do I use it right now?
 
-There are two interesting things you want to do regarding csvs - 
+There are two interesting things you want to do regarding CSV -
 encoding end decoding.
 
 ### Decoding
@@ -122,7 +123,7 @@ the right place:
 # ["z,a\\r\\n", ",value!\\r\\n"]
 ````
 
-You'll surely appreciate some [more info on `encode`](https://hexdocs.pm/csv/CSV.html#encode/2)
+You'll surely appreciate some [more info on `encode`](https://hexdocs.pm/csv/CSV.html#encode/2).
 
 ## Polymorphic encoding
 
@@ -150,11 +151,14 @@ to get good performance.
 
 There is more to know about everything :tm: - [Check the doc](http://hexdocs.pm/csv/)
 
-## License
-
-MIT
-
 ## Contributions & Bugfixes are most welcome!
+
 Please make sure to add tests. I will not look at PRs that are
 either failing or lowering coverage. Also, solve one problem at
 a time.
+
+## Copyright and License
+
+Copyright (c) 2015 Beat Richartz
+
+CSV source code is licensed under the [MIT License](https://github.com/beatrichartz/csv/blob/master/LICENSE).
