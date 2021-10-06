@@ -49,7 +49,8 @@ defimpl CSV.Encode, for: BitString do
              <<@double_quote::utf8>> <> <<@double_quote::utf8>>
            )) <> <<@double_quote::utf8>>
 
-      true -> data
+      true ->
+        data
     end
   end
 end

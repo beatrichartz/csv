@@ -22,5 +22,4 @@ defmodule CSVExceptionsTest do
       CSV.decode!(stream) |> Stream.run()
     end
   end
-
 end

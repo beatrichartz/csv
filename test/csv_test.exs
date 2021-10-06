@@ -29,17 +29,18 @@ defmodule CSVTest do
   test "decodes in strict mode not raising validation errors on variable row length if row length validation is disabled" do
     stream = ~w(a,be a c,d) |> to_stream
 
-    CSV.decode!(stream, [validate_row_length: false]) |> Stream.run
+    CSV.decode!(stream, validate_row_length: false) |> Stream.run()
   end
 
   test "decodes in normal mode not not validating row length when row length validation is disabled" do
     stream = ~w(a,be a c,d) |> to_stream
-    result = CSV.decode(stream, [validate_row_length: false]) |> Enum.to_list
+    result = CSV.decode(stream, validate_row_length: false) |> Enum.to_list()
+
     assert result == [
-      ok: ~w(a be),
-      ok: ~w(a),
-      ok: ~w(c d)
-    ]
+             ok: ~w(a be),
+             ok: ~w(a),
+             ok: ~w(c d)
+           ]
   end
 
   test "uses the :lines preprocessor by default" do

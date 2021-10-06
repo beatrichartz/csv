@@ -198,6 +198,7 @@ defmodule CSV.Decoding.Decoder do
   defp add_row_length({line, index, headers}, {false, options}) do
     {[{line, index, headers, false}], {false, options}}
   end
+
   defp add_row_length({line, 0, false}, {true, options}) do
     case parse_row({line, 0}, options) do
       {:ok, row, _} ->
@@ -208,10 +209,12 @@ defmodule CSV.Decoding.Decoder do
         {[{line, 0, false, false}], {false, options}}
     end
   end
+
   defp add_row_length({line, index, headers}, {true, options}) when is_list(headers) do
     row_length = headers |> Enum.count()
     {[{line, index, headers, row_length}], {row_length, options}}
   end
+
   defp add_row_length({line, index, headers}, {row_length, options}) do
     {[{line, index, headers, row_length}], {row_length, options}}
   end
