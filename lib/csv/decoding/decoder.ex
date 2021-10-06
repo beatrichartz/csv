@@ -22,23 +22,25 @@ defmodule CSV.Decoding.Decoder do
 
   These are the options:
 
-  * `:separator`   – The separator token to use, defaults to `?,`.
+  * `:separator`    – The separator token to use, defaults to `?,`.
       Must be a codepoint (syntax: ? + (your separator)).
   * `:strip_fields` – When set to true, will strip whitespace from fields.
       Defaults to false.
-  * `:num_workers` – The number of parallel operations to run when producing
+  * `:num_workers`  – The number of parallel operations to run when producing
       the stream.
   * `:worker_work_ratio` – The available work per worker, defaults to 5.
       Higher rates will mean more work sharing, but might also lead to work
       fragmentation slowing down the queues.
-  * `:headers`     – When set to `true`, will take the first row of the csv
+  * `:headers`      – When set to `true`, will take the first row of the csv
       and use it as header values.
       When set to a list, will use the given list as header values.
       When set to `false` (default), will use no header values.
       When set to anything but `false`, the resulting rows in the matrix will
       be maps instead of lists.
-  * `:replacement`   – The replacement string to use where lines have bad
+  * `:replacement`    – The replacement string to use where lines have bad
       encoding. Defaults to `nil`, which disables replacement.
+  * `:escape_formulas – Remove Formular Escaping inserted to prevent
+      [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
   ## Examples
 
@@ -50,7 +52,7 @@ defmodule CSV.Decoding.Decoder do
       ...> |> Enum.take(2)
       [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
 
-  Map an existing stream of lines separated by a token to a stream of rows with 
+  Map an existing stream of lines separated by a token to a stream of rows with
   a header row:
 
       iex> [\"a;b\",\"c;d\", \"e;f\"]
@@ -62,7 +64,7 @@ defmodule CSV.Decoding.Decoder do
         ok: %{\"a\" => \"e\", \"b\" => \"f\"}
       ]
 
-  Map an existing stream of lines separated by a token to a stream of rows with 
+  Map an existing stream of lines separated by a token to a stream of rows with
   a header row with duplications:
 
       iex> [\"a;b;b\",\"c;d;e\", \"f;g;h\"]

@@ -33,15 +33,32 @@ defimpl CSV.Encode, for: BitString do
   def encode(data, env \\ []) do
     separator = env |> Keyword.get(:separator, @separator)
     delimiter = env |> Keyword.get(:delimiter, @delimiter)
+    escape_formulas = env |> Keyword.get(:escape_formulas, @escape_formulas)
+
+    data =
+      if escape_formulas and String.starts_with?(data, @escape_formula_start) do
+        "'" <> data
+      else
+        data
+      end
+
+    patterns = [
+      <<separator::utf8>>,
+      delimiter,
+      <<@carriage_return::utf8>>,
+      <<@newline::utf8>>,
+      <<@double_quote::utf8>>
+    ]
+
+    patterns =
+      if escape_formulas do
+        patterns ++ @escape_formula_start
+      else
+        patterns
+      end
 
     cond do
-      String.contains?(data, [
-        <<separator::utf8>>,
-        delimiter,
-        <<@carriage_return::utf8>>,
-        <<@newline::utf8>>,
-        <<@double_quote::utf8>>
-      ]) ->
+      String.contains?(data, patterns) ->
         <<@double_quote::utf8>> <>
           (data
            |> String.replace(

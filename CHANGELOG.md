@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- Optional parameter `escape_formulas` to prevent CSV injection. [Fixes #103](https://github.com/beatrichartz/csv/issues/103) reported by [@maennchen](https://github.com/maennchen). Contributed by [@maennchen](https://github.com/maennchen) in [PR #104](https://github.com/beatrichartz/csv/pull/104).
+
 ## 2.4.1 (2020-09-12)
 
 - Fix unnecessary escaping of delimiters when encoding [Fixes #70](https://github.com/beatrichartz/csv/issues/70)

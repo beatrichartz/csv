@@ -12,6 +12,8 @@ defmodule CSV.Defaults do
       @double_quote ?"
       @escape_max_lines 1000
       @replacement nil
+      @escape_formulas false
+      @escape_formula_start ["=", "-", "+", "@"]
     end
   end
 
