@@ -5,6 +5,7 @@ defmodule CSV do
   alias CSV.Decoding.Decoder
   alias CSV.Encoding.Encoder
   alias CSV.EscapeSequenceError
+  alias CSV.StrayQuoteError
 
   @moduledoc ~S"""
   RFC 4180 compliant CSV parsing and encoding for Elixir. Allows to specify
@@ -28,6 +29,9 @@ defmodule CSV do
         escape sequences
         :none -> Will not preprocess input and expects line by line input
         with multiple line escape sequences aggregated to one line
+    * `:validate_row_length` – If set to `false`, will disable validation for
+      row length. This will allow for rows with variable length. Defaults to
+      `true`
     * `:escape_max_lines` – How many lines to maximally aggregate for multiline
       escapes. Defaults to a 1000.
     * `:num_workers` – The number of parallel operations to run when
@@ -62,11 +66,11 @@ defmodule CSV do
       iex> |> Enum.take(2)
       [
         ok: [\"a\",\"b\",\"c\"],
-        error: "Escape sequence started on line 2 near \\"\\\\d,e,f\\n\\" did \
-not terminate.\\n\\nEscape sequences are allowed to span up to 1000 lines. \
-This threshold avoids collecting the whole file into memory when an escape \
-sequence does not terminate. You can change it using the escape_max_lines \
-option: https://hexdocs.pm/csv/CSV.html#decode/2"
+        error: "Escape sequence started on line 2 near \\"d,e,f\\n\\" did \
+  not terminate.\\n\\nEscape sequences are allowed to span up to 1000 lines. \
+  This threshold avoids collecting the whole file into memory when an escape \
+  sequence does not terminate. You can change it using the escape_max_lines \
+  option: https://hexdocs.pm/csv/CSV.html#decode/2"
       ]
 
   Map an existing stream of lines separated by a token to a stream of rows
@@ -118,6 +122,9 @@ option: https://hexdocs.pm/csv/CSV.html#decode/2"
         with multiple line escape sequences aggregated to one line
     * `:escape_max_lines` – How many lines to maximally aggregate for multiline
       escapes. Defaults to a 1000.
+    * `:validate_row_length` – If set to `false`, will disable validation for
+      row length. This will allow for rows with variable length. Defaults to
+      `true`
     * `:num_workers` – The number of parallel operations to run when
       producing the stream.
     * `:worker_work_ratio` – The available work per worker, defaults to 5.
@@ -184,6 +191,7 @@ option: https://hexdocs.pm/csv/CSV.html#decode/2"
     case options |> Keyword.get(:preprocessor) do
       :none ->
         stream |> Preprocessing.None.process(options)
+
       _ ->
         stream |> Preprocessing.Lines.process(options)
     end
@@ -195,13 +203,24 @@ option: https://hexdocs.pm/csv/CSV.html#decode/2"
     stream |> Stream.map(&yield_or_raise!(&1, escape_max_lines))
   end
 
-  defp yield_or_raise!({ :error, EscapeSequenceError, escape_sequence, index }, escape_max_lines) do
-    raise EscapeSequenceError, escape_sequence: escape_sequence, line: index + 1, escape_max_lines: escape_max_lines 
+  defp yield_or_raise!({:error, EscapeSequenceError, escape_sequence, index}, escape_max_lines) do
+    raise EscapeSequenceError,
+      escape_sequence: escape_sequence,
+      line: index + 1,
+      escape_max_lines: escape_max_lines
   end
-  defp yield_or_raise!({ :error, mod, message, index }, _) do
+
+  defp yield_or_raise!({:error, StrayQuoteError, field, index}, _) do
+     raise StrayQuoteError,
+       field: field,
+       line: index + 1
+  end
+
+  defp yield_or_raise!({:error, mod, message, index}, _) do
     raise mod, message: message, line: index + 1
   end
-  defp yield_or_raise!({ :ok, row }, _), do: row
+
+  defp yield_or_raise!({:ok, row}, _), do: row
 
   defp inline_errors!(stream, options) do
     escape_max_lines = options |> Keyword.get(:escape_max_lines, @escape_max_lines)
@@ -209,12 +228,27 @@ option: https://hexdocs.pm/csv/CSV.html#decode/2"
     stream |> Stream.map(&yield_or_inline!(&1, escape_max_lines))
   end
 
-  defp yield_or_inline!({ :error, EscapeSequenceError, escape_sequence, index }, escape_max_lines) do
-    { :error, EscapeSequenceError.exception(escape_sequence: escape_sequence, line: index + 1, escape_max_lines: escape_max_lines).message }
+  defp yield_or_inline!({:error, EscapeSequenceError, escape_sequence, index}, escape_max_lines) do
+    {:error,
+     EscapeSequenceError.exception(
+       escape_sequence: escape_sequence,
+       line: index + 1,
+       escape_max_lines: escape_max_lines
+     ).message}
   end
-  defp yield_or_inline!({ :error, errormod, message, index }, _) do
-    { :error, errormod.exception(message: message, line: index + 1).message }
+
+  defp yield_or_inline!({:error, StrayQuoteError, field, index}, _) do
+    {:error,
+     StrayQuoteError.exception(
+       field: field,
+       line: index + 1
+     ).message}
   end
+
+  defp yield_or_inline!({:error, errormod, message, index}, _) do
+    {:error, errormod.exception(message: message, line: index + 1).message}
+  end
+
   defp yield_or_inline!(value, _), do: value
 
   @doc """
@@ -245,11 +279,10 @@ option: https://hexdocs.pm/csv/CSV.html#decode/2"
       iex> [[\"a\\nb\", \"\\tc\"], [\"de\", \"\\tf\\\"\"]]
       iex> |> CSV.encode(separator: ?\\t, delimiter: \"\\n\")
       iex> |> Enum.take(2)
-      [\"\\\"a\\\\nb\\\"\\t\\\"\\\\tc\\\"\\n\", \"de\\t\\\"\\\\tf\\\"\\\"\\\"\\n\"]
+      [\"\\\"a\\nb\\\"\\t\\\"\\tc\\\"\\n\", \"de\\t\\\"\\tf\\\"\\\"\\\"\\n\"]
   """
 
   def encode(stream, options \\ []) do
     Encoder.encode(stream, options)
   end
-
 end

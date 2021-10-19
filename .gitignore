@@ -10,3 +10,4 @@ mix.lock
 .envrc
 *.hist
 *.ez
+.tool-versions

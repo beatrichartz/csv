@@ -1,5 +1,6 @@
 defmodule CSV.Decoding.Parser do
   alias CSV.EscapeSequenceError
+  alias CSV.StrayQuoteError
 
   @moduledoc ~S"""
   The CSV Parser module - parses tokens coming from the lexer and parses them
@@ -14,68 +15,112 @@ defmodule CSV.Decoding.Parser do
 
   Options get transferred from the decoder. They are:
 
-    * `:strip_fields` – When set to true, will strip whitespace from fields. 
+    * `:strip_fields` – When set to true, will strip whitespace from fields.
       Defaults to false.
   """
 
   def parse(message, options \\ [])
-  def parse({ tokens, index }, options) do
-    case parse([], "", tokens, false, false, options) do
-      { :ok, row } -> { :ok, row, index }
-      { :error, type, message } -> { :error, type, message, index }
+
+  def parse({tokens, index}, options) do
+    case parse([], "", tokens, :unescaped, options) do
+      {:ok, row} -> {:ok, row, index}
+      {:error, type, message} -> {:error, type, message, index}
     end
-  end
-  def parse({ :error, mod, message, index }, _) do
-    { :error, mod, message, index }
   end
 
-  defp parse(row, field, [token | tokens], true, _, options) do
+  def parse({:error, mod, message, index}, _) do
+    {:error, mod, message, index}
+  end
+
+  defp parse(row, field, [token | tokens], :inline_quote, options) do
+    case token do
+      {:double_quote, content} ->
+        parse(row, field <> content, tokens, :unescaped, options)
+
+      _ ->
+        {:error, StrayQuoteError, field}
+    end
+  end
+
+  defp parse(row, field, [token | tokens], :inline_quote_in_escaped, options) do
+    case token do
+      {:double_quote, content} ->
+        parse(row, field <> content, tokens, :escaped, options)
+
+      {:separator, _} ->
+        parse(row ++ [field |> strip(options)], "", tokens, :unescaped, options)
+
+      {:delimiter, _} ->
+        parse(row, field, tokens, :unescaped, options)
+
+      _ ->
+        {:error, StrayQuoteError, field}
+    end
+  end
+
+  defp parse(row, field, [token | tokens], :escaped, options) do
     case token do
       {:double_quote, _} ->
-        parse(row, field, tokens, false, true, options)
+        parse(row, field, tokens, :inline_quote_in_escaped, options)
+
       {_, content} ->
-        parse(row, field <> content, tokens, true, false, options)
+        parse(row, field <> content, tokens, :escaped, options)
     end
   end
-  defp parse(_, field, [], true, _, _) do
-    { :error, EscapeSequenceError, field }
+
+  defp parse(_, field, [], :escaped, _) do
+    {:error, EscapeSequenceError, field}
   end
-  defp parse(row, "", [token | tokens], false, after_unquote, options) do
+
+  defp parse(_, field, [], :inline_quote, _) do
+    {:error, StrayQuoteError, field}
+  end
+
+  defp parse(row, "", [token | tokens], :unescaped, options) do
     case token do
       {:content, content} ->
-        parse(row, content, tokens, false, false, options)
+        parse(row, content, tokens, :unescaped, options)
+
       {:separator, _} ->
-        parse(row ++ [""], "", tokens, false, false, options)
+        parse(row ++ [""], "", tokens, :unescaped, options)
+
       {:delimiter, _} ->
-        parse(row, "", tokens, false, false, options)
-      {:double_quote, content} when after_unquote ->
-        parse(row, content, tokens, true, false, options)
+        parse(row, "", tokens, :unescaped, options)
+
       {:double_quote, _} ->
-        parse(row, "", tokens, true, false, options)
+        parse(row, "", tokens, :escaped, options)
     end
   end
-  defp parse(row, field, [token | tokens], false, after_unquote, options) do
+
+  defp parse(row, field, [token | tokens], :unescaped, options) do
     case token do
       {:content, content} ->
-        parse(row, field <> content, tokens, false, false, options)
+        parse(row, field <> content, tokens, :unescaped, options)
+
       {:separator, _} ->
-        parse(row ++ [field |> strip(options)], "", tokens, false, false, options)
+        parse(row ++ [field |> strip(options)], "", tokens, :unescaped, options)
+
       {:delimiter, _} ->
-        parse(row, field, tokens, false, false, options)
-      {:double_quote, content} when after_unquote ->
-        parse(row, field <> content, tokens, true, false, options)
+        parse(row, field, tokens, :unescaped, options)
+
       {:double_quote, _} ->
-        parse(row, field, tokens, true, false, options)
+        parse(row, field, tokens, :inline_quote, options)
     end
   end
-  defp parse(row, field, [], false, _, options) do
-    { :ok, row ++ [field |> strip(options)] }
+
+  defp parse(row, field, [], :inline_quote_in_escaped, options) do
+    {:ok, row ++ [field |> strip(options)]}
+  end
+
+  defp parse(row, field, [], :unescaped, options) do
+    {:ok, row ++ [field |> strip(options)]}
   end
 
   defp strip(field, options) do
     strip_fields = options |> Keyword.get(:strip_fields, false)
+
     case strip_fields do
-      true -> field |> String.trim
+      true -> field |> String.trim()
       _ -> field
     end
   end

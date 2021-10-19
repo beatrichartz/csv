@@ -38,26 +38,20 @@ defimpl CSV.Encode, for: BitString do
     cond do
       force_quotes ||
       String.contains?(data, [
-        << separator :: utf8 >>,
+        <<separator::utf8>>,
         delimiter,
-        << @carriage_return :: utf8 >>,
-        << @newline :: utf8 >>,
-        << @double_quote :: utf8 >>
+        <<@carriage_return::utf8>>,
+        <<@newline::utf8>>,
+        <<@double_quote::utf8>>
       ]) ->
-        << @double_quote :: utf8 >> <>
-      (data |> escape |> String.replace(
-        << @double_quote :: utf8 >>,
-        << @double_quote :: utf8 >> <> << @double_quote :: utf8 >>)) <>
-        << @double_quote :: utf8 >>
-      true ->
-        data |> escape
-    end
-  end
+        <<@double_quote::utf8>> <>
+          (data
+           |> String.replace(
+             <<@double_quote::utf8>>,
+             <<@double_quote::utf8>> <> <<@double_quote::utf8>>
+           )) <> <<@double_quote::utf8>>
 
-  defp escape(cell) do
-    cell |>
-      String.replace(<< @newline :: utf8 >>, "\\n") |>
-      String.replace(<< @carriage_return :: utf8 >>, "\\r") |>
-      String.replace("\t", "\\t")
+      true -> data
+    end
   end
 end

@@ -6,7 +6,7 @@ defmodule CSV.EncodingError do
   defexception [:line, :message]
 
   def exception(options) do
-    line    = options |> Keyword.fetch!(:line)
+    line = options |> Keyword.fetch!(:line)
     message = options |> Keyword.fetch!(:message)
 
     %__MODULE__{
@@ -24,12 +24,33 @@ defmodule CSV.RowLengthError do
   defexception [:line, :message]
 
   def exception(options) do
-    line    = options |> Keyword.fetch!(:line)
+    line = options |> Keyword.fetch!(:line)
     message = options |> Keyword.fetch!(:message)
 
     %__MODULE__{
       line: line,
       message: message <> " on line " <> Integer.to_string(line)
+    }
+  end
+end
+
+defmodule CSV.StrayQuoteError do
+  @moduledoc """
+  Raised at runtime when the CSV row has stray quotes.
+  """
+
+  defexception [:line, :message]
+
+  def exception(options) do
+    line = options |> Keyword.fetch!(:line)
+    field = options |> Keyword.fetch!(:field)
+
+    message = "Stray quote on line " <>
+      Integer.to_string(line) <> " near \""  <> field <> "\""
+
+    %__MODULE__{
+      line: line,
+      message: message
     }
   end
 end
@@ -46,7 +67,8 @@ defmodule CSV.EscapeSequenceError do
     escape_sequence = options |> Keyword.fetch!(:escape_sequence)
     escape_max_lines = options |> Keyword.fetch!(:escape_max_lines)
 
-    message = "Escape sequence started on line #{line} " <>
+    message =
+      "Escape sequence started on line #{line} " <>
         "near \"#{escape_sequence |> String.slice(0..9)}\" did not terminate.\n\n" <>
         "Escape sequences are allowed to span up to #{escape_max_lines} lines. " <>
         "This threshold avoids collecting the whole file into memory " <>

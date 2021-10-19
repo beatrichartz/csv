@@ -1,4 +1,4 @@
-# CSV [![Build Status](https://travis-ci.org/beatrichartz/csv.svg?branch=master)](https://travis-ci.org/beatrichartz/csv) [![Coverage Status](https://coveralls.io/repos/github/beatrichartz/csv/badge.svg?branch=master)](https://coveralls.io/github/beatrichartz/csv?branch=master) [![Inline docs](http://inch-ci.org/github/beatrichartz/csv.svg?branch=master)](http://inch-ci.org/github/beatrichartz/csv)
+# CSV [![Build Status](https://travis-ci.org/beatrichartz/csv.svg?branch=master)](https://travis-ci.org/beatrichartz/csv) [![Coverage Status](https://coveralls.io/repos/github/beatrichartz/csv/badge.svg?branch=master)](https://coveralls.io/github/beatrichartz/csv?branch=master) [![Inline docs](http://inch-ci.org/github/beatrichartz/csv.svg?branch=master)](http://inch-ci.org/github/beatrichartz/csv) [![Hex pm](http://img.shields.io/hexpm/v/csv.svg?style=flat)](https://hex.pm/packages/csv) [![Downloads](https://img.shields.io/hexpm/dw/csv.svg?style=flat)](https://hex.pm/packages/csv)
 [RFC 4180](http://tools.ietf.org/html/rfc4180) compliant CSV parsing and encoding for Elixir. Allows to specify other separators, so it could also be named: TSV. Why it is not idk, because of defaults I think.
 
 ## Why do we want it?
@@ -18,14 +18,14 @@ Now.
 
 Add
 ```elixir
-{:csv, "~> 2.0.0"}
+{:csv, "~> 2.4"}
 ```
 to your deps in `mix.exs` like so:
 
 ```elixir
 defp deps do
   [
-    {:csv, "~> 2.0.0"}
+    {:csv, "~> 2.4"}
   ]
 end
 ```
