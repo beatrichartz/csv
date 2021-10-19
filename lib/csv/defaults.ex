@@ -5,14 +5,15 @@ defmodule CSV.Defaults do
 
   defmacro __using__(_) do
     quote do
-      @separator ?,
-      @newline ?\n
-      @carriage_return ?\r
-      @delimiter <<@carriage_return::utf8>> <> <<@newline::utf8>>
-      @double_quote ?"
-      @escape_max_lines 1000
-      @replacement nil
-      @escape_formulas false
+      @separator            ?,
+      @newline              ?\n
+      @carriage_return      ?\r
+      @delimiter            << @carriage_return :: utf8 >> <> << @newline :: utf8 >>
+      @double_quote         ?"
+      @escape_max_lines     1000
+      @replacement          nil
+      @force_quotes         false
+      @escape_formulas      false
       @escape_formula_start ["=", "-", "+", "@"]
     end
   end
@@ -30,4 +31,5 @@ defmodule CSV.Defaults do
   def num_workers do
     :erlang.system_info(:schedulers) * 3
   end
+
 end
