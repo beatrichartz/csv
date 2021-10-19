@@ -17,4 +17,8 @@ defmodule EncodingTests.EscapedFieldsTest do
     assert result == ["\"a\\t\"\t\"b\\re\"\n", "\"c\\tf\"\"\"\tdg\n"]
   end
 
+  test "force_quotes does not break escaping" do
+    result = Encoder.encode([[:atom, 1], [["a", "b"], "dg"]], force_quotes: true) |> Enum.to_list
+    assert result == ["atom,1\r\n", "ab,dg\r\n"]
+  end
 end
