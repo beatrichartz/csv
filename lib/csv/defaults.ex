@@ -31,5 +31,4 @@ defmodule CSV.Defaults do
   def num_workers do
     :erlang.system_info(:schedulers) * 3
   end
-
 end
