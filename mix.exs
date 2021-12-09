@@ -43,7 +43,7 @@ defmodule CSV.Mixfile do
 
   defp deps do
     [
-      {:parallel_stream, "~> 1.0.4"},
+      {:parallel_stream, "~> 1.0.4 or ~> 1.1.0"},
       {:excoveralls, "~> 0.13", only: :test},
       {:benchfella, ">= 0.0.0", only: :bench},
       {:ex_csv, ">= 0.0.0", only: :bench},
