@@ -22,4 +22,14 @@ defmodule CSVExceptionsTest do
       CSV.decode!(stream) |> Stream.run()
     end
   end
+
+  test "returns encoding errors with rows in normal mode" do
+    stream = [<<"Diego,Fern", 225, "ndez">>, "John,Smith"] |> to_stream
+    result = CSV.decode(stream) |> Enum.to_list()
+
+    assert result == [
+             error: "Invalid encoding on line 1",
+             ok: ~w(John Smith)
+           ]
+  end
 end
