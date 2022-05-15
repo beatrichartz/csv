@@ -152,6 +152,10 @@ defmodule CSV.Decoding.Preprocessing.Lines do
     starts_sequence?(tail, <<head::utf8>>, quoted, separator, sequence_start)
   end
 
+  defp starts_sequence?(<<head>> <> tail, _, quoted, separator, sequence_start) do
+    starts_sequence?(tail, <<head>>, quoted, separator, sequence_start)
+  end
+
   defp starts_sequence?("", _, quoted, _, sequence_start) do
     {quoted, sequence_start}
   end
