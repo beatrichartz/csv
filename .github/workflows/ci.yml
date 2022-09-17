@@ -13,7 +13,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    name: Build and Test on OTP ${{matrix.environment.elixir-version}} / Elixir ${{matrix.environment.otp-version}}
+    name: Build and Test on Elixir ${{matrix.environment.elixir-version}} / OTP ${{matrix.environment.otp-version}}
     strategy:
       matrix:
         environment:
@@ -25,9 +25,9 @@ jobs:
             otp-version: 23.3.4
           - elixir-version: 1.11
             otp-version: 23.3.4
-          - elixir-version: 1.10
+          - elixir-version: '1.10'
             otp-version: 22.3.4
-          - elixir-version: 1.10
+          - elixir-version: '1.10'
             otp-version: 22.3.4
           - elixir-version: 1.9
             otp_version: 22.3.4
