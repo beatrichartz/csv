@@ -4,12 +4,9 @@
 
 ## Why do we want it?
 
-It parses files which contain rows (in UTF-8) separated by either commas or
-other separators.
+It parses files which contain rows (in UTF-8) separated by either commas or other separators.
 
-If that's not enough reason to absolutely :heart: :green_heart: :two_hearts: :heart: :revolving_hearts: :sparkling_heart: it,
-it also parses a CSV file in order about 2x times as fast as an unparallelized
-stream implementation :rocket:
+If that's not enough reason to absolutely :heart: it, it also parses a CSV file in order about 2x times as fast as an unparallelized stream implementation :rocket:
 
 ## When do we want it?
 
@@ -31,33 +28,13 @@ defp deps do
 end
 ```
 
-> Note: Elixir `1.5.0` is required for all versions above `2.5.0`.
-
-> Note: Elixir `1.1.0` is required for all versions above `1.1.5`.
-
-### From 1.x to 2.x - the tasty :tm: update.
-
-2.x has some nice new features like the separation between hair- and error-raising
-[`decode!`](https://hexdocs.pm/csv/CSV.html#decode!/2) and the zen of
-[`decode`](https://hexdocs.pm/csv/CSV.html#decode!/2), better error messages
-and an easier to understand codebase
-[for you to contribute](https://github.com/beatrichartz/csv#contributions--bugfixes-are-most-welcome).
-
-The only thing you _have_ to do to upgrade to 2.x is to change your calls to
-`decode` to [`decode!`](https://hexdocs.pm/csv/CSV.html#decode!/2),
-and adjust your exceptions-catching code to catch the
-[right exceptions](https://hexdocs.pm/csv/overview.html#exceptions_summary)
-still. But why not take full advantage and convert to
-[`decode` and the new tuple stream?](https://hexdocs.pm/csv/CSV.html#decode/2)
-
-![](https://media-cdn.tripadvisor.com/media/photo-s/07/2a/55/ee/icecream-selection.jpg)
-
-You know you want it.
+### Elixir version requirements
+* Elixir `1.5.0` is required for all versions above `2.5.0`.
+* Elixir `1.1.0` is required for all versions above `1.1.5`.
 
 ## Great! How do I use it right now?
 
-There are two interesting things you want to do regarding CSV -
-encoding end decoding.
+There are two interesting things you want to do regarding CSV - encoding end decoding.
 
 ### Decoding
 
@@ -169,6 +146,6 @@ a time.
 
 ## Copyright and License
 
-Copyright (c) 2015 Beat Richartz
+Copyright (c) 2022 Beat Richartz
 
 CSV source code is licensed under the [MIT License](https://github.com/beatrichartz/csv/blob/main/LICENSE).
