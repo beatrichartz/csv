@@ -54,5 +54,5 @@ jobs:
       run: mix deps.get
     - name: Run tests
       run: mix test
-    - name: Run tests
+    - name: Post coverage
       run: mix coveralls.github
