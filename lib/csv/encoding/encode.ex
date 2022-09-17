@@ -33,8 +33,10 @@ defimpl CSV.Encode, for: BitString do
   def encode(data, env \\ []) do
     separator = env |> Keyword.get(:separator, @separator)
     delimiter = env |> Keyword.get(:delimiter, @delimiter)
+    force_quotes = env |> Keyword.get(:force_quotes, @force_quotes)
 
     cond do
+      force_quotes ||
       String.contains?(data, [
         <<separator::utf8>>,
         delimiter,
