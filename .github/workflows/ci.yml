@@ -12,7 +12,7 @@ permissions:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     name: Build and Test on Elixir ${{matrix.environment.elixir-version}} / OTP ${{matrix.environment.otp-version}}
     strategy:
       matrix:
@@ -40,9 +40,9 @@ jobs:
           - elixir-version: 1.5
             otp-version: 19.3
           - elixir-version: 1.4
-            otp-version: 19.3
+            otp-version: 18.3
           - elixir-version: 1.3
-            otp-version: 19.3
+            otp-version: 18.3
     steps:
     - uses: actions/checkout@v3
     - name: Set up Elixir
