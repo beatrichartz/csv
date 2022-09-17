@@ -45,7 +45,6 @@ defmodule CSV.Mixfile do
     [
       {:parallel_stream, "~> 1.0.4 or ~> 1.1.0"},
       {:excoveralls, "~> 0.14", only: :test},
-      {:hackney, "~> 1.16", only: :test},
       {:benchfella, ">= 0.0.0", only: :bench},
       {:ex_csv, ">= 0.0.0", only: :bench},
       {:csvlixir, ">= 0.0.0", only: :bench},
