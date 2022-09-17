@@ -12,16 +12,42 @@ permissions:
 jobs:
   build:
 
-    name: Build and test
     runs-on: ubuntu-latest
-
+    name: Build and Test on OTP ${{matrix.environment.elixir-version}} / Elixir ${{matrix.environment.otp-version}}
+    strategy:
+      matrix:
+        environment:
+          - elixir-version: 1.14
+            otp-version: 25.0.4
+          - elixir-version: 1.13
+            otp-version: 24.3.4
+          - elixir-version: 1.12
+            otp-version: 23.3.4
+          - elixir-version: 1.11
+            otp-version: 23.3.4
+          - elixir-version: 1.10
+            otp-version: 22.3.4
+          - elixir-version: 1.10
+            otp-version: 22.3.4
+          - elixir-version: 1.9
+            otp_version: 22.3.4
+          - elixir-version: 1.8
+            otp-version: 21.3.8
+          - elixir-version: 1.7
+            otp-version: 21.3.8
+          - elixir-version: 1.6
+            otp-version: 20.3.8
+          - elixir-version: 1.5
+            otp-version: 19.3
+          - elixir-version: 1.4
+            otp-version: 18.3
+          - elixir-version: 1.3
+            otp-version: 18.3
     steps:
     - uses: actions/checkout@v3
     - name: Set up Elixir
       uses: erlef/setup-beam@988e02bfe678367a02564f65ca2e37726dc0268f
-      with:
-        elixir-version: '1.12.3'
-        otp-version: '24.1'
+      with: ${{matrix.environment}}
     - name: Restore dependencies cache
       uses: actions/cache@v3
       with:
