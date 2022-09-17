@@ -35,15 +35,17 @@ defmodule DecodingTests.HeadersTest do
   end
 
   test "parses strings into maps when there are duplicate headers" do
-    stream = [
-      "a,b,c,c,d,d,d",
-      "a1,b1,c1,c2,d1,d2,d3"
-    ] |> to_stream
+    stream =
+      [
+        "a,b,c,c,d,d,d",
+        "a1,b1,c1,c2,d1,d2,d3"
+      ]
+      |> to_stream
 
     result = Decoder.decode(stream, headers: true) |> Enum.to_list()
 
     assert result |> Enum.sort() == [
-             ok: %{"a" => "a1", "b" => "b1", "c" => ["c1", "c2"], "d" => ["d1","d2","d3"]}
+             ok: %{"a" => "a1", "b" => "b1", "c" => ["c1", "c2"], "d" => ["d1", "d2", "d3"]}
            ]
   end
 
@@ -52,9 +54,9 @@ defmodule DecodingTests.HeadersTest do
     result = Decoder.decode(stream, headers: false) |> Enum.to_list()
 
     assert result == [
-      {:ok, ["a", "b"]},
-      {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 1}
-    ]
+             {:ok, ["a", "b"]},
+             {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 1}
+           ]
   end
 
   test "reports correct error index when headers is true, error on index 1" do
@@ -62,8 +64,8 @@ defmodule DecodingTests.HeadersTest do
     result = Decoder.decode(stream, headers: true) |> Enum.to_list()
 
     assert result == [
-      {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 1}
-    ]
+             {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 1}
+           ]
   end
 
   test "reports correct error index when headers is true, error on index 2" do
@@ -71,9 +73,9 @@ defmodule DecodingTests.HeadersTest do
     result = Decoder.decode(stream, headers: true) |> Enum.to_list()
 
     assert result == [
-      {:ok, %{"a" => "c", "b" => "d"}},
-      {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 2}
-    ]
+             {:ok, %{"a" => "c", "b" => "d"}},
+             {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 2}
+           ]
   end
 
   test "reports correct error index when headers is a list" do
@@ -81,7 +83,7 @@ defmodule DecodingTests.HeadersTest do
     result = Decoder.decode(stream, headers: [:a, :b]) |> Enum.to_list()
 
     assert result == [
-      {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 0}
-    ]
+             {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 0}
+           ]
   end
 end

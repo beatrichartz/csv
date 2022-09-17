@@ -84,8 +84,8 @@ defmodule DecodingTests.BaselineExceptionsTest do
            ]
   end
 
-  def encode_decode_loop(l) do
-    l |> CSV.encode() |> Decoder.decode() |> Enum.to_list()
+  def encode_decode_loop(l, opts \\ []) do
+    l |> CSV.encode(opts) |> Decoder.decode(opts) |> Enum.to_list()
   end
 
   test "does not get corrupted after an error" do
@@ -100,5 +100,18 @@ defmodule DecodingTests.BaselineExceptionsTest do
     assert result_a == [ok: ~w(b)]
     assert result_b == [ok: ~w(b)]
     assert result_c == [ok: ~w(b)]
+  end
+
+  test "removes escaping for formula" do
+    input = [["=1+1", ~S(=1+2";=1+2), ~S(=1+2'" ;,=1+2)], ["-10+7"], ["+10+7"], ["@A1:A10"]]
+
+    assert [
+             ok: [
+               "=1+1=1+2\";=1+2=1+2'\" ;,=1+2",
+               "-10+7",
+               "+10+7",
+               "@A1:A10"
+             ]
+           ] = encode_decode_loop([input], escape_formulas: true)
   end
 end

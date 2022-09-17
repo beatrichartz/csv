@@ -25,69 +25,97 @@ defmodule CSV.Decoding.Lexer do
   def lex({line, index}, options \\ []) when is_list(options) do
     separator = options |> Keyword.get(:separator, @separator)
     replacement = options |> Keyword.get(:replacement, @replacement)
+    escape_formulas = options |> Keyword.get(:escape_formulas, @escape_formulas)
 
     case String.valid?(line) do
       false ->
         if replacement do
-          replace_bad_encoding(line, replacement) |> lex(index, separator)
+          replace_bad_encoding(line, replacement) |> lex(index, separator, escape_formulas)
         else
           {:error, EncodingError, "Invalid encoding", index}
         end
 
       true ->
-        lex(line, index, separator)
+        lex(line, index, separator, escape_formulas)
     end
   end
 
-  defp lex(line, index, separator) do
-    case lex([], nil, line, separator) do
+  defp lex(line, index, separator, escape_formulas) do
+    case lex([], nil, line, separator, escape_formulas) do
       {:ok, tokens} -> {:ok, tokens, index}
     end
   end
 
-  defp lex(tokens, {:delimiter, value}, <<@newline::utf8>> <> tail, separator) do
-    lex(tokens, {:delimiter, value <> <<@newline::utf8>>}, tail, separator)
+  defp lex(tokens, {:delimiter, value}, <<@newline::utf8>> <> tail, separator, escape_formulas) do
+    lex(tokens, {:delimiter, value <> <<@newline::utf8>>}, tail, separator, escape_formulas)
   end
 
-  defp lex(tokens, current_token, <<@newline::utf8>> <> tail, separator) do
-    lex(tokens |> add_token(current_token), {:delimiter, <<@newline::utf8>>}, tail, separator)
+  defp lex(tokens, current_token, <<@newline::utf8>> <> tail, separator, escape_formulas) do
+    lex(
+      tokens |> add_token(current_token),
+      {:delimiter, <<@newline::utf8>>},
+      tail,
+      separator,
+      escape_formulas
+    )
   end
 
-  defp lex(tokens, current_token, <<@carriage_return::utf8>> <> tail, separator) do
+  defp lex(tokens, current_token, <<@carriage_return::utf8>> <> tail, separator, escape_formulas) do
     lex(
       tokens |> add_token(current_token),
       {:delimiter, <<@carriage_return::utf8>>},
       tail,
-      separator
+      separator,
+      escape_formulas
     )
   end
 
-  defp lex(tokens, current_token, <<@double_quote::utf8>> <> tail, separator) do
+  defp lex(tokens, current_token, <<@double_quote::utf8>> <> tail, separator, escape_formulas) do
     lex(
       tokens |> add_token(current_token),
       {:double_quote, <<@double_quote::utf8>>},
       tail,
-      separator
+      separator,
+      escape_formulas
     )
   end
 
-  defp lex(tokens, current_token, <<head::utf8>> <> tail, separator) when head == separator do
-    lex(tokens |> add_token(current_token), {:separator, <<separator::utf8>>}, tail, separator)
+  defp lex(tokens, current_token, <<head::utf8>> <> tail, separator, escape_formulas)
+       when head == separator do
+    lex(
+      tokens |> add_token(current_token),
+      {:separator, <<separator::utf8>>},
+      tail,
+      separator,
+      escape_formulas
+    )
   end
 
-  defp lex(tokens, {:content, value}, <<head::utf8>> <> tail, separator) do
-    lex(tokens, {:content, value <> <<head::utf8>>}, tail, separator)
+  for start <- @escape_formula_start do
+    defp lex(tokens, current_token, "'#{unquote(start)}" <> tail, separator, true) do
+      lex(tokens, current_token, unquote(start) <> tail, separator, true)
+    end
   end
 
-  defp lex(tokens, nil, <<head::utf8>> <> tail, separator) do
-    lex(tokens, {:content, <<head::utf8>>}, tail, separator)
+  defp lex(tokens, {:content, value}, <<head::utf8>> <> tail, separator, escape_formulas) do
+    lex(tokens, {:content, value <> <<head::utf8>>}, tail, separator, escape_formulas)
   end
 
-  defp lex(tokens, current_token, <<head::utf8>> <> tail, separator) do
-    lex(tokens |> add_token(current_token), {:content, <<head::utf8>>}, tail, separator)
+  defp lex(tokens, nil, <<head::utf8>> <> tail, separator, escape_formulas) do
+    lex(tokens, {:content, <<head::utf8>>}, tail, separator, escape_formulas)
   end
 
-  defp lex(tokens, current_token, "", _) do
+  defp lex(tokens, current_token, <<head::utf8>> <> tail, separator, escape_formulas) do
+    lex(
+      tokens |> add_token(current_token),
+      {:content, <<head::utf8>>},
+      tail,
+      separator,
+      escape_formulas
+    )
+  end
+
+  defp lex(tokens, current_token, "", _, _) do
     {:ok, tokens |> add_token(current_token)}
   end
 

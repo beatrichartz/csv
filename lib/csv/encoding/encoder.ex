@@ -14,16 +14,18 @@ defmodule CSV.Encoding.Encoder do
 
   These are the options:
 
-    * `:separator`   – The separator token to use, defaults to `?,`.
+    * `:separator`      – The separator token to use, defaults to `?,`.
       Must be a codepoint (syntax: ? + your separator token).
-    * `:delimiter`   – The delimiter token to use, defaults to `\"\\r\\n\"`.
-    * `:headers`     – When set to `true`, uses the keys of the first map as
+    * `:delimiter`       – The delimiter token to use, defaults to `\"\\r\\n\"`.
+    * `:headers`         – When set to `true`, uses the keys of the first map as
       the first element in the stream. All subsequent elements are the values
       of the maps. When set to a list, will use the given list as the first
       element in the stream and order all subsequent elements using that list.
       When set to `false` (default), will use the raw inputs as elements.
       When set to anything but `false`, all elements in the input stream are
       assumed to be maps.
+    * `:escape_formulas` – Escape formulas to prevent
+      [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
   ## Examples
 
@@ -102,15 +104,15 @@ defmodule CSV.Encoding.Encoder do
     delimiter = options |> Keyword.get(:delimiter, @delimiter)
     force_quotes = options |> Keyword.get(:force_quotes, @force_quotes)
 
-    encoded = 
+    encoded =
       row
-      |> Enum.map(&encode_cell(&1, separator, delimiter, force_quotes))
-      |> Enum.join(<< separator :: utf8 >>)
+      |> Enum.map(&encode_cell(&1, options))
+      |> Enum.join(<<separator::utf8>>)
 
     encoded <> delimiter
   end
 
-  defp encode_cell(cell, separator, delimiter, force_quotes) do
-    CSV.Encode.encode(cell, separator: separator, delimiter: delimiter, force_quotes: force_quotes)
+  defp encode_cell(cell, options) do
+    CSV.Encode.encode(cell, options)
   end
 end
