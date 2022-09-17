@@ -33,7 +33,7 @@ defmodule CSV.Mixfile do
     [
       maintainers: ["Beat Richartz"],
       licenses: ["MIT"],
-      links: %{GitGub: @source_url}
+      links: %{GitHub: @source_url}
     ]
   end
 
