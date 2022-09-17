@@ -19,17 +19,19 @@ Now.
 
 Add
 ```elixir
-{:csv, "~> 2.4"}
+{:csv, "~> 2.5"}
 ```
 to your deps in `mix.exs` like so:
 
 ```elixir
 defp deps do
   [
-    {:csv, "~> 2.4"}
+    {:csv, "~> 2.5"}
   ]
 end
 ```
+
+> Note: Elixir `1.5.0` is required for all versions above `2.5.0`.
 
 > Note: Elixir `1.1.0` is required for all versions above `1.1.5`.
 

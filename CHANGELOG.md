@@ -1,7 +1,11 @@
 # Changelog
 
-## Unreleased
+## 2.5.0 (2022-09-17)
 - Optional parameter `escape_formulas` to prevent CSV injection. [Fixes #103](https://github.com/beatrichartz/csv/issues/103) reported by [@maennchen](https://github.com/maennchen). Contributed by [@maennchen](https://github.com/maennchen) in [PR #104](https://github.com/beatrichartz/csv/pull/104).
+- Optional parameter `force_quotes` to force quotes when encoding contributed by [@stuart](https://github.com/stuart)
+- Bugfix to pass non UTF-8 lines through in normal mode so other lines can be processed, [Fixes #107](https://github.com/beatrichartz/csv/pull/107). Contributed by [@al2o3cr](https://github.com/al2o3cr).
+- Allow to encode keyword lists specifying headers as values, contributed by [@michaelchu](https://github.com/michaelchu)
+- Better docs thanks to [@kianmeng](https://github.com/kianmeng)
 
 ## 2.4.1 (2020-09-12)
 
