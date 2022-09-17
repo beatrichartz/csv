@@ -23,15 +23,15 @@ defmodule DecodingTests.PreprocessingTests.LinesTest do
   end
 
   test "does not aggregate empty lines" do
-    stream = ~w(g, , ,l) |> to_stream
+    stream = ["g,", ",", ",l"] |> to_stream
     aggregated = stream |> Lines.process() |> Enum.to_list()
-    assert aggregated == ~w(g, , ,l)
+    assert aggregated == ["g,", ",", ",l"]
   end
 
   test "does not aggregate partially empty lines with escape sequences" do
-    stream = ~w(g, ,"""" ,l "","") |> to_stream
+    stream = ["g,", ",\"\"\"\"", ",l", "\"\",\"\""] |> to_stream
     aggregated = stream |> Lines.process() |> Enum.to_list()
-    assert aggregated == ~w(g, ,"""" ,l "","")
+    assert aggregated == ["g,", ",\"\"\"\"", ",l", "\"\",\"\""]
   end
 
   test "does not aggregate terminated escape sequences" do
