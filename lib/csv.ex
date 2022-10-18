@@ -124,16 +124,6 @@ defmodule CSV do
       iex> |> Enum.take(2)
       [[\"a\",\"b\",\"c\"], [\"d\",\"e\",\"f\"]]
 
-  Errors will be raised for varying row lengths `:validate_row_length` is set to true:
-
-      iex> assert_raise CSV.RowLengthError, fn -> 
-      iex> \"../test/fixtures/docs/row-length-errors.csv\"
-      iex> |> Path.expand(__DIR__)
-      iex> |> File.stream!
-      iex> |> CSV.decode!(validate_row_length: true)
-      iex> |> Enum.take(2)
-      iex> end
-
   Map an existing stream of lines separated by a token to a stream of rows
   with a header row:
 
