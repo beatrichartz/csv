@@ -32,16 +32,21 @@ defmodule EncodingTests.EscapedFieldsTest do
     result =
       Encoder.encode([["a\t", "b\re"], ["c\tf\"", "dg"]], separator: ?\t, delimiter: "\n")
       |> Enum.to_list()
+
     assert result == ["\"a\t\"\t\"b\re\"\n", "\"c\tf\"\"\"\tdg\n"]
-  end 
+  end
 
   test "force_quotes works with content that needs escapes" do
-    result = Encoder.encode([["a,", "b\re"], ["c,f\"", "dg"]], force_quotes: true) |> Enum.to_list
+    result =
+      Encoder.encode([["a,", "b\re"], ["c,f\"", "dg"]], force_quotes: true) |> Enum.to_list()
+
     assert result == ["\"a,\",\"b\re\"\r\n", "\"c,f\"\"\",\"dg\"\r\n"]
   end
 
   test "force_quotes works with various content" do
-    result = Encoder.encode([[:atom, 1], [["a", "b"], "dg"]], force_quotes: true) |> Enum.to_list
+    result =
+      Encoder.encode([[:atom, 1], [["a", "b"], "dg"]], force_quotes: true) |> Enum.to_list()
+
     assert result == ["\"atom\",\"1\"\r\n", "\"ab\",\"dg\"\r\n"]
   end
 end

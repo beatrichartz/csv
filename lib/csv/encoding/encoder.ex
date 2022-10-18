@@ -101,7 +101,9 @@ defmodule CSV.Encoding.Encoder do
 
   defp encode_row(row, options) do
     separator = options |> Keyword.get(:separator, @separator)
-    delimiter = options |> Keyword.get(:delimiter, @delimiter)
+
+    delimiter =
+      options |> Keyword.get(:delimiter, <<@carriage_return::utf8>> <> <<@newline::utf8>>)
 
     encoded =
       row

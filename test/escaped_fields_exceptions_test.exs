@@ -3,38 +3,32 @@ defmodule DecodingTests.EscapedFieldsExceptionsTest do
   import TestSupport.StreamHelpers
 
   test "parses strings unless they contain unfinished escape sequences" do
-    stream = ["a,be", "\"c,d", "u,z"] |> to_stream
+    stream = ["a,be", "\"c,d", "u,z"] |> to_line_stream
     result = CSV.decode(stream, headers: [:a, :b]) |> Enum.to_list()
 
     assert result == [
              ok: %{a: "a", b: "be"},
              error:
-               "Escape sequence started on line 2 near \"c,d\" did not terminate.\n\n" <>
-                 "Escape sequences are allowed to span up to 1000 lines. " <>
-                 "This threshold avoids collecting the whole file into memory " <>
-                 "when an escape sequence does not terminate. " <>
-                 "You can change it using the escape_max_lines option: https://hexdocs.pm/csv/CSV.html#decode/2",
+               "Escape sequence started on line 2:\n\n\"c,d\n^\n\ndid not terminate " <>
+                 "before the stream halted. Parsing will continue on line 3.\n",
              ok: %{a: "u", b: "z"}
            ]
   end
 
   test "raises errors for unfinished escape sequences spanning multiple lines" do
-    stream = [",ci,\"\"\"", ",c,d"] |> to_stream
+    stream = [",ci,\"\"\"", ",c,d"] |> to_line_stream
     result = stream |> CSV.decode() |> Enum.to_list()
 
     assert result == [
              error:
-               "Escape sequence started on line 1 near \"\"\" did not terminate.\n\n" <>
-                 "Escape sequences are allowed to span up to 1000 lines. " <>
-                 "This threshold avoids collecting the whole file into memory " <>
-                 "when an escape sequence does not terminate. " <>
-                 "You can change it using the escape_max_lines option: https://hexdocs.pm/csv/CSV.html#decode/2",
+               "Escape sequence started on line 1:\n\n\"\"\"\n^\n\ndid not terminate " <>
+                 "before the stream halted. Parsing will continue on line 2.\n",
              ok: ["", "c", "d"]
            ]
   end
 
   test "raises errors for unfinished escape sequences in strict mode" do
-    stream = [",ci,\"\"\"", ",c,d"] |> to_stream
+    stream = [",ci,\"\"\"", ",c,d"] |> to_line_stream
 
     assert_raise CSV.EscapeSequenceError, fn ->
       CSV.decode!(stream) |> Stream.run()
@@ -42,7 +36,7 @@ defmodule DecodingTests.EscapedFieldsExceptionsTest do
   end
 
   test "raises errors for stray quotes in strict mode" do
-    stream = [",ci\",", ",c,d"] |> to_stream
+    stream = [",ci\",", ",c,d"] |> to_line_stream
 
     assert_raise CSV.StrayQuoteError, fn ->
       CSV.decode!(stream) |> Stream.run()

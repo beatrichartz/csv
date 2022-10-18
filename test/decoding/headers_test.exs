@@ -5,7 +5,7 @@ defmodule DecodingTests.HeadersTest do
   alias CSV.Decoding.Decoder
 
   test "parses strings into maps when headers are set to true" do
-    stream = ["a,be", "c,d", "e,f"] |> to_stream
+    stream = ["a,be", "c,d", "e,f"] |> to_line_stream
     result = Decoder.decode(stream, headers: true) |> Enum.to_list()
 
     assert result |> Enum.sort() == [
@@ -14,9 +14,11 @@ defmodule DecodingTests.HeadersTest do
            ]
   end
 
-  test "parses strings and strips cells when headers are given and strip_fields is true" do
-    stream = ["h1,h2", "a, be free ", "c,d"] |> to_stream
-    result = Decoder.decode(stream, headers: true, strip_fields: true) |> Enum.to_list()
+  test "parses strings and applies a configured field finalizer" do
+    stream = ["h1,h2", "a, be free ", "c,d"] |> to_line_stream
+
+    result =
+      Decoder.decode(stream, headers: true, field_transform: &String.trim/1) |> Enum.to_list()
 
     assert result == [
              ok: %{"h1" => "a", "h2" => "be free"},
@@ -25,7 +27,7 @@ defmodule DecodingTests.HeadersTest do
   end
 
   test "parses strings into maps when headers are given as a list" do
-    stream = ["a,be", "c,d"] |> to_stream
+    stream = ["a,be", "c,d"] |> to_line_stream
     result = Decoder.decode(stream, headers: [:a, :b]) |> Enum.to_list()
 
     assert result == [
@@ -40,50 +42,12 @@ defmodule DecodingTests.HeadersTest do
         "a,b,c,c,d,d,d",
         "a1,b1,c1,c2,d1,d2,d3"
       ]
-      |> to_stream
+      |> to_line_stream
 
     result = Decoder.decode(stream, headers: true) |> Enum.to_list()
 
     assert result |> Enum.sort() == [
              ok: %{"a" => "a1", "b" => "b1", "c" => ["c1", "c2"], "d" => ["d1", "d2", "d3"]}
-           ]
-  end
-
-  test "reports correct error when headers is false" do
-    stream = ["a,b", "c"] |> to_stream()
-    result = Decoder.decode(stream, headers: false) |> Enum.to_list()
-
-    assert result == [
-             {:ok, ["a", "b"]},
-             {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 1}
-           ]
-  end
-
-  test "reports correct error index when headers is true, error on index 1" do
-    stream = ["a,b", "c"] |> to_stream()
-    result = Decoder.decode(stream, headers: true) |> Enum.to_list()
-
-    assert result == [
-             {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 1}
-           ]
-  end
-
-  test "reports correct error index when headers is true, error on index 2" do
-    stream = ["a,b", "c,d", "e"] |> to_stream()
-    result = Decoder.decode(stream, headers: true) |> Enum.to_list()
-
-    assert result == [
-             {:ok, %{"a" => "c", "b" => "d"}},
-             {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 2}
-           ]
-  end
-
-  test "reports correct error index when headers is a list" do
-    stream = ["a"] |> to_stream()
-    result = Decoder.decode(stream, headers: [:a, :b]) |> Enum.to_list()
-
-    assert result == [
-             {:error, CSV.RowLengthError, "Row has length 1 - expected length 2", 0}
            ]
   end
 end

@@ -5,30 +5,33 @@ defmodule CSVExceptionsTest do
   alias CSV.RowLengthError
 
   test "decodes in normal mode emitting errors with rows" do
-    stream = ~w(a,be a c,d) |> to_stream
-    result = CSV.decode(stream) |> Enum.to_list()
+    stream = ~w(a,be a c,d) |> to_line_stream
+    result = CSV.decode(stream, validate_row_length: true) |> Enum.to_list()
 
     assert result == [
-             ok: ~w(a be),
-             error: "Row has length 1 - expected length 2 on line 2",
-             ok: ~w(c d)
+             {:ok, ~w(a be)},
+             {:error,
+              "Row 2 has length 1 instead of expected length 2\n\n" <>
+                "You are seeing this error because :validate_row_length has been set to true\n",
+              ["a"]},
+             {:ok, ~w(c d)}
            ]
   end
 
   test "decodes in strict mode raising errors" do
-    stream = ~w(a,be a c,d) |> to_stream
+    stream = ~w(a,be a c,d) |> to_line_stream
 
     assert_raise RowLengthError, fn ->
-      CSV.decode!(stream) |> Stream.run()
+      CSV.decode!(stream, validate_row_length: true) |> Stream.run()
     end
   end
 
-  test "returns encoding errors with rows in normal mode" do
-    stream = [<<"Diego,Fern", 225, "ndez">>, "John,Smith"] |> to_stream
+  test "returns encoding errors as is with rows in normal mode" do
+    stream = [<<"Diego,Fern", 225, "ndez">>, "John,Smith"] |> to_line_stream
     result = CSV.decode(stream) |> Enum.to_list()
 
     assert result == [
-             error: "Invalid encoding on line 1",
+             ok: ["Diego", <<"Fern", 225, "ndez">>],
              ok: ~w(John Smith)
            ]
   end

@@ -1,61 +1,71 @@
 defmodule CSV.Decoding.Decoder do
+  use CSV.Defaults
+
   @moduledoc ~S"""
   The Decoder CSV module sends lines of delimited values from a stream to the
   parser and converts rows coming from the CSV parser module to a consumable
-  stream. In setup, it parallelises lexing and parsing, as well as different
-  lexer/parser pairs as workers. The number of workers can be controlled via
-  options.
+  stream. 
   """
   alias CSV.Decoding.Parser
-  alias CSV.Decoding.Lexer
-  alias CSV.Defaults
   alias CSV.RowLengthError
 
   @doc """
-  Decode a stream of comma-separated lines into a stream of rows.
-  You can control the number of parallel work streams via the option
-  `:num_workers` - default is the number of erlang schedulers times 3.
-  The Decoder expects line by line input of valid csv lines with inlined
-  escape sequences if you use it directly.
+  Decode a stream of comma-separated lines into a stream of rows that are
+  either lists of fields or maps of headers to fields.
+  The Decoder expects line or variable size byte stream input.
 
   ## Options
 
   These are the options:
 
-  * `:separator`    – The separator token to use, defaults to `?,`.
+  * `:separator`           – The separator token to use, defaults to `?,`.
       Must be a codepoint (syntax: ? + (your separator)).
-  * `:strip_fields` – When set to true, will strip whitespace from fields.
-      Defaults to false.
-  * `:num_workers`  – The number of parallel operations to run when producing
-      the stream.
-  * `:worker_work_ratio` – The available work per worker, defaults to 5.
-      Higher rates will mean more work sharing, but might also lead to work
-      fragmentation slowing down the queues.
-  * `:headers`      – When set to `true`, will take the first row of the csv
-      and use it as header values.
+  * `:field_transform`     – A function with arity 1 that will get called with 
+      each field and can apply transformations. Defaults to identity function.
+      This function will get called for every field and therefore should return 
+      quickly.
+  * `:headers`             – When set to `true`, will take the first row of
+      the csv and use it as header values.
       When set to a list, will use the given list as header values.
       When set to `false` (default), will use no header values.
       When set to anything but `false`, the resulting rows in the matrix will
       be maps instead of lists.
-  * `:replacement`    – The replacement string to use where lines have bad
-      encoding. Defaults to `nil`, which disables replacement.
-  * `:escape_formulas – Remove Formular Escaping inserted to prevent
-      [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
+  * `:validate_row_length` – When set to `true`, will take the first row of
+      the csv or its headers and validate that following rows are of the same 
+      length. Defaults to `false`.
+  * `:escape_formulas       – When set to `true`, will remove formula escaping 
+      inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
   ## Examples
 
   Convert a stream of lines with inlined escape sequences into a stream of rows:
 
-      iex> [\"a,b\",\"c,d\"]
+      iex> [\"a,b\\n\",\"c,d\\n\"]
       ...> |> Stream.map(&(&1))
       ...> |> CSV.Decoding.Decoder.decode
+      ...> |> Enum.take(2)
+      [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
+
+  Convert a stream of lines with inlined escape sequences and formulae into a stream of rows:
+
+      iex> [\"'@a,'=b\\n\",\"'-c,'+d\\n\"]
+      ...> |> Stream.map(&(&1))
+      ...> |> CSV.Decoding.Decoder.decode(unescape_formulas: true)
+      ...> |> Enum.take(2)
+      [ok: [\"@a\", \"=b\"], ok: [\"-c\", \"+d\"]]
+
+  Convert a stream of lines with into a stream of rows trimming each field:
+
+      iex> [\" a , b   \\n\",\" c   ,   d \\n\"]
+      ...> |> Stream.map(&(&1))
+      ...> |> CSV.Decoding.Decoder.decode(field_transform: &String.trim/1)
       ...> |> Enum.take(2)
       [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
 
   Map an existing stream of lines separated by a token to a stream of rows with
   a header row:
 
-      iex> [\"a;b\",\"c;d\", \"e;f\"]
+      iex> [\"a;b\\n\",\"c;d\\n\", \"e;f\\n\"]
       ...> |> Stream.map(&(&1))
       ...> |> CSV.Decoding.Decoder.decode(separator: ?;, headers: true)
       ...> |> Enum.take(2)
@@ -67,7 +77,7 @@ defmodule CSV.Decoding.Decoder do
   Map an existing stream of lines separated by a token to a stream of rows with
   a header row with duplications:
 
-      iex> [\"a;b;b\",\"c;d;e\", \"f;g;h\"]
+      iex> [\"a;b;b\\n\",\"c;d;e\\n\", \"f;g;h\\n\"]
       ...> |> Stream.map(&(&1))
       ...> |> CSV.Decoding.Decoder.decode(separator: ?;, headers: true)
       ...> |> Enum.take(2)
@@ -79,7 +89,7 @@ defmodule CSV.Decoding.Decoder do
   Map an existing stream of lines separated by a token to a stream of rows
   with a given header row:
 
-      iex> [\"a;b\",\"c;d\", \"e;f\"]
+      iex> [\"a;b\\n\",\"c;d\\n\", \"e;f\\n\"]
       ...> |> Stream.map(&(&1))
       ...> |> CSV.Decoding.Decoder.decode(separator: ?;, headers: [:x, :y])
       ...> |> Enum.take(2)
@@ -90,10 +100,7 @@ defmodule CSV.Decoding.Decoder do
 
   Decode a CSV string:
 
-      iex> csv_string = \"id,name\\r\\n1,Jane\\r\\n2,George\\r\\n3,John\"
-      ...> {:ok, out} = csv_string |> StringIO.open
-      ...> out
-      ...> |> IO.binstream(:line)
+      iex> [\"id,name\\r\\n1,Jane\\r\\n2,George\\r\\n3,John\"]
       ...> |> CSV.Decoding.Decoder.decode(headers: true)
       ...> |> Enum.map(&(&1))
       [
@@ -103,47 +110,22 @@ defmodule CSV.Decoding.Decoder do
       ]
 
   """
-
   def decode(stream, options \\ []) do
     options = options |> with_defaults
 
     stream
-    |> Stream.with_index()
+    |> Parser.parse(options)
+    |> validate_row_length(options)
     |> with_headers(options)
-    |> with_row_length(options)
-    |> decode_rows(options)
   end
 
   defp with_defaults(options) do
     options
-    |> Keyword.merge(
-      num_workers: options |> Keyword.get(:num_workers, Defaults.num_workers()),
-      headers: options |> Keyword.get(:headers, false)
-    )
+    |> Keyword.merge(headers: options |> Keyword.get(:headers, false))
   end
 
-  defp decode_rows(stream, options) do
-    stream
-    |> ParallelStream.map(&decode_row(&1, options), options)
-  end
-
-  defp decode_row({nil, 0}, _) do
-    {:ok, []}
-  end
-
-  defp decode_row({line, index, headers, row_length}, options) do
-    with {:ok, parsed, _} <- parse_row({line, index}, options),
-         {:ok, _} <- validate_row_length({parsed, index}, row_length),
-         do: build_row(parsed, headers)
-  end
-
-  defp parse_row({line, index}, options) do
-    with {:ok, lex, _} <- Lexer.lex({line, index}, options),
-         do: Parser.parse({lex, index}, options)
-  end
-
-  defp build_row(data, headers) when is_list(headers) do
-    zipped_data =
+  defp build_row_with_headers(data, headers) when is_list(headers) do
+    row_with_headers =
       headers
       |> Enum.zip(data)
       |> Enum.reduce(%{}, fn {key, value}, row ->
@@ -159,79 +141,84 @@ defmodule CSV.Decoding.Decoder do
         end
       end)
 
-    {:ok, zipped_data}
+    {:ok, row_with_headers}
   end
 
-  defp build_row(data, _), do: {:ok, data}
+  defp build_row_with_headers(data, _), do: {:ok, data}
 
   defp with_headers(stream, options) do
     headers = options |> Keyword.get(:headers, false)
-    stream |> Stream.transform({headers, options}, &add_headers/2)
-  end
 
-  defp add_headers({line, 0}, {headers, options}) when is_list(headers) do
-    {[{line, 0, headers}], {headers, options}}
-  end
-
-  defp add_headers({line, 0}, {true, options}) do
-    case parse_row({line, 0}, options) do
-      {:ok, headers, _} ->
-        {[], {headers, options}}
+    case headers do
+      false ->
+        stream
 
       _ ->
-        {[], {false, options}}
+        stream
+        |> Stream.transform(
+          fn -> headers end,
+          &add_headers/2,
+          fn _ -> :ok end
+        )
     end
   end
 
-  defp add_headers({line, 0}, {false, options}) do
-    {[{line, 0, false}], {false, options}}
+  defp add_headers({:ok, data}, headers) when is_list(headers) do
+    {[build_row_with_headers(data, headers)], headers}
   end
 
-  defp add_headers({line, index}, {headers, options}) do
-    {[{line, index, headers}], {headers, options}}
+  defp add_headers({:ok, data}, true) do
+    {[], data}
   end
 
-  defp with_row_length(stream, options) do
-    validate_row_length_option = options |> Keyword.get(:validate_row_length, true)
-
-    stream |> Stream.transform({validate_row_length_option, options}, &add_row_length/2)
+  defp add_headers({:error, _, _} = result, headers) do
+    {[result], headers}
   end
 
-  defp add_row_length({line, index, headers}, {false, options}) do
-    {[{line, index, headers, false}], {false, options}}
+  defp add_headers({:error, _, _, _} = result, headers) do
+    {[result], headers}
   end
 
-  defp add_row_length({line, 0, false}, {true, options}) do
-    case parse_row({line, 0}, options) do
-      {:ok, row, _} ->
-        row_length = row |> Enum.count()
-        {[{line, 0, false, row_length}], {row_length, options}}
+  defp validate_row_length(stream, options) do
+    validate_row_length = options |> Keyword.get(:validate_row_length, false)
+    headers = options |> Keyword.get(:headers)
+
+    case validate_row_length do
+      true when is_list(headers) ->
+        stream
+        |> Stream.with_index()
+        |> Stream.transform(Enum.count(headers), &add_row_length_errors/2)
+
+      true ->
+        stream |> Stream.with_index() |> Stream.transform(:undefined, &add_row_length_errors/2)
 
       _ ->
-        {[{line, 0, false, false}], {false, options}}
+        stream
     end
   end
 
-  defp add_row_length({line, index, headers}, {true, options}) when is_list(headers) do
-    row_length = headers |> Enum.count()
-    {[{line, index, headers, row_length}], {row_length, options}}
+  defp add_row_length_errors({{:ok, row} = result, _}, :undefined) do
+    {[result], Enum.count(row)}
   end
 
-  defp add_row_length({line, index, headers}, {row_length, options}) do
-    {[{line, index, headers, row_length}], {row_length, options}}
+  defp add_row_length_errors({{:error, _, _} = result, _}, state) do
+    {[result], state}
   end
 
-  defp validate_row_length({data, _}, false), do: {:ok, data}
-  defp validate_row_length({data, _}, nil), do: {:ok, data}
-
-  defp validate_row_length({data, index}, expected_length) do
-    case data |> Enum.count() do
+  defp add_row_length_errors({{:ok, row} = result, index}, expected_length) do
+    case Enum.count(row) do
       ^expected_length ->
-        {:ok, data}
+        {[result], expected_length}
 
       actual_length ->
-        {:error, RowLengthError,
-         "Row has length #{actual_length} - expected length #{expected_length}", index}
+        {[
+           {:error, RowLengthError,
+            [
+              actual_length: actual_length,
+              expected_length: expected_length,
+              row: index + 1
+            ], row}
+         ], expected_length}
     end
   end
 end

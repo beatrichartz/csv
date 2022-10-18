@@ -1,127 +1,602 @@
 defmodule CSV.Decoding.Parser do
-  alias CSV.EscapeSequenceError
-  alias CSV.StrayQuoteError
+  use CSV.Defaults
 
   @moduledoc ~S"""
-  The CSV Parser module - parses tokens coming from the lexer and parses them
-  into a row of fields.
+  The Parser CSV module transforms a stream of byte chunks or bytes
+  into a stream of row tuples and (potentially) error tuples. It
+  follows the grammar defined in [RFC4180](https://www.rfc-editor.org/rfc/rfc4180).
   """
+  alias CSV.StrayQuoteError
+  alias CSV.EscapeSequenceError
 
   @doc """
-  Parses tokens by receiving them from a sender / lexer and sending them to
-  the given receiver process (the decoder).
+  Parse a stream of comma-separated lines into a stream of rows.
+  The Parser expects line or variable size byte stream input.
 
   ## Options
 
-  Options get transferred from the decoder. They are:
+  These are the options:
 
-    * `:strip_fields` – When set to true, will strip whitespace from fields.
-      Defaults to false.
+  * `:separator`           – The separator token to use, defaults to `?,`.
+      Must be a codepoint (syntax: ? + (your separator)).
+  * `:field_transform`     – A function with arity 1 that will get called with 
+      each field and can apply transformations. Defaults to identity function.
+      This function will get called for every field and therefore should return 
+      quickly.
+  * `:escape_formulas       – When set to `true`, will remove formula escaping 
+      inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
+
+  ## Examples
+
+  Convert a stream of lines with inlined escape sequences into a stream of rows:
+
+      iex> [\"a,b\\n\",\"c,d\\n\"]
+      ...> |> Stream.map(&(&1))
+      ...> |> CSV.Decoding.Parser.parse
+      ...> |> Enum.take(2)
+      [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
+
+  Convert a stream of lines with into a stream of rows trimming each field:
+
+      iex> [\" a , b   \\n\",\" c   ,   d \\n\"]
+      ...> |> Stream.map(&(&1))
+      ...> |> CSV.Decoding.Parser.parse(field_transform: &String.trim/1)
+      ...> |> Enum.take(2)
+      [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
+
   """
+  def parse(stream, options \\ []) do
+    stream
+    |> parse_into_rows(options)
+  end
 
-  def parse(message, options \\ [])
+  defp parse_into_rows(stream, options) do
+    escape_max_lines = get_escape_max_lines(options)
 
-  def parse({tokens, index}, options) do
-    case parse([], "", tokens, :unescaped, options) do
-      {:ok, row} -> {:ok, row, index}
-      {:error, type, message} -> {:error, type, message, index}
+    token_pattern = create_token_pattern(options)
+    field_transform = create_field_transform(options)
+
+    stream
+    |> Stream.concat([:stream_halted, :finish_parsing])
+    |> Stream.transform(
+      fn -> {[], "", {:open, 0, 1}, ""} end,
+      create_row_transform(escape_max_lines, token_pattern, field_transform),
+      fn _ -> :ok end
+    )
+  end
+
+  defp empty_state do
+    {[], {[], "", {:open, 0, 1}, ""}}
+  end
+
+  defp create_unescape_formulas(options) do
+    unescape_formulas = options |> Keyword.get(:unescape_formulas, @unescape_formulas)
+
+    if unescape_formulas do
+      formula_pattern = :binary.compile_pattern(@escape_formula_start)
+
+      fn field ->
+        case :binary.match(field, formula_pattern) do
+          {1, _} -> :binary.part(field, {1, byte_size(field) - 1})
+          _ -> field
+        end
+      end
+    else
+      fn field -> field end
     end
   end
 
-  def parse({:error, mod, message, index}, _) do
-    {:error, mod, message, index}
+  defp get_user_finalizer(options) do
+    options
+    |> Keyword.get(
+      :field_transform,
+      fn field -> field end
+    )
   end
 
-  defp parse(row, field, [token | tokens], :inline_quote, options) do
-    case token do
-      {:double_quote, content} ->
-        parse(row, field <> content, tokens, :unescaped, options)
+  defp create_field_transform(options) do
+    unescape_formulas_fn = create_unescape_formulas(options)
+    user_finalizer_fn = get_user_finalizer(options)
+
+    fn
+      line, "", {field_start_position, length} ->
+        user_finalizer_fn.(
+          unescape_formulas_fn.(:binary.part(line, {field_start_position, length}))
+        )
+
+      line, partial_field, {field_start_position, length} ->
+        user_finalizer_fn.(
+          unescape_formulas_fn.(
+            partial_field <> :binary.part(line, {field_start_position, length})
+          )
+        )
+    end
+  end
+
+  defp create_token_pattern(options) do
+    separator = get_separator(options)
+
+    :binary.compile_pattern([
+      separator,
+      @escape,
+      @carriage_return,
+      @newline
+    ])
+  end
+
+  defp get_separator(options) do
+    <<options |> Keyword.get(:separator, @separator)::utf8>>
+  end
+
+  defp get_escape_max_lines(options) do
+    options |> Keyword.get(:escape_max_lines, @escape_max_lines)
+  end
+
+  @compile {:inline, create_row_transform: 3}
+  defp create_row_transform(escape_max_lines, token_pattern, field_transform) do
+    fn
+      :stream_halted, {[], _, _, ""} ->
+        empty_state()
+
+      :stream_halted, {fields, partial_field, parse_state, sequence} ->
+        rows = []
+        tokens = :binary.matches(sequence, token_pattern)
+
+        parse_byte_sequence(
+          sequence,
+          rows,
+          {fields, partial_field, parse_state},
+          tokens,
+          :stream_halted,
+          field_transform
+        )
+
+      :finish_parsing, {[], "", _, _} ->
+        empty_state()
+
+      :finish_parsing, {fields, "", _, ""} ->
+        {[{:ok, fields}], {[], "", {:open, 0, 1}, ""}}
+
+      :finish_parsing, {fields, partial_field, _, last_field} ->
+        {[{:ok, fields ++ [partial_field <> last_field]}], {[], "", {:open, 0, 1}, ""}}
+
+      :finish_parsing, {fields, partial_field, parse_state, sequence, :reparse} ->
+        full_sequence = sequence
+        rows = []
+        tokens = :binary.matches(full_sequence, token_pattern)
+
+        parse_byte_sequence(
+          full_sequence,
+          rows,
+          {fields, partial_field, parse_state},
+          tokens,
+          :stream_halted,
+          field_transform
+        )
+
+      sequence, {fields, partial_field, parse_state, leftover_sequence, :reparse} ->
+        full_sequence = leftover_sequence <> sequence
+        rows = []
+
+        tokens = :binary.matches(full_sequence, token_pattern)
+
+        parse_byte_sequence(
+          full_sequence,
+          rows,
+          {fields, partial_field, parse_state},
+          tokens,
+          escape_max_lines,
+          field_transform
+        )
+
+      sequence, {fields, partial_field, parse_state, leftover_sequence} ->
+        full_sequence = leftover_sequence <> sequence
+        rows = []
+
+        tokens =
+          :binary.matches(full_sequence, token_pattern,
+            scope: {byte_size(leftover_sequence), byte_size(sequence)}
+          )
+
+        parse_byte_sequence(
+          full_sequence,
+          rows,
+          {fields, partial_field, parse_state},
+          tokens,
+          escape_max_lines,
+          field_transform
+        )
+    end
+  end
+
+  @compile {:inline, parse_byte_sequence: 6}
+  defp parse_byte_sequence(
+         sequence,
+         rows,
+         {fields, partial_field, {:open, field_start_position, line}},
+         [{token_position, token_length} | tokens],
+         escape_max_lines,
+         finalize_field
+       ) do
+    case :binary.part(sequence, {token_position, token_length}) do
+      @escape when field_start_position == token_position ->
+        parse_byte_sequence(
+          sequence,
+          rows,
+          {fields, partial_field, {:escaped, token_position + token_length, line, line}},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
+
+      @escape ->
+        parse_byte_sequence(
+          sequence,
+          rows,
+          {:errored, StrayQuoteError,
+           [
+             line: line,
+             sequence_position: token_position + token_length,
+             sequence: sequence
+           ], line},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
+
+      @newline ->
+        new_field =
+          finalize_field.(
+            sequence,
+            partial_field,
+            {field_start_position, token_position - field_start_position}
+          )
+
+        parse_byte_sequence(
+          sequence,
+          rows ++ [{:ok, fields ++ [new_field]}],
+          {[], "", {:open, token_position + token_length, line + 1}},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
+
+      @carriage_return ->
+        new_field =
+          finalize_field.(
+            sequence,
+            partial_field,
+            {field_start_position, token_position - field_start_position}
+          )
+
+        parse_byte_sequence(
+          sequence,
+          rows ++ [{:ok, fields ++ [new_field]}],
+          {[], "", {:row_closing, token_position + token_length, line}},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
 
       _ ->
-        {:error, StrayQuoteError, field}
+        new_field =
+          finalize_field.(
+            sequence,
+            partial_field,
+            {field_start_position, token_position - field_start_position}
+          )
+
+        parse_byte_sequence(
+          sequence,
+          rows,
+          {fields ++ [new_field], "", {:open, token_position + token_length, line}},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
     end
   end
 
-  defp parse(row, field, [token | tokens], :inline_quote_in_escaped, options) do
-    case token do
-      {:double_quote, content} ->
-        parse(row, field <> content, tokens, :escaped, options)
+  defp parse_byte_sequence(
+         sequence,
+         rows,
+         {fields, partial_field, {:escaped, field_start_position, escape_start_line, line}},
+         [{token_position, token_length} | tokens],
+         escape_max_lines,
+         finalize_field
+       ) do
+    case :binary.part(sequence, {token_position, token_length}) do
+      @escape ->
+        parse_byte_sequence(
+          sequence,
+          rows,
+          {fields, partial_field,
+           {:escape_closing, token_position, field_start_position, escape_start_line, line}},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
 
-      {:separator, _} ->
-        parse(row ++ [field |> strip(options)], "", tokens, :unescaped, options)
+      @newline when escape_max_lines == :stream_halted ->
+        {first_line_end, _} = :binary.match(sequence, [@newline])
 
-      {:delimiter, _} ->
-        parse(row, field, tokens, :unescaped, options)
+        leftover_sequence =
+          :binary.part(sequence, {first_line_end + 1, byte_size(sequence) - (first_line_end + 1)})
+
+        {rows ++
+           [
+             {:error, EscapeSequenceError,
+              [
+                line: escape_start_line,
+                stream_halted: true,
+                escape_sequence_start:
+                  :binary.replace(partial_field, [@escape], @escape <> @escape, [:global]) <>
+                    @escape <>
+                    :binary.part(sequence, {0, first_line_end})
+              ]}
+           ], {[], "", {:open, 0, escape_start_line + 1}, leftover_sequence, :reparse}}
+
+      @newline when escape_start_line + escape_max_lines == line ->
+        {first_line_end, _} = :binary.match(sequence, [@newline])
+
+        leftover_sequence =
+          :binary.part(sequence, {first_line_end + 1, byte_size(sequence) - (first_line_end + 1)})
+
+        {rows ++
+           [
+             {:error, EscapeSequenceError,
+              [
+                line: escape_start_line,
+                escape_max_lines: escape_max_lines,
+                escape_sequence_start:
+                  partial_field <> @escape <> :binary.part(sequence, {0, first_line_end})
+              ]}
+           ], {[], "", {:open, 0, escape_start_line + 1}, leftover_sequence, :reparse}}
+
+      @newline ->
+        parse_byte_sequence(
+          sequence,
+          rows,
+          {fields, partial_field, {:escaped, field_start_position, escape_start_line, line + 1}},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
+
+      @carriage_return ->
+        parse_byte_sequence(
+          sequence,
+          rows,
+          {fields, partial_field, {:escaped, field_start_position, escape_start_line, line}},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
 
       _ ->
-        {:error, StrayQuoteError, field}
+        parse_byte_sequence(
+          sequence,
+          rows,
+          {fields, partial_field, {:escaped, field_start_position, escape_start_line, line}},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
     end
   end
 
-  defp parse(row, field, [token | tokens], :escaped, options) do
-    case token do
-      {:double_quote, _} ->
-        parse(row, field, tokens, :inline_quote_in_escaped, options)
+  defp parse_byte_sequence(
+         sequence,
+         rows,
+         {fields, partial_field,
+          {:escape_closing, previous_token_position, field_start_position, escape_start_line,
+           line}},
+         [{token_position, token_length} | tokens],
+         escape_max_lines,
+         finalize_field
+       ) do
+    case :binary.part(sequence, {token_position, token_length}) do
+      _ when previous_token_position + 1 != token_position ->
+        sequence_for_error =
+          @escape <>
+            case :binary.match(sequence, @newline,
+                   scope: {field_start_position, byte_size(sequence) - field_start_position}
+                 ) do
+              {newline_position, _} ->
+                :binary.part(
+                  sequence,
+                  {field_start_position, newline_position - field_start_position}
+                )
 
-      {_, content} ->
-        parse(row, field <> content, tokens, :escaped, options)
+              :nomatch ->
+                :binary.part(
+                  sequence,
+                  {field_start_position, byte_size(sequence) - field_start_position}
+                )
+            end
+
+        parse_byte_sequence(
+          sequence,
+          rows,
+          {:errored, StrayQuoteError,
+           [
+             line: line,
+             sequence_position: previous_token_position + 2 - field_start_position,
+             sequence: sequence_for_error
+           ], line},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
+
+      @escape when previous_token_position + 1 == token_position ->
+        parse_byte_sequence(
+          sequence,
+          rows,
+          {fields,
+           finalize_field.(
+             sequence,
+             partial_field,
+             {field_start_position, token_position - field_start_position}
+           ), {:escaped, token_position + token_length, escape_start_line, line}},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
+
+      @carriage_return ->
+        new_field =
+          finalize_field.(
+            sequence,
+            partial_field,
+            {field_start_position, token_position - token_length - field_start_position}
+          )
+
+        parse_byte_sequence(
+          sequence,
+          rows ++ [{:ok, fields ++ [new_field]}],
+          {[], "", {:row_closing, token_position + token_length, line}},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
+
+      @newline ->
+        new_field =
+          finalize_field.(
+            sequence,
+            partial_field,
+            {field_start_position, token_position - token_length - field_start_position}
+          )
+
+        parse_byte_sequence(
+          sequence,
+          rows ++ [{:ok, fields ++ [new_field]}],
+          {[], "", {:open, token_position + token_length, line + 1}},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
+
+      _ ->
+        new_field =
+          finalize_field.(
+            sequence,
+            partial_field,
+            {field_start_position, token_position - 1 - field_start_position}
+          )
+
+        parse_byte_sequence(
+          sequence,
+          rows,
+          {fields ++ [new_field], "", {:open, token_position + token_length, line}},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
     end
   end
 
-  defp parse(_, field, [], :escaped, _) do
-    {:error, EscapeSequenceError, field}
-  end
+  defp parse_byte_sequence(
+         sequence,
+         rows,
+         {:errored, error_module, arguments, line},
+         [{token_position, token_length} | tokens],
+         escape_max_lines,
+         finalize_field
+       ) do
+    case :binary.part(sequence, {token_position, token_length}) do
+      @newline ->
+        leftover_sequence =
+          :binary.part(sequence, {token_position + 1, byte_size(sequence) - (token_position + 1)})
 
-  defp parse(_, field, [], :inline_quote, _) do
-    {:error, StrayQuoteError, field}
-  end
+        {rows ++ [{:error, error_module, arguments}],
+         {[], "", {:open, 0, line + 1}, leftover_sequence}}
 
-  defp parse(row, "", [token | tokens], :unescaped, options) do
-    case token do
-      {:content, content} ->
-        parse(row, content, tokens, :unescaped, options)
-
-      {:separator, _} ->
-        parse(row ++ [""], "", tokens, :unescaped, options)
-
-      {:delimiter, _} ->
-        parse(row, "", tokens, :unescaped, options)
-
-      {:double_quote, _} ->
-        parse(row, "", tokens, :escaped, options)
+      _ ->
+        parse_byte_sequence(
+          sequence,
+          rows,
+          {:errored, error_module, arguments, line},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
     end
   end
 
-  defp parse(row, field, [token | tokens], :unescaped, options) do
-    case token do
-      {:content, content} ->
-        parse(row, field <> content, tokens, :unescaped, options)
+  defp parse_byte_sequence(
+         sequence,
+         rows,
+         {fields, partial_field, {:row_closing, field_start_position, line}},
+         [{token_position, token_length} | tokens],
+         escape_max_lines,
+         finalize_field
+       ) do
+    case :binary.part(sequence, {token_position, token_length}) do
+      @newline ->
+        parse_byte_sequence(
+          sequence,
+          rows,
+          {fields, partial_field, {:open, token_position + token_length, line + 1}},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
 
-      {:separator, _} ->
-        parse(row ++ [field |> strip(options)], "", tokens, :unescaped, options)
-
-      {:delimiter, _} ->
-        parse(row, field, tokens, :unescaped, options)
-
-      {:double_quote, _} ->
-        parse(row, field, tokens, :inline_quote, options)
+      _ ->
+        parse_byte_sequence(
+          sequence,
+          rows,
+          {fields, partial_field, {:open, field_start_position, line}},
+          tokens,
+          escape_max_lines,
+          finalize_field
+        )
     end
   end
 
-  defp parse(row, field, [], :inline_quote_in_escaped, options) do
-    {:ok, row ++ [field |> strip(options)]}
+  defp parse_byte_sequence(
+         sequence,
+         rows,
+         {fields, partial_field, {:escaped, field_start_position, escape_start_line, line}},
+         [],
+         _,
+         _
+       ) do
+    leftover_sequence =
+      :binary.part(sequence, {field_start_position, byte_size(sequence) - field_start_position})
+
+    {rows, {fields, partial_field, {:escaped, 0, escape_start_line, line}, leftover_sequence}}
   end
 
-  defp parse(row, field, [], :unescaped, options) do
-    {:ok, row ++ [field |> strip(options)]}
+  defp parse_byte_sequence(
+         sequence,
+         rows,
+         {fields, partial_field,
+          {:escape_closing, previous_token_position, field_start_position, escape_start_line,
+           line}},
+         [],
+         _,
+         _
+       ) do
+    {rows,
+     {fields, partial_field,
+      {:escape_closing, previous_token_position, field_start_position, escape_start_line, line},
+      sequence}}
   end
 
-  defp strip(field, options) do
-    strip_fields = options |> Keyword.get(:strip_fields, false)
+  defp parse_byte_sequence(
+         sequence,
+         rows,
+         {fields, partial_field, {current_parse_state, field_start_position, line}},
+         [],
+         _,
+         _
+       ) do
+    leftover_sequence =
+      :binary.part(sequence, {field_start_position, byte_size(sequence) - field_start_position})
 
-    case strip_fields do
-      true -> field |> String.trim()
-      _ -> field
-    end
+    {rows, {fields, partial_field, {current_parse_state, 0, line}, leftover_sequence}}
   end
 end
