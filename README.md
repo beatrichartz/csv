@@ -20,8 +20,8 @@ end
 
 ## Performance
 Parallelism has been replaced by a binary matching parser in version 3.x. This library is able
-to parse about half a million rows of a moderately complex CSV file per second, ensuring that
-parsing will unlikely be the bottleneck of any operation.
+to parse about half a million rows of a moderately complex CSV file per second in a single process, 
+ensuring that parsing will unlikely be the bottleneck of any operation.
 
 ## Upgrading from 2.x
 TBD
