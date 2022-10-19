@@ -160,10 +160,6 @@ defmodule CSV do
     stream |> Stream.map(&yield_or_raise!(&1, escape_max_lines))
   end
 
-  defp yield_or_raise!({:error, mod, args, _}, _) do
-    raise mod, args ++ [mode: :strict]
-  end
-
   defp yield_or_raise!({:error, mod, args}, _) do
     raise mod, args ++ [mode: :strict]
   end
@@ -174,10 +170,6 @@ defmodule CSV do
     escape_max_lines = options |> Keyword.get(:escape_max_lines, @escape_max_lines)
 
     stream |> Stream.map(&yield_or_inline!(&1, escape_max_lines))
-  end
-
-  defp yield_or_inline!({:error, mod, args, row}, _) do
-    {:error, mod.exception(args ++ [mode: :normal]).message, row}
   end
 
   defp yield_or_inline!({:error, mod, args}, _) do

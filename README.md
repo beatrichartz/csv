@@ -1,38 +1,32 @@
 # CSV [![Build Status](https://github.com/beatrichartz/csv/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/beatrichartz/csv) [![Coverage Status](https://coveralls.io/repos/github/beatrichartz/csv/badge.svg?branch=main)](https://coveralls.io/github/beatrichartz/csv?branch=main) [![Inline docs](http://inch-ci.org/github/beatrichartz/csv.svg?branch=main)](http://inch-ci.org/github/beatrichartz/csv) [![Hex pm](http://img.shields.io/hexpm/v/csv.svg?style=flat)](https://hex.pm/packages/csv) [![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/csv/) [![License](https://img.shields.io/hexpm/l/csv.svg)](https://github.com/beatrichartz/csv/blob/main/LICENSE) [![Downloads](https://img.shields.io/hexpm/dw/csv.svg?style=flat)](https://hex.pm/packages/csv)
 
-[RFC 4180](http://tools.ietf.org/html/rfc4180) compliant CSV parsing and encoding for Elixir. Allows to specify other separators, so it could also be named: TSV. Why it is not idk, because of defaults I think.
+[RFC 4180](http://tools.ietf.org/html/rfc4180) compliant CSV parsing and encoding for Elixir.
 
-## Why do we want it?
-
-It parses files which contain rows (in UTF-8) separated by either commas or other separators.
-
-If that's not enough reason to absolutely :heart: it, it also parses a CSV file in order about 2x times as fast as an unparallelized stream implementation :rocket:
-
-## When do we want it?
-
-Now.
-
-## How do I get it?
+## Installation
 
 Add
 ```elixir
-{:csv, "~> 2.5"}
+{:csv, "~> 3.0"}
 ```
 to your deps in `mix.exs` like so:
 
 ```elixir
 defp deps do
   [
-    {:csv, "~> 2.5"}
+    {:csv, "~> 3.0"}
   ]
 end
 ```
+
+## Upgrading from 2.x
+Parallelism has been replaced by a binary matching parser in version 3.x. 
+This means that `CSV` now returns binary references.
 
 ### Elixir version requirements
 * Elixir `1.5.0` is required for all versions above `2.5.0`.
 * Elixir `1.1.0` is required for all versions above `1.1.5`.
 
-## Great! How do I use it right now?
+## Usage
 
 There are two interesting things you want to do regarding CSV - encoding end decoding.
 
@@ -51,8 +45,10 @@ And you'll get a stream of row tuples:
 
 And, potentially error tuples:
 ````elixir
-[error: "Row has length 3 - expected length 2 on line 1", ok: ["c", "d"]]
+[error: "", ok: ["c", "d"]]
 ````
+
+
 
 Use the bang to decode! into a two-dimensional list, raising errors as they
 occur:

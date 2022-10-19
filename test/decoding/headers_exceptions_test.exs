@@ -10,7 +10,7 @@ defmodule DecodingTests.HeadersExceptionsTest do
 
     assert result == [
              {:ok, ["a", "b"]},
-             {:error, CSV.RowLengthError, [actual_length: 1, expected_length: 2, row: 2], ["c"]}
+             {:error, CSV.RowLengthError, [actual_length: 1, expected_length: 2, row: 2]}
            ]
   end
 
@@ -19,7 +19,7 @@ defmodule DecodingTests.HeadersExceptionsTest do
     result = Decoder.decode(stream, headers: true, validate_row_length: true) |> Enum.to_list()
 
     assert result == [
-             {:error, CSV.RowLengthError, [actual_length: 1, expected_length: 2, row: 2], ["c"]}
+             {:error, CSV.RowLengthError, [actual_length: 1, expected_length: 2, row: 2]}
            ]
   end
 
@@ -29,7 +29,7 @@ defmodule DecodingTests.HeadersExceptionsTest do
 
     assert result == [
              {:ok, %{"a" => "c", "b" => "d"}},
-             {:error, CSV.RowLengthError, [actual_length: 1, expected_length: 2, row: 3], ["e"]}
+             {:error, CSV.RowLengthError, [actual_length: 1, expected_length: 2, row: 3]}
            ]
   end
 
@@ -40,7 +40,7 @@ defmodule DecodingTests.HeadersExceptionsTest do
       Decoder.decode(stream, headers: [:a, :b], validate_row_length: true) |> Enum.to_list()
 
     assert result == [
-             {:error, CSV.RowLengthError, [actual_length: 1, expected_length: 2, row: 1], ["a"]}
+             {:error, CSV.RowLengthError, [actual_length: 1, expected_length: 2, row: 1]}
            ]
   end
 end

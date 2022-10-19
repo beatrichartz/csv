@@ -217,7 +217,7 @@ defmodule CSV.Decoding.Decoder do
               actual_length: actual_length,
               expected_length: expected_length,
               row: index + 1
-            ], row}
+            ]}
          ], expected_length}
     end
   end

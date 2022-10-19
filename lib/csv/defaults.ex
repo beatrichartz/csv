@@ -12,7 +12,7 @@ defmodule CSV.Defaults do
       @carriage_return <<@carriage_return_character::utf8>>
       @escape_character ?"
       @escape <<@escape_character::utf8>>
-      @escape_max_lines 1000
+      @escape_max_lines 10
       @replacement nil
       @force_quotes false
       @trim_fields false

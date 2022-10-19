@@ -29,10 +29,6 @@ defmodule CSV.Mixfile do
     end
   end
 
-  def application do
-    [applications: [:parallel_stream]]
-  end
-
   defp package do
     [
       maintainers: ["Beat Richartz"],
@@ -43,9 +39,9 @@ defmodule CSV.Mixfile do
 
   defp deps do
     [
-      {:parallel_stream, "~> 1.0.4 or ~> 1.1.0"},
       {:excoveralls, "~> 0.14", only: :test},
       {:benchfella, ">= 0.0.0", only: :bench},
+      {:eflame, "~> 1.0", only: :bench},
       {:nimble_csv, ">= 0.0.0", only: :bench},
       {:ex_doc, ">= 0.0.0", only: :docs},
       {:inch_ex, "~> 0.5", only: :docs},

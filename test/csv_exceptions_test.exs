@@ -9,12 +9,11 @@ defmodule CSVExceptionsTest do
     result = CSV.decode(stream, validate_row_length: true) |> Enum.to_list()
 
     assert result == [
-             {:ok, ~w(a be)},
-             {:error,
-              "Row 2 has length 1 instead of expected length 2\n\n" <>
-                "You are seeing this error because :validate_row_length has been set to true\n",
-              ["a"]},
-             {:ok, ~w(c d)}
+             ok: ~w(a be),
+             error:
+               "Row 2 has length 1 instead of expected length 2\n\n" <>
+                 "You are seeing this error because :validate_row_length has been set to true\n",
+             ok: ~w(c d)
            ]
   end
 

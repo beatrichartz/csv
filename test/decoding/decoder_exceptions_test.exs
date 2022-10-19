@@ -50,10 +50,8 @@ defmodule DecodingTests.DecoderExceptionTest do
       stream |> Decoder.decode(validate_row_length: true) |> filter_errors |> Enum.to_list()
 
     assert errors == [
-             {:error, RowLengthError, [actual_length: 3, expected_length: 2, row: 2],
-              ["", "c", "d"]},
-             {:error, RowLengthError, [actual_length: 3, expected_length: 2, row: 4],
-              ["g", "", "h"]}
+             {:error, RowLengthError, [actual_length: 3, expected_length: 2, row: 2]},
+             {:error, RowLengthError, [actual_length: 3, expected_length: 2, row: 4]}
            ]
   end
 
