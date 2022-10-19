@@ -18,6 +18,20 @@ defp deps do
 end
 ```
 
+## Reduce lost data and time due to formatting errors
+CSV is a notoriously unstable format, with many implementations interpreting the standard differently.
+This often leads to situations where large datasets can not be parsed completely because of a few or even
+just one line deviating from the standard.
+
+`CSV` has two decoding modes, normal `CSV.decode` and strict `CSV.decode!`. 
+
+Normal mode will return tuples, `ok: ["field1", "field2"]` for correctly formatted rows, and `err: "Message"`
+for incorrectly formatted ones. This makes this mode well suited for extracting all correctly formatted data
+from a file while avoiding having to manipulate the file.
+
+If you want the decoder to fail on the first error, use strict mode instead. It will raise the first error
+it sees as an exception.
+
 ## Performance
 Parallelism has been replaced by a binary matching parser in version 3.x. This library is able
 to parse about half a million rows of a moderately complex CSV file per second in a single process, 
