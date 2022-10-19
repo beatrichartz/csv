@@ -18,16 +18,19 @@ defp deps do
 end
 ```
 
+## Performance
+Parallelism has been replaced by a binary matching parser in version 3.x. This library is able
+to parse about half a million rows of a moderately complex CSV file per second, ensuring that
+parsing will unlikely be the bottleneck of any operation.
+
 ## Upgrading from 2.x
-Parallelism has been replaced by a binary matching parser in version 3.x. 
-This means that `CSV` now returns binary references.
+TBD
 
 ### Elixir version requirements
 * Elixir `1.5.0` is required for all versions above `2.5.0`.
 * Elixir `1.1.0` is required for all versions above `1.1.5`.
 
 ## Usage
-
 There are two interesting things you want to do regarding CSV - encoding end decoding.
 
 ### Decoding
@@ -47,8 +50,6 @@ And, potentially error tuples:
 ````elixir
 [error: "", ok: ["c", "d"]]
 ````
-
-
 
 Use the bang to decode! into a two-dimensional list, raising errors as they
 occur:
@@ -75,7 +76,7 @@ file = File.open!("test.csv", [:write, :utf8])
 table_data |> CSV.encode |> Enum.each(&IO.write(file, &1))
 ````
 
-## I have this file, but it's tab-separated :interrobang:
+## What about tab separation?
 
 Pass in another separator to the decoder:
 
