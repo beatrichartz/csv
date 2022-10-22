@@ -68,6 +68,10 @@ to no changes in most cases:
   ```
 - The `:validate_row_length` option which produces an error for rows with different length now defaults to `false`. Set it
   to `true` to get the same behaviour as in 2.x
+- The `:escape_max_lines` option default has been set to `10` instead of `1000`. To get the same behaviour as in 2.x, use:
+  ```elixir
+  File.stream!("data.csv") |> CSV.decode(escape_max_lines: 1000)
+  ```
 
 That's it! Please open an issue if you see any other non-backward compatible behaviour so it can be documented.
 
