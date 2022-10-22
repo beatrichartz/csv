@@ -104,6 +104,23 @@ defmodule DecodingTests.ParserExceptionsTest do
            ]
   end
 
+  test "includes an error for escape sequences that do not terminate before the end of the file and parses following lines with no newline at the end" do
+    stream = ["a,\"be\n", "c,d\n", "e,f\n", "g,"] |> to_stream
+    errors = stream |> Parser.parse() |> Enum.to_list()
+
+    assert errors == [
+             {:error, EscapeSequenceError,
+              [
+                line: 1,
+                stream_halted: true,
+                escape_sequence_start: "\"be"
+              ]},
+             {:ok, ["c", "d"]},
+             {:ok, ["e", "f"]},
+             {:ok, ["g", ""]}
+           ]
+  end
+
   def encode_decode_loop(l, opts \\ []) do
     l |> CSV.encode(opts) |> Parser.parse(opts) |> Enum.to_list()
   end

@@ -63,7 +63,7 @@ defmodule CSV.Decoding.Parser do
     field_transform = create_field_transform(options)
 
     stream
-    |> Stream.concat([:stream_halted, :finish_parsing])
+    |> Stream.concat([:stream_halted, :finish_parsing, :finish_parsing])
     |> Stream.transform(
       fn -> {[], "", {:open, 0, 1}, ""} end,
       create_row_transform(escape_max_lines, token_pattern, field_transform),
@@ -163,9 +163,6 @@ defmodule CSV.Decoding.Parser do
 
       :finish_parsing, {[], "", _, _} ->
         empty_state()
-
-      :finish_parsing, {fields, "", _, ""} ->
-        {[{:ok, fields}], {[], "", {:open, 0, 1}, ""}}
 
       :finish_parsing, {fields, partial_field, _, last_field} ->
         {[{:ok, fields ++ [partial_field <> last_field]}], {[], "", {:open, 0, 1}, ""}}
