@@ -46,6 +46,16 @@ defmodule DecodingTests.ParserExceptionsTest do
            ]
   end
 
+  test "includes an error with a the correct sequence for byte chunk parsed rows with unescaped quotes" do
+    stream = ["a\",\"be\n", "\"c", ",d\n", "\"e,f\"", "g\",h\n"] |> to_stream
+    errors = stream |> Parser.parse() |> Enum.to_list()
+
+    assert errors == [
+             {:error, StrayQuoteError, [line: 1, sequence_position: 2, sequence: "a\",\"be\n"]},
+             {:error, StrayQuoteError, [line: 3, sequence_position: 6, sequence: "\"c,d"]}
+           ]
+  end
+
   test "includes an error for rows with unescaped quotes at the end of the stream" do
     stream = ["a\",\"be\n", "e,fg,hh\""] |> to_stream
     errors = stream |> Parser.parse() |> Enum.to_list()

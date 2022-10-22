@@ -552,7 +552,7 @@ defmodule CSV.Decoding.Parser do
   defp parse_byte_sequence(
          sequence,
          rows,
-         {fields, partial_field, {:row_closing, field_start_position, line}},
+         {fields, partial_field, {:row_closing, _, line}},
          [{token_position, token_length} | tokens],
          escape_max_lines,
          finalize_field
@@ -572,8 +572,8 @@ defmodule CSV.Decoding.Parser do
         parse_byte_sequence(
           sequence,
           rows,
-          {fields, partial_field, {:open, field_start_position, line}},
-          tokens,
+          {fields, partial_field, {:open, 0, line}},
+          [{token_position, token_length} | tokens],
           escape_max_lines,
           finalize_field
         )

@@ -52,6 +52,20 @@ defmodule DecodingTests.ParserTest do
     assert result == [ok: ["a", "be"], ok: ["c\"", "d"]]
   end
 
+  test "parses strings that end in \\r" do
+    stream = ["a,be\r", "\"c\",d\r"] |> to_stream
+    result = Parser.parse(stream) |> Enum.to_list()
+
+    assert result == [ok: ["a", "be"], ok: ["c", "d"]]
+  end
+
+  test "parses byte partitioned strings that separate \\r and \\n" do
+    stream = ["a,be\r", "\n\"c\"\"\",d"] |> to_stream
+    result = Parser.parse(stream) |> Enum.to_list()
+
+    assert result == [ok: ["a", "be"], ok: ["c\"", "d"]]
+  end
+
   test "parses strings that contain multi-byte unicode characters" do
     stream = ["a,b", "c,ಠ_ಠ"] |> to_line_stream
     result = Parser.parse(stream) |> Enum.to_list()
