@@ -33,12 +33,12 @@ defmodule CSV.Decoding.Decoder do
   * `:validate_row_length` – When set to `true`, will take the first row of
       the csv or its headers and validate that following rows are of the same 
       length. Defaults to `false`.
-  * `:escape_formulas       – When set to `true`, will remove formula escaping 
+  * `:escape_formulas`      – When set to `true`, will remove formula escaping 
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
   ## Examples
 
-  Convert a stream of lines with inlined escape sequences into a stream of rows:
+  Convert a stream with inlined escape sequences into a stream of rows:
 
       iex> [\"a,b\\n\",\"c,d\\n\"]
       ...> |> Stream.map(&(&1))
@@ -46,7 +46,7 @@ defmodule CSV.Decoding.Decoder do
       ...> |> Enum.take(2)
       [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
 
-  Convert a stream of lines with inlined escape sequences and formulae into a stream of rows:
+  Convert a line stream with escape sequences into a stream of rows:
 
       iex> [\"'@a,'=b\\n\",\"'-c,'+d\\n\"]
       ...> |> Stream.map(&(&1))
@@ -54,13 +54,31 @@ defmodule CSV.Decoding.Decoder do
       ...> |> Enum.take(2)
       [ok: [\"@a\", \"=b\"], ok: [\"-c\", \"+d\"]]
 
-  Convert a stream of lines with into a stream of rows trimming each field:
+  Trim each field:
 
       iex> [\" a , b   \\n\",\" c   ,   d \\n\"]
       ...> |> Stream.map(&(&1))
       ...> |> CSV.Decoding.Decoder.decode(field_transform: &String.trim/1)
       ...> |> Enum.take(2)
       [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
+
+  Replace invalid codepoints:
+      
+      iex> \"../../../test/fixtures/broken-encoding.csv\"
+      ...> |> Path.expand(__DIR__)
+      ...> |> File.stream!()
+      ...> |> CSV.Decoding.Decoder.decode(field_transform: fn field ->
+      ...>   if String.valid?(field) do
+      ...>     field
+      ...>   else
+      ...>     field
+      ...>     |> String.codepoints()
+      ...>     |> Enum.map(fn codepoint -> if String.valid?(codepoint), do: codepoint, else: "?" end)
+      ...>     |> Enum.join()
+      ...>   end
+      ...> end)
+      ...> |> Enum.take(2)
+      [ok: [\"a\", \"b\", \"c\", \"?_?\"], ok: [\"ಠ_ಠ\"]]
 
   Map an existing stream of lines separated by a token to a stream of rows with
   a header row:
@@ -110,6 +128,13 @@ defmodule CSV.Decoding.Decoder do
       ]
 
   """
+  @type decode_options ::
+          {:unescape_formulas, boolean()}
+          | {:headers, [String.t() | atom()] | boolean()}
+          | {:validate_row_length, boolean()}
+          | {:separator, char}
+          | {:field_transform, (String.t() -> String.t())}
+  @spec decode(Enumerable.t(), [decode_options()]) :: Enumerable.t()
   def decode(stream, options \\ []) do
     options = options |> with_defaults
 

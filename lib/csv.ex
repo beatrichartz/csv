@@ -85,6 +85,14 @@ defmodule CSV do
 
   """
 
+  @type decode_options ::
+          {:unescape_formulas, boolean()}
+          | {:headers, [String.t() | atom()] | boolean()}
+          | {:separator, char}
+          | {:validate_row_length, boolean()}
+          | {:field_transform, (String.t() -> String.t())}
+
+  @spec decode(Enumerable.t(), [decode_options()]) :: Enumerable.t()
   def decode(stream, options \\ []) do
     stream |> Decoder.decode(options) |> inline_errors!(options)
   end
@@ -148,8 +156,35 @@ defmodule CSV do
         %{:x => \"c\", :y => \"d\"}
       ]
 
+  Trim each field:
+
+      iex> [\" a , b   \\n\",\" c   ,   d \\n\"]
+      ...> |> Stream.map(&(&1))
+      ...> |> CSV.decode(field_transform: &String.trim/1)
+      ...> |> Enum.take(2)
+      [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
+
+  Replace invalid codepoints:
+      
+      iex> \"../test/fixtures/broken-encoding.csv\"
+      ...> |> Path.expand(__DIR__)
+      ...> |> File.stream!()
+      ...> |> CSV.decode(field_transform: fn field ->
+      ...>   if String.valid?(field) do
+      ...>     field
+      ...>   else
+      ...>     field
+      ...>     |> String.codepoints()
+      ...>     |> Enum.map(fn codepoint -> if String.valid?(codepoint), do: codepoint, else: "?" end)
+      ...>     |> Enum.join()
+      ...>   end
+      ...> end)
+      ...> |> Enum.take(2)
+      [ok: [\"a\", \"b\", \"c\", \"?_?\"], ok: [\"ಠ_ಠ\"]]
+
   """
 
+  @spec decode!(Enumerable.t(), [decode_options()]) :: Enumerable.t()
   def decode!(stream, options \\ []) do
     stream |> Decoder.decode(options) |> raise_errors!(options)
   end

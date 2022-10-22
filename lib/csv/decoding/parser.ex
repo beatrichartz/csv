@@ -23,7 +23,7 @@ defmodule CSV.Decoding.Parser do
       each field and can apply transformations. Defaults to identity function.
       This function will get called for every field and therefore should return 
       quickly.
-  * `:escape_formulas       – When set to `true`, will remove formula escaping 
+  * `:unescape_formulas    – When set to `true`, will remove formula escaping 
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
   ## Examples
@@ -45,6 +45,12 @@ defmodule CSV.Decoding.Parser do
       [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
 
   """
+  @type parse_options ::
+          {:unescape_formulas, boolean()}
+          | {:separator, char}
+          | {:field_transform, (String.t() -> String.t())}
+
+  @spec parse(Enumerable.t(), [parse_options()]) :: Enumerable.t()
   def parse(stream, options \\ []) do
     stream
     |> parse_into_rows(options)

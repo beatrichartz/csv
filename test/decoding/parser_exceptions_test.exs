@@ -14,7 +14,7 @@ defmodule DecodingTests.ParserExceptionsTest do
       |> Parser.parse()
       |> Enum.to_list()
 
-    assert result == [{:ok, ["a", "b", "c", "d", "e", "c", <<191, 95, 191>>]}, {:ok, ["ಠ_ಠ"]}]
+    assert result == [{:ok, ["a", "b", "c", <<191, 95, 191>>]}, {:ok, ["ಠ_ಠ"]}]
   end
 
   test "empty stream input produces an empty stream as output" do
