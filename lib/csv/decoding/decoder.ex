@@ -149,7 +149,7 @@ defmodule CSV.Decoding.Decoder do
     |> Keyword.merge(headers: options |> Keyword.get(:headers, false))
   end
 
-  defp build_row_with_headers(data, headers) when is_list(headers) do
+  defp build_row_with_headers(data, headers) do
     row_with_headers =
       headers
       |> Enum.zip(data)
@@ -168,8 +168,6 @@ defmodule CSV.Decoding.Decoder do
 
     {:ok, row_with_headers}
   end
-
-  defp build_row_with_headers(data, _), do: {:ok, data}
 
   defp with_headers(stream, options) do
     headers = options |> Keyword.get(:headers, false)
@@ -197,10 +195,6 @@ defmodule CSV.Decoding.Decoder do
   end
 
   defp add_headers({:error, _, _} = result, headers) do
-    {[result], headers}
-  end
-
-  defp add_headers({:error, _, _, _} = result, headers) do
     {[result], headers}
   end
 
