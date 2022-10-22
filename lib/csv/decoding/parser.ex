@@ -411,7 +411,7 @@ defmodule CSV.Decoding.Parser do
         sequence_for_error =
           @escape <>
             case :binary.match(sequence, @newline,
-                   scope: {field_start_position, byte_size(sequence) - field_start_position}
+                   scope: {previous_token_position, byte_size(sequence) - previous_token_position}
                  ) do
               {newline_position, _} ->
                 binary_part(
