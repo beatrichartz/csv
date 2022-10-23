@@ -148,7 +148,16 @@ defmodule CSV.Decoding.Parser do
       :stream_halted, {[], _, _, ""} ->
         empty_state()
 
-      :stream_halted, {fields, partial_field, parse_state, sequence} ->
+      :stream_halted, end_state ->
+        {fields, partial_field, parse_state, sequence} =
+          case end_state do
+            {_, _, _, _} = state ->
+              state
+
+            {fields, partial_field, parse_state, sequence, _} ->
+              {fields, partial_field, parse_state, sequence}
+          end
+
         parse_byte_sequence(
           sequence,
           [],
@@ -447,20 +456,41 @@ defmodule CSV.Decoding.Parser do
                 )
             end
 
-        parse_byte_sequence(
-          sequence,
-          rows,
-          {[], "",
-           {:errored, field_start_position, StrayQuoteError,
-            [
-              line: line,
-              sequence_position: previous_token_position + 2 - field_start_position,
-              sequence: sequence_for_error
-            ], line}},
-          [{token_position, token_length} | tokens],
-          escape_max_lines,
-          finalize_field
-        )
+        case :binary.match(sequence, [@newline]) do
+          {first_line_end, 1} ->
+            leftover_sequence =
+              binary_part(
+                sequence,
+                first_line_end + 1,
+                byte_size(sequence) - (first_line_end + 1)
+              )
+
+            {rows ++
+               [
+                 {:error, StrayQuoteError,
+                  [
+                    line: line,
+                    sequence_position: previous_token_position + 2 - field_start_position,
+                    sequence: sequence_for_error
+                  ]}
+               ], {[], "", {:open, 0, escape_start_line + 1}, leftover_sequence, :reparse}}
+
+          :nomatch ->
+            parse_byte_sequence(
+              sequence,
+              rows,
+              {[], "",
+               {:errored, field_start_position, StrayQuoteError,
+                [
+                  line: line,
+                  sequence_position: previous_token_position + 2 - field_start_position,
+                  sequence: sequence_for_error
+                ], line}},
+              [{token_position, token_length} | tokens],
+              escape_max_lines,
+              finalize_field
+            )
+        end
 
       @escape when previous_token_position + 1 == token_position ->
         parse_byte_sequence(

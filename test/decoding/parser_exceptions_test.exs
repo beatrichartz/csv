@@ -44,6 +44,7 @@ defmodule DecodingTests.ParserExceptionsTest do
              {:error, StrayQuoteError, [line: 1, sequence_position: 2, sequence: "a\",\"be\n"]},
              {:error, StrayQuoteError,
               [line: 3, sequence_position: 6, sequence: "\"c,d\n\"e,f\"g\",h"]},
+             {:error, StrayQuoteError, [line: 3, sequence_position: 5, sequence: "\"e,f\"g\",h"]},
              {:ok, ["j", "k"]}
            ]
   end
@@ -56,6 +57,7 @@ defmodule DecodingTests.ParserExceptionsTest do
              {:error, StrayQuoteError, [line: 1, sequence_position: 2, sequence: "a\",\"be\n"]},
              {:error, StrayQuoteError,
               [line: 3, sequence_position: 7, sequence: "\"c,,d\n\"e,f\""]},
+             {:error, StrayQuoteError, [line: 3, sequence_position: 5, sequence: "\"e,f\"g\",h"]},
              {:ok, ["j", "k"]}
            ]
   end
@@ -122,7 +124,7 @@ defmodule DecodingTests.ParserExceptionsTest do
   end
 
   test "includes an error for repeated escape sequences that do not terminate before the end of the file and parses following lines with no newline at the end" do
-    stream = ["a,\"be\n", "c,\"d\n", "e,\"f\n", "g,"] |> to_stream
+    stream = ["a,\"be\n", "c,\"d\"\n", "e,\"f\n", "g,"] |> to_stream
     errors = stream |> Parser.parse() |> Enum.to_list()
 
     assert errors == [
@@ -130,8 +132,9 @@ defmodule DecodingTests.ParserExceptionsTest do
               [
                 line: 2,
                 sequence_position: 7,
-                sequence: "\"be\nc,\"d"
+                sequence: "\"be\nc,\"d\""
               ]},
+             {:ok, ["c", "d"]},
              {:error, EscapeSequenceError,
               [
                 line: 3,
