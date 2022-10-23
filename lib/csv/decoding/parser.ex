@@ -63,7 +63,7 @@ defmodule CSV.Decoding.Parser do
     field_transform = create_field_transform(options)
 
     stream
-    |> Stream.concat([:stream_halted, :finish_parsing, :finish_parsing])
+    |> Stream.concat([:stream_halted])
     |> Stream.transform(
       fn -> {[], "", {:open, 0, 1}, ""} end,
       create_row_transform(escape_max_lines, token_pattern, field_transform),
@@ -149,9 +149,63 @@ defmodule CSV.Decoding.Parser do
         empty_state()
 
       :stream_halted, {fields, partial_field, parse_state, sequence} ->
-        rows = []
-        tokens = :binary.matches(sequence, token_pattern)
+        parse_byte_sequence(
+          sequence,
+          [],
+          {fields, partial_field, parse_state},
+          :binary.matches(sequence, token_pattern),
+          :stream_halted,
+          field_transform
+        )
+        |> parse_to_end(
+          token_pattern,
+          field_transform
+        )
 
+      sequence, {fields, partial_field, parse_state, leftover_sequence, :reparse} ->
+        full_sequence = leftover_sequence <> sequence
+
+        parse_byte_sequence(
+          full_sequence,
+          [],
+          {fields, partial_field, parse_state},
+          :binary.matches(full_sequence, token_pattern),
+          escape_max_lines,
+          field_transform
+        )
+
+      sequence, {fields, partial_field, parse_state, leftover_sequence} ->
+        full_sequence = leftover_sequence <> sequence
+
+        parse_byte_sequence(
+          full_sequence,
+          [],
+          {fields, partial_field, parse_state},
+          :binary.matches(full_sequence, token_pattern,
+            scope: {byte_size(leftover_sequence), byte_size(sequence)}
+          ),
+          escape_max_lines,
+          field_transform
+        )
+    end
+  end
+
+  defp parse_to_end({rows, {[], _, _, ""} = parse_state}, _, _) do
+    {rows, parse_state}
+  end
+
+  defp parse_to_end(
+         {rows, {fields, partial_field, {:open, _, _} = parse_state, sequence}},
+         token_pattern,
+         field_transform
+       ) do
+    tokens = :binary.matches(sequence, token_pattern)
+
+    case tokens do
+      [] ->
+        {rows ++ [{:ok, fields ++ [partial_field <> sequence]}], {[], "", {:open, 0, 1}, ""}}
+
+      _ ->
         parse_byte_sequence(
           sequence,
           rows,
@@ -160,60 +214,28 @@ defmodule CSV.Decoding.Parser do
           :stream_halted,
           field_transform
         )
-
-      :finish_parsing, {[], "", _, _} ->
-        empty_state()
-
-      :finish_parsing, {fields, partial_field, _, last_field} ->
-        {[{:ok, fields ++ [partial_field <> last_field]}], {[], "", {:open, 0, 1}, ""}}
-
-      :finish_parsing, {fields, partial_field, parse_state, sequence, :reparse} ->
-        full_sequence = sequence
-        rows = []
-        tokens = :binary.matches(full_sequence, token_pattern)
-
-        parse_byte_sequence(
-          full_sequence,
-          rows,
-          {fields, partial_field, parse_state},
-          tokens,
-          :stream_halted,
-          field_transform
-        )
-
-      sequence, {fields, partial_field, parse_state, leftover_sequence, :reparse} ->
-        full_sequence = leftover_sequence <> sequence
-        rows = []
-
-        tokens = :binary.matches(full_sequence, token_pattern)
-
-        parse_byte_sequence(
-          full_sequence,
-          rows,
-          {fields, partial_field, parse_state},
-          tokens,
-          escape_max_lines,
-          field_transform
-        )
-
-      sequence, {fields, partial_field, parse_state, leftover_sequence} ->
-        full_sequence = leftover_sequence <> sequence
-        rows = []
-
-        tokens =
-          :binary.matches(full_sequence, token_pattern,
-            scope: {byte_size(leftover_sequence), byte_size(sequence)}
-          )
-
-        parse_byte_sequence(
-          full_sequence,
-          rows,
-          {fields, partial_field, parse_state},
-          tokens,
-          escape_max_lines,
-          field_transform
-        )
+        |> parse_to_end(token_pattern, field_transform)
     end
+  end
+
+  defp parse_to_end(
+         {rows, {[], "", _, _}},
+         _,
+         _
+       ) do
+    {rows, {[], "", {:open, 0, 1}, ""}}
+  end
+
+  defp parse_to_end(
+         {rows, {fields, partial_field, parse_state, sequence, _}},
+         token_pattern,
+         field_transform
+       ) do
+    parse_to_end(
+      {rows, {fields, partial_field, parse_state, sequence}},
+      token_pattern,
+      field_transform
+    )
   end
 
   @compile {:inline, parse_byte_sequence: 6}
@@ -342,7 +364,7 @@ defmodule CSV.Decoding.Parser do
                     @escape <>
                     binary_part(sequence, 0, first_line_end)
               ]}
-           ], {[], "", {:open, 0, escape_start_line + 1}, leftover_sequence, :reparse}}
+           ], {[], "", {:open, 0, escape_start_line + 1}, leftover_sequence}}
 
       @newline when escape_start_line + escape_max_lines == line ->
         {first_line_end, _} = :binary.match(sequence, [@newline])
@@ -435,7 +457,7 @@ defmodule CSV.Decoding.Parser do
               sequence_position: previous_token_position + 2 - field_start_position,
               sequence: sequence_for_error
             ], line}},
-          tokens,
+          [{token_position, token_length} | tokens],
           escape_max_lines,
           finalize_field
         )
