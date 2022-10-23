@@ -86,11 +86,11 @@ defmodule CSV do
   """
 
   @type decode_options ::
-          {:unescape_formulas, boolean()}
-          | {:headers, [String.t() | atom()] | boolean()}
-          | {:separator, char}
-          | {:validate_row_length, boolean()}
+          {:separator, char}
           | {:field_transform, (String.t() -> String.t())}
+          | {:headers, [String.t() | atom()] | boolean()}
+          | {:unescape_formulas, boolean()}
+          | {:validate_row_length, boolean()}
 
   @spec decode(Enumerable.t(), [decode_options()]) :: Enumerable.t()
   def decode(stream, options \\ []) do
@@ -254,6 +254,12 @@ defmodule CSV do
       [\"\\\"'@a\\\",\\\"'=b\\\"\\r\\n\", \"\\\"'-c\\\",\\\"'+d\\\"\\r\\n\"]
   """
 
+  @type encode_options ::
+          {:separator, char}
+          | {:delimiter, String.t()}
+          | {:escape_formulas, boolean()}
+
+  @spec encode(Enumerable.t(), [encode_options()]) :: Enumerable.t()
   def encode(stream, options \\ []) do
     Encoder.encode(stream, options)
   end

@@ -30,6 +30,12 @@ defimpl CSV.Encode, for: BitString do
   where necessary.
   """
 
+  @type encode_options ::
+          {:separator, char}
+          | {:delimiter, String.t()}
+          | {:escape_formulas, boolean()}
+
+  @spec encode(Enumerable.t(), [encode_options()]) :: Enumerable.t()
   def encode(data, env \\ []) do
     separator = env |> Keyword.get(:separator, @separator)
     delimiter = env |> Keyword.get(:delimiter, @carriage_return <> @newline)
