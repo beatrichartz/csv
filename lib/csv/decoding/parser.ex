@@ -92,7 +92,7 @@ defmodule CSV.Decoding.Parser do
     end
   end
 
-  defp get_user_finalizer(options) do
+  defp get_user_transform(options) do
     options
     |> Keyword.get(
       :field_transform,
@@ -102,19 +102,19 @@ defmodule CSV.Decoding.Parser do
 
   defp create_field_transform(options) do
     unescape_formulas_fn = create_unescape_formulas(options)
-    user_finalizer_fn = get_user_finalizer(options)
+    user_transform_fn = get_user_transform(options)
 
     fn
       line, "", {field_start_position, length} ->
         :binary.copy(
-          user_finalizer_fn.(
+          user_transform_fn.(
             unescape_formulas_fn.(binary_part(line, field_start_position, length))
           )
         )
 
       line, partial_field, {field_start_position, length} ->
         :binary.copy(
-          user_finalizer_fn.(
+          user_transform_fn.(
             unescape_formulas_fn.(
               partial_field <> binary_part(line, field_start_position, length)
             )
