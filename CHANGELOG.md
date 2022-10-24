@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.0.1 (2022-10-25)
+- Ensure that stray escape quotes and unterminated escape sequences on a last line without a newline produce errors
+
 ## 3.0.0 (2022-10-25)
 - The parallel parser/lexer with a binary matching parser with better performance.
 - A new `:field_transform` option allows specifying functionality applied when decoding any field through a function
