@@ -41,12 +41,31 @@ defmodule DecodingTests.ParserExceptionsTest do
     errors = stream |> Parser.parse() |> Enum.to_list()
 
     assert errors == [
-             {:error, StrayQuoteError, [line: 1, sequence_position: 2, sequence: "a\",\"be\n"]},
+             {:error, StrayQuoteError, [line: 1, sequence_position: 2, sequence: "a\",\"be"]},
              {:error, StrayQuoteError,
               [line: 3, sequence_position: 6, sequence: "\"c,d\n\"e,f\"g\",h"]},
              {:error, StrayQuoteError, [line: 3, sequence_position: 5, sequence: "\"e,f\"g\",h"]},
              {:ok, ["j", "k"]}
            ]
+  end
+
+  test "includes an error for rows with unescaped quotes in a byte stream" do
+    1..5
+    |> Enum.each(fn size ->
+      stream = "a\",\"be\n\"c,d\n\"e,f\"g\",h\nj,k\nm,l\no,p" |> to_byte_stream(size)
+      errors = stream |> Parser.parse() |> Enum.to_list()
+
+      assert errors == [
+               {:error, StrayQuoteError, [line: 1, sequence_position: 2, sequence: "a\",\"be"]},
+               {:error, StrayQuoteError,
+                [line: 3, sequence_position: 6, sequence: "\"c,d\n\"e,f\"g\",h"]},
+               {:error, StrayQuoteError,
+                [line: 3, sequence_position: 5, sequence: "\"e,f\"g\",h"]},
+               {:ok, ["j", "k"]},
+               {:ok, ["m", "l"]},
+               {:ok, ["o", "p"]}
+             ]
+    end)
   end
 
   test "includes an error for rows with unescaped quotes in escape sequences on the same line" do
@@ -61,14 +80,30 @@ defmodule DecodingTests.ParserExceptionsTest do
            ]
   end
 
+  test "includes an error for rows with unescaped quotes in escape sequences on the same line in a byte stream" do
+    1..10
+    |> Enum.each(fn size ->
+      stream = "a,\"b\"e\n\"c,\"d\n\"e,f\"g\",h\nj,k" |> to_byte_stream(size)
+      errors = stream |> Parser.parse() |> Enum.to_list()
+
+      assert errors == [
+               {:error, StrayQuoteError, [line: 1, sequence_position: 3, sequence: "\"b\"e"]},
+               {:error, StrayQuoteError, [line: 2, sequence_position: 4, sequence: "\"c,\"d"]},
+               {:error, StrayQuoteError,
+                [line: 3, sequence_position: 5, sequence: "\"e,f\"g\",h"]},
+               {:ok, ["j", "k"]}
+             ]
+    end)
+  end
+
   test "includes an error with a the correct sequence for byte chunk parsed rows with unescaped quotes" do
     stream = ["a\",\"be\n", "\"c,", ",d\n", "\"e,f\"", "g\",h\n", "j,k"] |> to_stream
     errors = stream |> Parser.parse() |> Enum.to_list()
 
     assert errors == [
-             {:error, StrayQuoteError, [line: 1, sequence_position: 2, sequence: "a\",\"be\n"]},
+             {:error, StrayQuoteError, [line: 1, sequence_position: 2, sequence: "a\",\"be"]},
              {:error, StrayQuoteError,
-              [line: 3, sequence_position: 7, sequence: "\"c,,d\n\"e,f\""]},
+              [line: 3, sequence_position: 7, sequence: "\"c,,d\n\"e,f\"g\",h"]},
              {:error, StrayQuoteError, [line: 3, sequence_position: 5, sequence: "\"e,f\"g\",h"]},
              {:ok, ["j", "k"]}
            ]
@@ -79,9 +114,24 @@ defmodule DecodingTests.ParserExceptionsTest do
     errors = stream |> Parser.parse() |> Enum.to_list()
 
     assert errors == [
-             {:error, StrayQuoteError, [line: 1, sequence_position: 2, sequence: "a\",\"be\n"]},
-             {:error, StrayQuoteError, [line: 2, sequence_position: 8, sequence: "e,fg,hh\""]}
+             {:error, StrayQuoteError, [line: 1, sequence_position: 2, sequence: "a\",\"be"]},
+             {:error, StrayQuoteError,
+              [line: 2, sequence_position: 8, sequence: "e,fg,hh\"", stream_halted: true]}
            ]
+  end
+
+  test "includes an error for rows with unescaped quotes at the end of the stream for a byte stream" do
+    10..25
+    |> Enum.each(fn size ->
+      stream = "a\",\"be\ne,fg,hh\"" |> to_byte_stream(size)
+      errors = stream |> Parser.parse() |> Enum.to_list()
+
+      assert errors == [
+               {:error, StrayQuoteError, [line: 1, sequence_position: 2, sequence: "a\",\"be"]},
+               {:error, StrayQuoteError,
+                [line: 2, sequence_position: 8, sequence: "e,fg,hh\"", stream_halted: true]}
+             ]
+    end)
   end
 
   test "includes an error for escape sequences that do not terminate within a number of lines and parses following lines" do
@@ -101,6 +151,26 @@ defmodule DecodingTests.ParserExceptionsTest do
            ]
   end
 
+  test "includes an error for escape sequences that do not terminate within a number of lines and parses following lines for a byte stream" do
+    1..25
+    |> Enum.each(fn size ->
+      stream = "a,\"be\nc,d\ne,f\ng,h\n" |> to_byte_stream(size)
+      errors = stream |> Parser.parse(escape_max_lines: 2) |> Enum.to_list()
+
+      assert errors == [
+               {:error, EscapeSequenceError,
+                [
+                  line: 1,
+                  escape_max_lines: 2,
+                  escape_sequence_start: "\"be"
+                ]},
+               {:ok, ["c", "d"]},
+               {:ok, ["e", "f"]},
+               {:ok, ["g", "h"]}
+             ]
+    end)
+  end
+
   test "includes an error for escape sequences that do not terminate before the end of the file and parses following lines" do
     stream = ["a,\"be", "c,d", "e,f", "g,h"] |> to_line_stream
     errors = stream |> Parser.parse() |> Enum.to_list()
@@ -109,13 +179,35 @@ defmodule DecodingTests.ParserExceptionsTest do
              {:error, EscapeSequenceError,
               [
                 line: 1,
-                stream_halted: true,
-                escape_sequence_start: "\"be"
+                escape_max_lines: 4,
+                escape_sequence_start: "\"be",
+                stream_halted: true
               ]},
              {:ok, ["c", "d"]},
              {:ok, ["e", "f"]},
              {:ok, ["g", "h"]}
            ]
+  end
+
+  test "includes an error for escape sequences that do not terminate before the end of the file and parses following lines for a byte stream" do
+    1..15
+    |> Enum.each(fn size ->
+      stream = "a,\"be\nc,d\ne,f\ng,h\n" |> to_byte_stream(size)
+      errors = stream |> Parser.parse() |> Enum.to_list()
+
+      assert errors == [
+               {:error, EscapeSequenceError,
+                [
+                  line: 1,
+                  escape_max_lines: 4,
+                  escape_sequence_start: "\"be",
+                  stream_halted: true
+                ]},
+               {:ok, ["c", "d"]},
+               {:ok, ["e", "f"]},
+               {:ok, ["g", "h"]}
+             ]
+    end)
   end
 
   test "includes an error for escape sequences that do not terminate before the end of the file and parses following lines with no newline at the end" do
@@ -126,13 +218,35 @@ defmodule DecodingTests.ParserExceptionsTest do
              {:error, EscapeSequenceError,
               [
                 line: 1,
-                stream_halted: true,
-                escape_sequence_start: "\"be"
+                escape_max_lines: 3,
+                escape_sequence_start: "\"be",
+                stream_halted: true
               ]},
              {:ok, ["c", "d"]},
              {:ok, ["e", "f"]},
              {:ok, ["g", ""]}
            ]
+  end
+
+  test "includes an error for escape sequences that do not terminate before the end of the file and parses following lines with no newline at the end for a byte stream" do
+    1..25
+    |> Enum.each(fn size ->
+      stream = "a,\"be\nc,d\ne,f\ng," |> to_byte_stream(size)
+      errors = stream |> Parser.parse() |> Enum.to_list()
+
+      assert errors == [
+               {:error, EscapeSequenceError,
+                [
+                  line: 1,
+                  escape_max_lines: 3,
+                  escape_sequence_start: "\"be",
+                  stream_halted: true
+                ]},
+               {:ok, ["c", "d"]},
+               {:ok, ["e", "f"]},
+               {:ok, ["g", ""]}
+             ]
+    end)
   end
 
   test "includes an error for repeated escape sequences that do not terminate before the end of the file and parses following lines with no newline at the end" do
@@ -150,11 +264,38 @@ defmodule DecodingTests.ParserExceptionsTest do
              {:error, EscapeSequenceError,
               [
                 line: 3,
-                stream_halted: true,
-                escape_sequence_start: "\"f"
+                escape_max_lines: 1,
+                escape_sequence_start: "\"f",
+                stream_halted: true
               ]},
              {:ok, ["g", ""]}
            ]
+  end
+
+  test "includes an error for repeated escape sequences that do not terminate before the end of the file and parses following lines with no newline at the end for a byte stream" do
+    1..25
+    |> Enum.each(fn size ->
+      stream = "a,\"be\nc,\"d\"\ne,\"f\ng," |> to_byte_stream(size)
+      errors = stream |> Parser.parse() |> Enum.to_list()
+
+      assert errors == [
+               {:error, StrayQuoteError,
+                [
+                  line: 2,
+                  sequence_position: 7,
+                  sequence: "\"be\nc,\"d\""
+                ]},
+               {:ok, ["c", "d"]},
+               {:error, EscapeSequenceError,
+                [
+                  line: 3,
+                  escape_max_lines: 1,
+                  escape_sequence_start: "\"f",
+                  stream_halted: true
+                ]},
+               {:ok, ["g", ""]}
+             ]
+    end)
   end
 
   def encode_decode_loop(l, opts \\ []) do

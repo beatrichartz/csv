@@ -20,8 +20,8 @@ defmodule ParseBench do
 
   bench "csv" do
     path
-    |> File.stream!([read_ahead: 100_000], 1000)
-    |> CSV.decode(separator: String.to_charlist(separator) |> List.first())
+    |> File.stream!([read_ahead: 100_000], 2000)
+    |> CSV.decode!(separator: String.to_charlist(separator) |> List.first())
     |> Stream.run()
   end
 

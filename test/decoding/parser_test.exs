@@ -13,12 +13,10 @@ defmodule DecodingTests.ParserTest do
     assert result == [ok: ~w(a be), ok: ~w(c d)]
   end
 
-  1..20
-  |> Enum.each(fn size ->
-    @tag size: size
-    test "parses byte streams of size #{size} into a list of fields", context do
-      stream =
-        "a,be\nc,d\ne,f\ngee this is a longer line,isn't it" |> to_byte_stream(context[:size])
+  test "parses byte streams of into a list of fields" do
+    1..50
+    |> Enum.each(fn size ->
+      stream = "a,be\nc,d\ne,f\ngee this is a longer line,isn't it" |> to_byte_stream(size)
 
       result = Parser.parse(stream) |> Enum.to_list()
 
@@ -28,8 +26,8 @@ defmodule DecodingTests.ParserTest do
                ok: ~w(e f),
                ok: ["gee this is a longer line", "isn't it"]
              ]
-    end
-  end)
+    end)
+  end
 
   test "parses empty lines into a list of empty fields" do
     stream = [",", "c,d"] |> to_line_stream
@@ -64,6 +62,36 @@ defmodule DecodingTests.ParserTest do
     result = Parser.parse(stream) |> Enum.to_list()
 
     assert result == [ok: ["a", "be"], ok: ["c\"", "d"]]
+  end
+
+  test "parses escape sequences that end on the last line without a newline and applies transforms" do
+    1..25
+    |> Enum.each(fn size ->
+      stream = "a,\"    b,c\nd,e\n,f   \"\"   \"" |> to_byte_stream(size)
+      result = Parser.parse(stream, field_transform: &String.trim/1) |> Enum.to_list()
+
+      assert result == [ok: ["a", "b,c\nd,e\n,f   \""]]
+    end)
+  end
+
+  test "parses sequences that end on the last line without a newline and applies transforms" do
+    1..25
+    |> Enum.each(fn size ->
+      stream = "aa,bb\ndd,ee\nee,    ff    " |> to_byte_stream(size)
+      result = Parser.parse(stream, field_transform: &String.trim/1) |> Enum.to_list()
+
+      assert result == [ok: ["aa", "bb"], ok: ["dd", "ee"], ok: ["ee", "ff"]]
+    end)
+  end
+
+  test "parses sequences that end on the last line with a carriage return applies transforms" do
+    1..25
+    |> Enum.each(fn size ->
+      stream = "aa,bb\ndd,ee\nee,    ff    \r" |> to_byte_stream(size)
+      result = Parser.parse(stream, field_transform: &String.trim/1) |> Enum.to_list()
+
+      assert result == [ok: ["aa", "bb"], ok: ["dd", "ee"], ok: ["ee", "ff"]]
+    end)
   end
 
   test "parses strings that contain multi-byte unicode characters" do
