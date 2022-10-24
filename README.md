@@ -124,8 +124,35 @@ occur, aborting the operation:
 File.stream!("data.csv") |> CSV.decode!
 ````
 
-For more info on available optiosn visit [the docs on `decode`](https://hexdocs.pm/csv/CSV.html#decode/2)
-and [`decode!`](https://hexdocs.pm/csv/CSV.html#decode!/2)
+#### Options
+
+For all available options [check the docs on `decode`](https://hexdocs.pm/csv/CSV.html#decode/2)
+[and `decode!`](https://hexdocs.pm/csv/CSV.html#decode!/2)
+
+Specify a semicolon separator:
+
+````elixir
+stream |> CSV.decode(separator: ?;)
+````
+
+Specify a custom escape character:
+
+````elixir
+stream |> CSV.decode(escape_character: ?@)
+````
+
+Apply a transformation to a field when parsed, e.g. trimming the field:
+
+````elixir
+stream |> CSV.decode(field_transform: &String.trim/1)
+````
+
+Unescape formulas that have been escaped:
+
+````elixir
+stream |> CSV.decode(unescape_formulas: true)
+````
+
 
 ### Encoding
 
@@ -143,12 +170,18 @@ file = File.open!("test.csv", [:write, :utf8])
 table_data |> CSV.encode |> Enum.each(&IO.write(file, &1))
 ````
 
-## Options
+#### Options
 
 Use a semicolon separator:
 
 ````elixir
 your_data |> CSV.encode(separator: ?;)
+````
+
+Use a specific escape character:
+
+````elixir
+your_data |> CSV.encode(escape_character: ?@)
 ````
 
 You can also specify headers when encoding, which will encode map values into
@@ -169,10 +202,10 @@ but the values will be the value used for the header row name in CSV output
 
 You'll surely appreciate some [more info on `encode`](https://hexdocs.pm/csv/CSV.html#encode/2).
 
-## Polymorphic encoding
+#### Polymorphic encoding
 
 Make sure your data gets encoded the way you want - implement the `CSV.Encode`
-protocol for whatever strange you wish to encode:
+protocol for whatever you wish to encode:
 
 ````elixir
 defimpl CSV.Encode, for: MyData do
@@ -184,7 +217,7 @@ end
 
 Or similar.
 
-## Ensure performant encoding
+#### Ensure performant encoding
 
 The encoding protocol implements a fallback to Any for types where a simple call
 o `to_string` will provide unambiguous results. Protocol dispatch for the
