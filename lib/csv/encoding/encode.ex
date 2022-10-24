@@ -31,15 +31,18 @@ defimpl CSV.Encode, for: BitString do
   """
 
   @type encode_options ::
-          {:separator, char}
+          {:separator, char()}
+          | {:escape_character, char()}
           | {:delimiter, String.t()}
+          | {:force_escaping, boolean()}
           | {:escape_formulas, boolean()}
 
-  @spec encode(Enumerable.t(), [encode_options()]) :: Enumerable.t()
+  @spec encode(bitstring(), [encode_options()]) :: bitstring()
   def encode(data, env \\ []) do
-    separator = env |> Keyword.get(:separator, @separator)
+    separator = <<env |> Keyword.get(:separator, @separator)::utf8>>
+    escape = <<env |> Keyword.get(:escape_character, @escape_character)::utf8>>
     delimiter = env |> Keyword.get(:delimiter, @carriage_return <> @newline)
-    force_quotes = env |> Keyword.get(:force_quotes, @force_quotes)
+    force_escaping = env |> Keyword.get(:force_escaping, @force_escaping)
     escape_formulas = env |> Keyword.get(:escape_formulas, @escape_formulas)
 
     data =
@@ -50,11 +53,11 @@ defimpl CSV.Encode, for: BitString do
       end
 
     patterns = [
-      <<separator::utf8>>,
+      separator,
       delimiter,
       @carriage_return,
       @newline,
-      @escape
+      escape
     ]
 
     patterns =
@@ -65,13 +68,13 @@ defimpl CSV.Encode, for: BitString do
       end
 
     cond do
-      force_quotes || String.contains?(data, patterns) ->
-        @escape <>
+      force_escaping || String.contains?(data, patterns) ->
+        escape <>
           (data
            |> String.replace(
-             @escape,
-             @escape <> @escape
-           )) <> @escape
+             escape,
+             escape <> escape
+           )) <> escape
 
       true ->
         data

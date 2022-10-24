@@ -36,16 +36,28 @@ defmodule EncodingTests.EscapedFieldsTest do
     assert result == ["\"a\t\"\t\"b\re\"\n", "\"c\tf\"\"\"\tdg\n"]
   end
 
-  test "force_quotes works with content that needs escapes" do
+  test "allows custom escape characters and escapes them" do
     result =
-      Encoder.encode([["a,", "b\re"], ["c,f\"", "dg"]], force_quotes: true) |> Enum.to_list()
+      Encoder.encode([["a@", "b@e"], ["c@f\"", "dg"]],
+        separator: ?\t,
+        escape_character: ?@,
+        delimiter: "\n"
+      )
+      |> Enum.to_list()
+
+    assert result == ["@a@@@\t@b@@e@\n", "@c@@f\"@\tdg\n"]
+  end
+
+  test "forcing escaping works with content that needs escapes" do
+    result =
+      Encoder.encode([["a,", "b\re"], ["c,f\"", "dg"]], force_escaping: true) |> Enum.to_list()
 
     assert result == ["\"a,\",\"b\re\"\r\n", "\"c,f\"\"\",\"dg\"\r\n"]
   end
 
-  test "force_quotes works with various content" do
+  test "forcing escaping works with various content" do
     result =
-      Encoder.encode([[:atom, 1], [["a", "b"], "dg"]], force_quotes: true) |> Enum.to_list()
+      Encoder.encode([[:atom, 1], [["a", "b"], "dg"]], force_escaping: true) |> Enum.to_list()
 
     assert result == ["\"atom\",\"1\"\r\n", "\"ab\",\"dg\"\r\n"]
   end

@@ -27,6 +27,18 @@ defmodule DecodingTests.EscapedFieldsExceptionsTest do
            ]
   end
 
+  test "raises errors for unfinished escape sequences spanning multiple lines and custom escape characters" do
+    stream = [",ci,@@@", ",c,d"] |> to_line_stream
+    result = stream |> CSV.decode(escape_character: ?@) |> Enum.to_list()
+
+    assert result == [
+             error:
+               "Escape sequence started on line 1:\n\n@@@\n\ndid not terminate " <>
+                 "before the stream halted. Parsing will continue on line 2.\n",
+             ok: ["", "c", "d"]
+           ]
+  end
+
   test "raises errors for unfinished escape sequences in strict mode" do
     stream = [",ci,\"\"\"", ",c,d"] |> to_line_stream
 

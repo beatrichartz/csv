@@ -14,8 +14,8 @@ defmodule EncodingTests.BaselineTest do
     assert result == ["a;b\n", "c;d\n"]
   end
 
-  test "allows forcing of quotes" do
-    result = Encoder.encode([~w(a b), ~w(c d)], force_quotes: true) |> Enum.to_list()
+  test "allows forcing of escape characters" do
+    result = Encoder.encode([~w(a b), ~w(c d)], force_escaping: true) |> Enum.to_list()
     assert result == ["\"a\",\"b\"\r\n", "\"c\",\"d\"\r\n"]
   end
 end

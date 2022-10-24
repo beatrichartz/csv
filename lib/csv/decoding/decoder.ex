@@ -20,6 +20,8 @@ defmodule CSV.Decoding.Decoder do
 
   * `:separator`           – The separator token to use, defaults to `?,`.
       Must be a codepoint (syntax: ? + (your separator)).
+  * `:escape_character`    – The escape character token to use, defaults to `?"`.
+      Must be a codepoint (syntax: ? + (your escape character)).
   * `:field_transform`     – A function with arity 1 that will get called with 
       each field and can apply transformations. Defaults to identity function.
       This function will get called for every field and therefore should return 
@@ -43,6 +45,14 @@ defmodule CSV.Decoding.Decoder do
       iex> [\"a,b\\n\",\"c,d\\n\"]
       ...> |> Stream.map(&(&1))
       ...> |> CSV.Decoding.Decoder.decode
+      ...> |> Enum.take(2)
+      [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
+
+  Convert a stream with custom escape characters into a stream of rows:
+
+      iex> [\"@a@,@b@\\n\",\"@c@,@d@\\n\"]
+      ...> |> Stream.map(&(&1))
+      ...> |> CSV.Decoding.Decoder.decode(escape_character: ?@)
       ...> |> Enum.take(2)
       [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
 
@@ -133,6 +143,7 @@ defmodule CSV.Decoding.Decoder do
           | {:headers, [String.t() | atom()] | boolean()}
           | {:validate_row_length, boolean()}
           | {:separator, char}
+          | {:escape_character, char}
           | {:field_transform, (String.t() -> String.t())}
   @spec decode(Enumerable.t(), [decode_options()]) :: Enumerable.t()
   def decode(stream, options \\ []) do

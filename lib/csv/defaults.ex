@@ -14,7 +14,7 @@ defmodule CSV.Defaults do
       @escape <<@escape_character::utf8>>
       @escape_max_lines 10
       @replacement nil
-      @force_quotes false
+      @force_escaping false
       @trim_fields false
       @escape_formulas false
       @unescape_formulas false

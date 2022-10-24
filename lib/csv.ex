@@ -19,6 +19,8 @@ defmodule CSV do
 
   * `:separator`           – The separator token to use, defaults to `?,`.
       Must be a codepoint (syntax: ? + (your separator)).
+  * `:escape_character`    – The escape character token to use, defaults to `?"`.
+      Must be a codepoint (syntax: ? + (your escape character)).
   * `:field_transform`     – A function with arity 1 that will get called with 
       each field and can apply transformations. Defaults to identity function.
       This function will get called for every field and therefore should return 
@@ -32,7 +34,7 @@ defmodule CSV do
   * `:validate_row_length` – When set to `true`, will take the first row of
       the csv or its headers and validate that following rows are of the same 
       length. Defaults to `false`.
-  * `:unescape_formulas       – When set to `true`, will remove formula escaping 
+  * `:unescape_formulas    – When set to `true`, will remove formula escaping 
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
   ## Examples
@@ -71,6 +73,30 @@ defmodule CSV do
         ok: %{\"a\" => \"e\", \"b\" => \"f\"}
       ]
 
+  Map a stream with custom escape characters:
+
+      iex> [\"@a@,@b@\\n\",\"@c@,@d@\\n\"]
+      ...> |> Stream.map(&(&1))
+      ...> |> CSV.decode(escape_character: ?@)
+      ...> |> Enum.take(2)
+      [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
+
+  Map a stream with custom separator characters:
+
+      iex> [\"a;b\\n\",\"c;d\\n\"]
+      ...> |> Stream.map(&(&1))
+      ...> |> CSV.decode(separator: ?;)
+      ...> |> Enum.take(2)
+      [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
+
+  Trim each field:
+
+      iex> [\" a , b   \\n\",\" c   ,   d \\n\"]
+      ...> |> Stream.map(&(&1))
+      ...> |> CSV.decode(field_transform: &String.trim/1)
+      ...> |> Enum.take(2)
+      [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
+
   Map an existing stream of lines separated by a token to a stream of rows
   with a given header row:
 
@@ -107,6 +133,8 @@ defmodule CSV do
 
   * `:separator`           – The separator token to use, defaults to `?,`.
       Must be a codepoint (syntax: ? + (your separator)).
+  * `:escape_character`    – The escape character token to use, defaults to `?"`.
+      Must be a codepoint (syntax: ? + (your escape character)).
   * `:field_transform`     – A function with arity 1 that will get called with 
       each field and can apply transformations. Defaults to identity function.
       This function will get called for every field and therefore should return 
@@ -120,7 +148,8 @@ defmodule CSV do
   * `:validate_row_length` – When set to `true`, will take the first row of
       the csv or its headers and validate that following rows are of the same 
       length. Will raise an error if validation fails. Defaults to `false`.
-  * `:escape_formulas       – When set to `true`, will remove formula escaping 
+  * `:unescape_formulas    – When set to `true`, will remove formula escaping 
+      inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
   ## Examples
 
   Convert a filestream into a stream of rows in order of the given stream:
@@ -144,6 +173,14 @@ defmodule CSV do
         %{\"a\" => \"e\", \"b\" => \"f\"}
       ]
 
+  Map a stream with custom escape characters:
+
+      iex> [\"@a@,@b@\\n\",\"@c@,@d@\\n\"]
+      ...> |> Stream.map(&(&1))
+      ...> |> CSV.decode!(escape_character: ?@)
+      ...> |> Enum.take(2)
+      [[\"a\", \"b\"], [\"c\", \"d\"]]
+
   Map an existing stream of lines separated by a token to a stream of rows
   with a given header row:
 
@@ -160,16 +197,16 @@ defmodule CSV do
 
       iex> [\" a , b   \\n\",\" c   ,   d \\n\"]
       ...> |> Stream.map(&(&1))
-      ...> |> CSV.decode(field_transform: &String.trim/1)
+      ...> |> CSV.decode!(field_transform: &String.trim/1)
       ...> |> Enum.take(2)
-      [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
+      [[\"a\", \"b\"], [\"c\", \"d\"]]
 
   Replace invalid codepoints:
       
       iex> \"../test/fixtures/broken-encoding.csv\"
       ...> |> Path.expand(__DIR__)
       ...> |> File.stream!()
-      ...> |> CSV.decode(field_transform: fn field ->
+      ...> |> CSV.decode!(field_transform: fn field ->
       ...>   if String.valid?(field) do
       ...>     field
       ...>   else
@@ -180,7 +217,7 @@ defmodule CSV do
       ...>   end
       ...> end)
       ...> |> Enum.take(2)
-      [ok: [\"a\", \"b\", \"c\", \"?_?\"], ok: [\"ಠ_ಠ\"]]
+      [[\"a\", \"b\", \"c\", \"?_?\"], [\"ಠ_ಠ\"]]
 
   """
 
@@ -223,8 +260,12 @@ defmodule CSV do
 
     * `:separator`              – The separator token to use, defaults to `?,`.
     Must be a codepoint (syntax: ? + (your separator)).
+    * `:escape_character`       – The escape character token to use, defaults to `?"`.
+    Must be a codepoint (syntax: ? + (your escape character)).
     * `:delimiter`              – The delimiter token to use, defaults to `\\r\\n`.
     Must be a string.
+    * `:force_escaping          – When set to `true`, will escape fields even if
+    they do not contain characters that require escaping
     * `:escape_formulas         – When set to `true`, will escape formulas
     to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
@@ -245,6 +286,14 @@ defmodule CSV do
       iex> |> Enum.take(2)
       [\"\\\"a\\nb\\\"\\t\\\"\\tc\\\"\\n\", \"de\\t\\\"\\tf\\\"\\\"\\\"\\n\"]
 
+  Convert a stream of rows with fields into a stream of lines forcing escaping
+  with a custom character:
+
+      iex> [~w(a b), ~w(c d)]
+      iex> |> CSV.encode(force_escaping: true, escape_character: ?@)
+      iex> |> Enum.take(2)
+      [\"@a@,@b@\\r\\n\", \"@c@,@d@\\r\\n\"]
+
   Convert a stream of rows with fields with formulas into a stream of
   lines:
 
@@ -255,8 +304,10 @@ defmodule CSV do
   """
 
   @type encode_options ::
-          {:separator, char}
+          {:separator, char()}
+          | {:escape_character, char()}
           | {:delimiter, String.t()}
+          | {:force_escaping, boolean()}
           | {:escape_formulas, boolean()}
 
   @spec encode(Enumerable.t(), [encode_options()]) :: Enumerable.t()

@@ -2,9 +2,16 @@ defmodule EscapedFieldsTest do
   use ExUnit.Case
   import TestSupport.StreamHelpers
 
-  test "parses empty escape sequences correctly" do
+  test "parses empty escape sequences" do
     stream = ["\"\",e"] |> to_line_stream
     result = CSV.decode!(stream) |> Enum.take(2)
+
+    assert result == [["", "e"]]
+  end
+
+  test "parses empty escape with custom escape characters" do
+    stream = ["@@,e"] |> to_line_stream
+    result = CSV.decode!(stream, escape_character: ?@) |> Enum.take(2)
 
     assert result == [["", "e"]]
   end
@@ -16,14 +23,21 @@ defmodule EscapedFieldsTest do
     assert result == [["a", "be\nc,d\ne,f"], ~w(g h)]
   end
 
-  test "parses escape sequences in each field correctly" do
+  test "collects rows with fields spanning multiple lines and custom escape characters" do
+    stream = ["a,@be", "c,d\ne,f@", "g,h", "i,j", "k,l"] |> to_line_stream
+    result = CSV.decode!(stream, escape_character: ?@) |> Enum.take(2)
+
+    assert result == [["a", "be\nc,d\ne,f"], ~w(g h)]
+  end
+
+  test "parses escape sequences in each field" do
     stream = ["a,\"b\",\"c\"", "\"d\",e,\"f\"\"\""] |> to_line_stream
     result = CSV.decode(stream) |> Enum.take(2)
 
     assert result == [ok: ["a", "b", "c"], ok: ["d", "e", "f\""]]
   end
 
-  test "parses escape sequences containing escaped double quotes and applies transforms correctly" do
+  test "parses escape sequences containing escaped double quotes and applies transforms" do
     stream =
       ["  a  ,\"   \"\"b\"\"    \",\"    \"\"     c     \"\"      \"\"      \""] |> to_line_stream
 
