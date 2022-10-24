@@ -1,5 +1,45 @@
 # Changelog
 
+## 3.0.0 (2022-10-25)
+- The parallel parser/lexer with a binary matching parser with better performance.
+- A new `:field_transform` option allows specifying functionality applied when decoding any field through a function
+- Escape characters can now be specified using the `:escape_character` option, this [Closes #59](https://github.com/beatrichartz/csv/issues/59)
+- The library will now reparse lines that follow e.g. an unterminated escape sequence. This ensures that all possible valid rows
+  will be returned in normal mode
+- Encoding checks have been removed because they can either be done using `:field_transform` or outside the library
+- Better docs
+
+### Upgrading from 2.x
+- **Parallelism has been removed**, alongside its options `:num_workers` and `:worker_work_ratio`. You can safely remove them.
+- **`StrayQuoteError` is now `StrayEscapeCharacterError`**. If you catch this error in your code, you need to rename it.
+- **The `:trim_fields` option needs to be replaced** with the `:field_transform` option:
+  ```elixir
+  File.stream!("data.csv") |> CSV.decode(field_transform: &String.trim/1)
+  ```
+- **`:validate_row_length` now defaults to `false`**. This option produces an error for rows with different length. Set it
+  to `true` to get the same behaviour as in 2.x
+- **`:escape_formulas` is now `:unescape_formulas` for `decode` and `decode!`.** It is still `:escape_formulas` for
+  `encode`. Change `:escape_formulas` to `:unescape_formulas` in `decode` calls to get the same behaviour as in 2.x
+- **`:escape_max_lines` now defaults to `10`** instead of `1000`. To get the same behaviour as in 2.x, use:
+  ```elixir
+  File.stream!("data.csv") |> CSV.decode(escape_max_lines: 1000)
+  ```
+- **`:replace` has been removed**. `CSV` will now return fields with incorrect encoding as-is. 
+  You can use the new `:field_transform` option to provide a function transforming fields while they are being parsed. 
+  This allows to e.g. replace incorrect encoding:
+  ```elixir
+  defp replace_bad_encoding(field) do
+    if String.valid?(field) do
+      field
+    else
+      field
+      |> String.codepoints()
+      |> Enum.map(fn codepoint -> if String.valid?(codepoint), do: codepoint, else: "?" end)
+      |> Enum.join()
+    end
+  end
+  ```
+
 ## 2.5.0 (2022-09-17)
 - Optional parameter `escape_formulas` to prevent CSV injection. [Fixes #103](https://github.com/beatrichartz/csv/issues/103) reported by [@maennchen](https://github.com/maennchen). Contributed by [@maennchen](https://github.com/maennchen) in [PR #104](https://github.com/beatrichartz/csv/pull/104).
 - Optional parameter `force_quotes` to force quotes when encoding contributed by [@stuart](https://github.com/stuart)
