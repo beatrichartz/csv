@@ -304,7 +304,7 @@ defmodule CSV.Decoding.Parser do
          {fields, partial_field, {:open, field_start_position, line}},
          [{token_position, token_length} | tokens],
          escape_max_lines,
-         finalize_field
+         field_transform
        ) do
     case binary_part(sequence, token_position, token_length) do
       @escape when field_start_position == token_position ->
@@ -314,7 +314,7 @@ defmodule CSV.Decoding.Parser do
           {fields, partial_field, {:escaped, token_position + token_length, line, line}},
           tokens,
           escape_max_lines,
-          finalize_field
+          field_transform
         )
 
       @escape ->
@@ -332,12 +332,12 @@ defmodule CSV.Decoding.Parser do
             end, line}},
           tokens,
           escape_max_lines,
-          finalize_field
+          field_transform
         )
 
       @newline ->
         new_field =
-          finalize_field.(
+          field_transform.(
             sequence,
             partial_field,
             {field_start_position, token_position - field_start_position}
@@ -349,12 +349,12 @@ defmodule CSV.Decoding.Parser do
           {[], "", {:open, token_position + token_length, line + 1}},
           tokens,
           escape_max_lines,
-          finalize_field
+          field_transform
         )
 
       @carriage_return ->
         new_field =
-          finalize_field.(
+          field_transform.(
             sequence,
             partial_field,
             {field_start_position, token_position - field_start_position}
@@ -366,12 +366,12 @@ defmodule CSV.Decoding.Parser do
           {[], "", {:row_closing, token_position + token_length, line}},
           tokens,
           escape_max_lines,
-          finalize_field
+          field_transform
         )
 
       _ ->
         new_field =
-          finalize_field.(
+          field_transform.(
             sequence,
             partial_field,
             {field_start_position, token_position - field_start_position}
@@ -383,7 +383,7 @@ defmodule CSV.Decoding.Parser do
           {fields ++ [new_field], "", {:open, token_position + token_length, line}},
           tokens,
           escape_max_lines,
-          finalize_field
+          field_transform
         )
     end
   end
@@ -394,7 +394,7 @@ defmodule CSV.Decoding.Parser do
          {fields, partial_field, {:escaped, field_start_position, escape_start_line, line}},
          [{token_position, token_length} | tokens],
          escape_max_lines,
-         finalize_field
+         field_transform
        ) do
     case binary_part(sequence, token_position, token_length) do
       @escape ->
@@ -405,7 +405,7 @@ defmodule CSV.Decoding.Parser do
            {:escape_closing, token_position, field_start_position, escape_start_line, line}},
           tokens,
           escape_max_lines,
-          finalize_field
+          field_transform
         )
 
       @newline when escape_start_line + escape_max_lines == line ->
@@ -438,7 +438,7 @@ defmodule CSV.Decoding.Parser do
           {fields, partial_field, {:escaped, field_start_position, escape_start_line, line + 1}},
           tokens,
           escape_max_lines,
-          finalize_field
+          field_transform
         )
 
       @carriage_return ->
@@ -448,7 +448,7 @@ defmodule CSV.Decoding.Parser do
           {fields, partial_field, {:escaped, field_start_position, escape_start_line, line}},
           tokens,
           escape_max_lines,
-          finalize_field
+          field_transform
         )
 
       _ ->
@@ -458,7 +458,7 @@ defmodule CSV.Decoding.Parser do
           {fields, partial_field, {:escaped, field_start_position, escape_start_line, line}},
           tokens,
           escape_max_lines,
-          finalize_field
+          field_transform
         )
     end
   end
@@ -471,7 +471,7 @@ defmodule CSV.Decoding.Parser do
            line}},
          [{token_position, token_length} | tokens],
          escape_max_lines,
-         finalize_field
+         field_transform
        ) do
     case binary_part(sequence, token_position, token_length) do
       _ when previous_token_position + 1 != token_position ->
@@ -488,7 +488,7 @@ defmodule CSV.Decoding.Parser do
             end, escape_start_line}},
           [{token_position, token_length} | tokens],
           escape_max_lines,
-          finalize_field
+          field_transform
         )
 
       @escape when previous_token_position + 1 == token_position ->
@@ -496,19 +496,19 @@ defmodule CSV.Decoding.Parser do
           sequence,
           rows,
           {fields,
-           finalize_field.(
+           field_transform.(
              sequence,
              partial_field,
              {field_start_position, token_position - field_start_position}
            ), {:escaped, token_position + token_length, escape_start_line, line}},
           tokens,
           escape_max_lines,
-          finalize_field
+          field_transform
         )
 
       @carriage_return ->
         new_field =
-          finalize_field.(
+          field_transform.(
             sequence,
             partial_field,
             {field_start_position, token_position - token_length - field_start_position}
@@ -520,12 +520,12 @@ defmodule CSV.Decoding.Parser do
           {[], "", {:row_closing, token_position + token_length, line}},
           tokens,
           escape_max_lines,
-          finalize_field
+          field_transform
         )
 
       @newline ->
         new_field =
-          finalize_field.(
+          field_transform.(
             sequence,
             partial_field,
             {field_start_position, token_position - token_length - field_start_position}
@@ -537,12 +537,12 @@ defmodule CSV.Decoding.Parser do
           {[], "", {:open, token_position + token_length, line + 1}},
           tokens,
           escape_max_lines,
-          finalize_field
+          field_transform
         )
 
       _ ->
         new_field =
-          finalize_field.(
+          field_transform.(
             sequence,
             partial_field,
             {field_start_position, token_position - token_length - field_start_position}
@@ -554,7 +554,7 @@ defmodule CSV.Decoding.Parser do
           {fields ++ [new_field], "", {:open, token_position + token_length, line}},
           tokens,
           escape_max_lines,
-          finalize_field
+          field_transform
         )
     end
   end
@@ -565,7 +565,7 @@ defmodule CSV.Decoding.Parser do
          {_, _, {:errored, field_start_position, error_module, construct_arguments, line}},
          [{token_position, token_length} | tokens],
          escape_max_lines,
-         finalize_field
+         field_transform
        ) do
     case binary_part(sequence, token_position, token_length) do
       @newline ->
@@ -598,7 +598,7 @@ defmodule CSV.Decoding.Parser do
           {[], "", {:errored, field_start_position, error_module, construct_arguments, line}},
           tokens,
           escape_max_lines,
-          finalize_field
+          field_transform
         )
     end
   end
@@ -609,7 +609,7 @@ defmodule CSV.Decoding.Parser do
          {fields, partial_field, {:row_closing, _, line}},
          [{token_position, token_length} | tokens],
          escape_max_lines,
-         finalize_field
+         field_transform
        ) do
     case binary_part(sequence, token_position, token_length) do
       @newline ->
@@ -619,7 +619,7 @@ defmodule CSV.Decoding.Parser do
           {fields, partial_field, {:open, token_position + token_length, line + 1}},
           tokens,
           escape_max_lines,
-          finalize_field
+          field_transform
         )
 
       _ ->
@@ -629,7 +629,7 @@ defmodule CSV.Decoding.Parser do
           {fields, partial_field, {:open, 0, line}},
           [{token_position, token_length} | tokens],
           escape_max_lines,
-          finalize_field
+          field_transform
         )
     end
   end
