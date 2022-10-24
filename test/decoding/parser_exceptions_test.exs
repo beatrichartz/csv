@@ -129,6 +129,16 @@ defmodule DecodingTests.ParserExceptionsTest do
     end)
   end
 
+  test "includes escape sequences with a stray escape character on the last line" do
+    stream = "a,\"b,c\nd,e\n,f\"\" \"a" |> to_byte_stream(10)
+    result = Parser.parse(stream) |> Enum.to_list()
+
+    assert result == [
+             {:error, StrayEscapeCharacterError,
+              [line: 3, sequence: "b,c\nd,e\n,f\"\" \"a", stream_halted: true]}
+           ]
+  end
+
   test "includes an error for escape sequences that do not terminate within a number of lines and parses following lines" do
     stream = ["a,\"be", "c,d", "e,f", "g,h"] |> to_line_stream
     errors = stream |> Parser.parse(escape_max_lines: 2) |> Enum.to_list()

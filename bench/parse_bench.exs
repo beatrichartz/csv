@@ -2,7 +2,7 @@ defmodule ParseBench do
   use Benchfella
 
   setup_all do
-    NimbleCSV.define(MyParser, separator: separator, escape: "\"")
+    NimbleCSV.define(MyParser, separator: separator, escape: "}")
 
     if System.get_env("CSV_BENCH_OBSERVER") do
       :observer.start()
@@ -21,7 +21,7 @@ defmodule ParseBench do
   bench "csv" do
     path
     |> File.stream!([read_ahead: 100_000], 2000)
-    |> CSV.decode!(separator: String.to_charlist(separator) |> List.first())
+    |> CSV.decode!(separator: String.to_charlist(separator) |> List.first(), escape_character: ?})
     |> Stream.run()
   end
 

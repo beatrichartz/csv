@@ -224,9 +224,9 @@ defmodule CSV.Decoding.Parser do
 
   defp parse_to_end(
          {rows,
-          {fields, partial_field, {:escape_closing, previous_token_position, _, _, _},
+          {fields, partial_field, {:escape_closing, previous_token_position, _, _, line},
            {_, sequence}}},
-         _,
+         escape_character,
          _,
          _
        ) do
@@ -236,7 +236,12 @@ defmodule CSV.Decoding.Parser do
          empty_transform_state()}
 
       _ ->
-        {rows, empty_transform_state()}
+        {rows
+         |> add_error(StrayEscapeCharacterError,
+           line: line,
+           sequence: sequence,
+           stream_halted: true
+         ), empty_transform_state()}
     end
   end
 
