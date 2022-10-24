@@ -4,7 +4,7 @@ defmodule DecodingTests.ParserExceptionsTest do
 
   alias CSV.Decoding.Parser
   alias CSV.EscapeSequenceError
-  alias CSV.StrayQuoteError
+  alias CSV.StrayEscapeCharacterError
 
   test "parses encodings as-is without validation" do
     stream = "../fixtures/broken-encoding.csv" |> Path.expand(__DIR__) |> File.stream!()
@@ -41,9 +41,9 @@ defmodule DecodingTests.ParserExceptionsTest do
     errors = stream |> Parser.parse() |> Enum.to_list()
 
     assert errors == [
-             {:error, StrayQuoteError, [line: 1, sequence: "a\",\"be"]},
-             {:error, StrayQuoteError, [line: 3, sequence: "\"c,d\n\"e,f\"g\",h"]},
-             {:error, StrayQuoteError, [line: 3, sequence: "\"e,f\"g\",h"]},
+             {:error, StrayEscapeCharacterError, [line: 1, sequence: "a\",\"be"]},
+             {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"c,d\n\"e,f\"g\",h"]},
+             {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"e,f\"g\",h"]},
              {:ok, ["j", "k"]}
            ]
   end
@@ -55,9 +55,9 @@ defmodule DecodingTests.ParserExceptionsTest do
       errors = stream |> Parser.parse() |> Enum.to_list()
 
       assert errors == [
-               {:error, StrayQuoteError, [line: 1, sequence: "a\",\"be"]},
-               {:error, StrayQuoteError, [line: 3, sequence: "\"c,d\n\"e,f\"g\",h"]},
-               {:error, StrayQuoteError, [line: 3, sequence: "\"e,f\"g\",h"]},
+               {:error, StrayEscapeCharacterError, [line: 1, sequence: "a\",\"be"]},
+               {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"c,d\n\"e,f\"g\",h"]},
+               {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"e,f\"g\",h"]},
                {:ok, ["j", "k"]},
                {:ok, ["m", "l"]},
                {:ok, ["o", "p"]}
@@ -70,9 +70,9 @@ defmodule DecodingTests.ParserExceptionsTest do
     errors = stream |> Parser.parse() |> Enum.to_list()
 
     assert errors == [
-             {:error, StrayQuoteError, [line: 1, sequence: "\"b\"e"]},
-             {:error, StrayQuoteError, [line: 2, sequence: "\"c,\"d"]},
-             {:error, StrayQuoteError, [line: 3, sequence: "\"e,f\"g\",h"]},
+             {:error, StrayEscapeCharacterError, [line: 1, sequence: "\"b\"e"]},
+             {:error, StrayEscapeCharacterError, [line: 2, sequence: "\"c,\"d"]},
+             {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"e,f\"g\",h"]},
              {:ok, ["j", "k"]}
            ]
   end
@@ -84,9 +84,9 @@ defmodule DecodingTests.ParserExceptionsTest do
       errors = stream |> Parser.parse() |> Enum.to_list()
 
       assert errors == [
-               {:error, StrayQuoteError, [line: 1, sequence: "\"b\"e"]},
-               {:error, StrayQuoteError, [line: 2, sequence: "\"c,\"d"]},
-               {:error, StrayQuoteError, [line: 3, sequence: "\"e,f\"g\",h"]},
+               {:error, StrayEscapeCharacterError, [line: 1, sequence: "\"b\"e"]},
+               {:error, StrayEscapeCharacterError, [line: 2, sequence: "\"c,\"d"]},
+               {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"e,f\"g\",h"]},
                {:ok, ["j", "k"]}
              ]
     end)
@@ -97,9 +97,9 @@ defmodule DecodingTests.ParserExceptionsTest do
     errors = stream |> Parser.parse() |> Enum.to_list()
 
     assert errors == [
-             {:error, StrayQuoteError, [line: 1, sequence: "a\",\"be"]},
-             {:error, StrayQuoteError, [line: 3, sequence: "\"c,,d\n\"e,f\"g\",h"]},
-             {:error, StrayQuoteError, [line: 3, sequence: "\"e,f\"g\",h"]},
+             {:error, StrayEscapeCharacterError, [line: 1, sequence: "a\",\"be"]},
+             {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"c,,d\n\"e,f\"g\",h"]},
+             {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"e,f\"g\",h"]},
              {:ok, ["j", "k"]}
            ]
   end
@@ -109,8 +109,9 @@ defmodule DecodingTests.ParserExceptionsTest do
     errors = stream |> Parser.parse() |> Enum.to_list()
 
     assert errors == [
-             {:error, StrayQuoteError, [line: 1, sequence: "a\",\"be"]},
-             {:error, StrayQuoteError, [line: 2, sequence: "e,fg,hh\"", stream_halted: true]}
+             {:error, StrayEscapeCharacterError, [line: 1, sequence: "a\",\"be"]},
+             {:error, StrayEscapeCharacterError,
+              [line: 2, sequence: "e,fg,hh\"", stream_halted: true]}
            ]
   end
 
@@ -121,8 +122,9 @@ defmodule DecodingTests.ParserExceptionsTest do
       errors = stream |> Parser.parse() |> Enum.to_list()
 
       assert errors == [
-               {:error, StrayQuoteError, [line: 1, sequence: "a\",\"be"]},
-               {:error, StrayQuoteError, [line: 2, sequence: "e,fg,hh\"", stream_halted: true]}
+               {:error, StrayEscapeCharacterError, [line: 1, sequence: "a\",\"be"]},
+               {:error, StrayEscapeCharacterError,
+                [line: 2, sequence: "e,fg,hh\"", stream_halted: true]}
              ]
     end)
   end
@@ -247,7 +249,7 @@ defmodule DecodingTests.ParserExceptionsTest do
     errors = stream |> Parser.parse() |> Enum.to_list()
 
     assert errors == [
-             {:error, StrayQuoteError,
+             {:error, StrayEscapeCharacterError,
               [
                 line: 2,
                 sequence: "\"be\nc,\"d\""
@@ -271,7 +273,7 @@ defmodule DecodingTests.ParserExceptionsTest do
       errors = stream |> Parser.parse() |> Enum.to_list()
 
       assert errors == [
-               {:error, StrayQuoteError,
+               {:error, StrayEscapeCharacterError,
                 [
                   line: 2,
                   sequence: "\"be\nc,\"d\""

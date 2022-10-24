@@ -6,7 +6,7 @@ defmodule CSV.Decoding.Parser do
   into a stream of row tuples and (potentially) error tuples. It
   follows the grammar defined in [RFC4180](https://www.rfc-editor.org/rfc/rfc4180).
   """
-  alias CSV.StrayQuoteError
+  alias CSV.StrayEscapeCharacterError
   alias CSV.EscapeSequenceError
 
   @doc """
@@ -329,7 +329,7 @@ defmodule CSV.Decoding.Parser do
           sequence,
           rows,
           {[], "",
-           {:errored, field_start_position, StrayQuoteError,
+           {:errored, field_start_position, StrayEscapeCharacterError,
             fn arguments ->
               [
                 line: line,
@@ -487,7 +487,7 @@ defmodule CSV.Decoding.Parser do
           sequence,
           rows,
           {[], partial_field,
-           {:errored, field_start_position, StrayQuoteError,
+           {:errored, field_start_position, StrayEscapeCharacterError,
             fn arguments ->
               [
                 line: line,

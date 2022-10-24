@@ -20,7 +20,7 @@ defmodule CSV.RowLengthError do
   end
 end
 
-defmodule CSV.StrayQuoteError do
+defmodule CSV.StrayEscapeCharacterError do
   @moduledoc """
   Raised at runtime when the CSV row has stray quotes.
   """
@@ -32,9 +32,9 @@ defmodule CSV.StrayQuoteError do
     sequence = options |> Keyword.fetch!(:sequence)
 
     message =
-      "Stray quote on line #{line}:" <>
+      "Stray escape character on line #{line}:" <>
         "\n\n#{sequence}" <>
-        "\n\nThis error often happens when the wrong separator has been applied.\n"
+        "\n\nThis error often happens when the wrong separator or escape character has been applied.\n"
 
     %__MODULE__{
       line: line,

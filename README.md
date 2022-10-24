@@ -42,10 +42,25 @@ While `1000` is usually a good default number of bytes to stream, you should mea
 byte size according to your environment.
 
 ## Upgrading from 2.x
-The main goal for 3.x has been to streamline the library API and leverage binary matching. Upgrading should require few
-to no changes in most cases:
-- Parallelism has been removed, alongside its options `:num_workers` and `:worker_work_ratio`. You can safely remove them.
-- The `:replace` option has been removed and `CSV` will now return fields with incorrect encoding as-is. 
+The main goal for 3.x has been to streamline the library API and leverage binary matching. 
+
+#### Upgrading should require few to no changes in most cases:
+
+- **Parallelism has been removed**, alongside its options `:num_workers` and `:worker_work_ratio`. You can safely remove them.
+- **`StrayQuoteError` is now `StrayEscapeCharacterError`**. If you catch this error in your code, you need to rename it.
+- **The `:trim_fields` option needs to be replaced** with the `:field_transform` option:
+  ```elixir
+  File.stream!("data.csv") |> CSV.decode(field_transform: &String.trim/1)
+  ```
+- **`:validate_row_length` now defaults to `false`**. This option produces an error for rows with different length. Set it
+  to `true` to get the same behaviour as in 2.x
+- **`:escape_formulas` is now `:unescape_formulas` for `decode` and `decode!`.** It is still `:escape_formulas` for
+  `encode`. Change `:escape_formulas` to `:unescape_formulas` in `decode` calls to get the same behaviour as in 2.x
+- **`:escape_max_lines` now defaults to `10`** instead of `1000`. To get the same behaviour as in 2.x, use:
+  ```elixir
+  File.stream!("data.csv") |> CSV.decode(escape_max_lines: 1000)
+  ```
+- **`:replace` has been removed**. `CSV` will now return fields with incorrect encoding as-is. 
   You can use the new `:field_transform` option to provide a function transforming fields while they are being parsed. 
   This allows to e.g. replace incorrect encoding:
   ```elixir
@@ -62,20 +77,8 @@ to no changes in most cases:
 
   File.stream!("data.csv") |> CSV.decode(field_transform: &replace_bad_encoding/1)
   ```
-- The `:trim_fields` option has been removed and can be replaced using the `:field_transform` option:
-  ```elixir
-  File.stream!("data.csv") |> CSV.decode(field_transform: &String.trim/1)
-  ```
-- The `:validate_row_length` option which produces an error for rows with different length now defaults to `false`. Set it
-  to `true` to get the same behaviour as in 2.x
-- The `:escape_formulas` option has been renamed to `:unescape_formulas` for `decode` and `decode!`. It is still `:escape_formulas` for
-  `encode`. Change `:escape_formulas` to `:unescape_formulas` in `decode` calls to get the same behaviour as in 2.x
-- The `:escape_max_lines` option default has been set to `10` instead of `1000`. To get the same behaviour as in 2.x, use:
-  ```elixir
-  File.stream!("data.csv") |> CSV.decode(escape_max_lines: 1000)
-  ```
 
-That's it! Please open an issue if you see any other non-backward compatible behaviour so it can be documented.
+**That's it!** Please open an issue if you see any other non-backward compatible behaviour so it can be documented.
 
 ### Elixir version requirements
 * Elixir `1.5.0` is required for all versions above `2.5.0`.

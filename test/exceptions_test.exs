@@ -2,7 +2,7 @@ defmodule ExceptionsTest do
   use ExUnit.Case
 
   alias CSV.EscapeSequenceError
-  alias CSV.StrayQuoteError
+  alias CSV.StrayEscapeCharacterError
   alias CSV.RowLengthError
 
   test "exception messaging about row length errors" do
@@ -50,10 +50,10 @@ defmodule ExceptionsTest do
                "You can change it using the escape_max_lines option: https://hexdocs.pm/csv/CSV.html#decode/2\n"
   end
 
-  test "exception messaging about stray quote errors" do
-    exception = StrayQuoteError.exception(line: 1, sequence: "THIS")
+  test "exception messaging about stray escape character errors" do
+    exception = StrayEscapeCharacterError.exception(line: 1, sequence: "THIS")
 
     assert exception.message ==
-             "Stray quote on line 1:\n\nTHIS\n\nThis error often happens when the wrong separator has been applied.\n"
+             "Stray escape character on line 1:\n\nTHIS\n\nThis error often happens when the wrong separator or escape character has been applied.\n"
   end
 end
