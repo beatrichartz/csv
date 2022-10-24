@@ -71,11 +71,6 @@ defmodule CSV.Decoding.Parser do
     )
   end
 
-  @compile {:inline, empty_state: 0}
-  defp empty_state do
-    {[], empty_transform_state()}
-  end
-
   @compile {:inline, empty_transform_state: 0}
   defp empty_transform_state do
     {[], "", {:open, 0, 1}, {:parsed, ""}}
@@ -155,9 +150,6 @@ defmodule CSV.Decoding.Parser do
 
   defp create_row_transform(escape_max_lines, token_pattern, field_transform) do
     fn
-      :stream_halted, {[], _, _, ""} ->
-        empty_state()
-
       :stream_halted, {fields, partial_field, parse_state, sequence} ->
         parse_to_end(
           {[], {fields, partial_field, parse_state, sequence}},
