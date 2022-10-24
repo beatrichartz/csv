@@ -73,7 +73,7 @@ defmodule CSV.EscapeSequenceError do
         escape_max_lines = options |> Keyword.fetch!(:escape_max_lines)
 
         "Escape sequence started on line #{line}:" <>
-          "\n\n#{escape_sequence_start}\n^\n\ndid not terminate." <>
+          "\n\n#{escape_sequence_start}\n\ndid not terminate." <>
           continues_parsing <>
           "\n\n" <>
           "Escape sequences are allowed to span up to #{escape_max_lines} lines. " <>

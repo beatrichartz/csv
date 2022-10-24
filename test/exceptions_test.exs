@@ -43,7 +43,7 @@ defmodule ExceptionsTest do
       )
 
     assert exception.message ==
-             "Escape sequence started on line 1:\n\nSEQUENCE START\n^\n\ndid not terminate. " <>
+             "Escape sequence started on line 1:\n\nSEQUENCE START\n\ndid not terminate. " <>
                "You can use normal mode to continue parsing rows even if single rows have errors.\n\n" <>
                "Escape sequences are allowed to span up to 2 lines. This threshold avoids " <>
                "collecting the whole file into memory when an escape sequence does not terminate.\n" <>
