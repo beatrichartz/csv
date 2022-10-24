@@ -72,6 +72,15 @@ defmodule CSV.Decoding.Decoder do
       ...> |> Enum.take(2)
       [ok: [\"a\", \"b\"], ok: [\"c\", \"d\"]]
 
+  Read from a file with a Byte Order Mark (BOM):
+
+      iex> \"../../../test/fixtures/utf8-with-bom.csv\"
+      ...> |> Path.expand(__DIR__)
+      ...> |> File.stream!([:trim_bom])
+      ...> |> CSV.Decoding.Decoder.decode()
+      ...> |> Enum.take(2)
+      [ok: [\"a\", \"b\"], ok: [\"d\", \"e\"]]
+
   Replace invalid codepoints:
       
       iex> \"../../../test/fixtures/broken-encoding.csv\"

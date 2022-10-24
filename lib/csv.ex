@@ -48,6 +48,15 @@ defmodule CSV do
       iex> |> Enum.take(2)
       [ok: [\"a\",\"b\",\"c\"], ok: [\"d\",\"e\",\"f\"]]
 
+  Read from a file with a Byte Order Mark (BOM):
+
+      iex> \"../test/fixtures/utf8-with-bom.csv\"
+      ...> |> Path.expand(__DIR__)
+      ...> |> File.stream!([:trim_bom])
+      ...> |> CSV.decode()
+      ...> |> Enum.take(2)
+      [ok: [\"a\", \"b\"], ok: [\"d\", \"e\"]]
+
   Errors will show up as error tuples:
 
       iex> \"../test/fixtures/docs/escape-errors.csv\"
@@ -150,16 +159,26 @@ defmodule CSV do
       length. Will raise an error if validation fails. Defaults to `false`.
   * `:unescape_formulas    – When set to `true`, will remove formula escaping 
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
+
   ## Examples
 
   Convert a filestream into a stream of rows in order of the given stream:
 
       iex> \"../test/fixtures/docs/valid.csv\"
       iex> |> Path.expand(__DIR__)
-      iex> |> File.stream!
-      iex> |> CSV.decode!
+      iex> |> File.stream!()
+      iex> |> CSV.decode!()
       iex> |> Enum.take(2)
       [[\"a\",\"b\",\"c\"], [\"d\",\"e\",\"f\"]]
+
+  Read from a file with a Byte Order Mark (BOM):
+
+      iex> \"../test/fixtures/utf8-with-bom.csv\"
+      ...> |> Path.expand(__DIR__)
+      ...> |> File.stream!([:trim_bom])
+      ...> |> CSV.decode!()
+      ...> |> Enum.take(2)
+      [[\"a\", \"b\"], [\"d\", \"e\"]]
 
   Map an existing stream of lines separated by a token to a stream of rows
   with a header row:
