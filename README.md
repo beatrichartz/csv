@@ -20,9 +20,11 @@ end
 CSV is a notoriously fickle format, with many implementations and files interpreting it differently.
 
 For that reason, `CSV` implements a normal mode `CSV.decode` that will return a stream of `ok: ["field1", "field2"]`
-and `err: "Message"` tuples. 
+and `err: "Message"` tuples. It will also **reparse lines after a previous line has opened an unterminated escape sequence**,
+ensuring you get all correctly formatted rows.
 
-This allows to extract all correctly formatted rows, while displaying descriptive errors for all incorrectly formatted ones.
+The goal of this library is to allow to extract all correctly formatted rows, while displaying descriptive errors for 
+incorrectly formatted rows.
 
 In strict mode using `CSV.decode!` the library will raise an exception when it encounters the first error, aborting the
 operation.
