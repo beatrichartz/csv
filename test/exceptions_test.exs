@@ -29,7 +29,7 @@ defmodule ExceptionsTest do
       )
 
     assert exception.message ==
-             "Escape sequence started on line 1:\n\nSEQUENCE START\n^\n\ndid not terminate " <>
+             "Escape sequence started on line 1:\n\nSEQUENCE START\n\ndid not terminate " <>
                "before the stream halted. Parsing will continue on line 2.\n"
   end
 
@@ -51,9 +51,9 @@ defmodule ExceptionsTest do
   end
 
   test "exception messaging about stray quote errors" do
-    exception = StrayQuoteError.exception(line: 1, sequence_position: 5, sequence: "THIS")
+    exception = StrayQuoteError.exception(line: 1, sequence: "THIS")
 
     assert exception.message ==
-             "Stray quote on line 1 at position 5:\n\nTHIS\n    ^\n\nThis error often happens when the wrong separator has been applied.\n"
+             "Stray quote on line 1:\n\nTHIS\n\nThis error often happens when the wrong separator has been applied.\n"
   end
 end

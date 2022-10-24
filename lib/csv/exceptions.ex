@@ -29,18 +29,15 @@ defmodule CSV.StrayQuoteError do
 
   def exception(options) do
     line = options |> Keyword.fetch!(:line)
-    sequence_position = options |> Keyword.fetch!(:sequence_position)
     sequence = options |> Keyword.fetch!(:sequence)
-    indicator = String.duplicate(" ", sequence_position - 1) <> "^"
 
     message =
-      "Stray quote on line #{line} at position #{sequence_position}:" <>
-        "\n\n#{sequence}\n#{indicator}" <>
+      "Stray quote on line #{line}:" <>
+        "\n\n#{sequence}" <>
         "\n\nThis error often happens when the wrong separator has been applied.\n"
 
     %__MODULE__{
       line: line,
-      sequence_position: sequence_position,
       message: message
     }
   end
@@ -70,7 +67,7 @@ defmodule CSV.EscapeSequenceError do
     message =
       if stream_halted do
         "Escape sequence started on line #{line}:" <>
-          "\n\n#{escape_sequence_start}\n^\n\ndid not terminate before the stream halted." <>
+          "\n\n#{escape_sequence_start}\n\ndid not terminate before the stream halted." <>
           continues_parsing <> "\n"
       else
         escape_max_lines = options |> Keyword.fetch!(:escape_max_lines)

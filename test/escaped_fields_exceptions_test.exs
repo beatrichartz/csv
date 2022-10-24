@@ -9,7 +9,7 @@ defmodule DecodingTests.EscapedFieldsExceptionsTest do
     assert result == [
              ok: %{a: "a", b: "be"},
              error:
-               "Escape sequence started on line 2:\n\n\"c,d\n^\n\ndid not terminate " <>
+               "Escape sequence started on line 2:\n\n\"c,d\n\ndid not terminate " <>
                  "before the stream halted. Parsing will continue on line 3.\n",
              ok: %{a: "u", b: "z"}
            ]
@@ -21,7 +21,7 @@ defmodule DecodingTests.EscapedFieldsExceptionsTest do
 
     assert result == [
              error:
-               "Escape sequence started on line 1:\n\n\"\"\"\n^\n\ndid not terminate " <>
+               "Escape sequence started on line 1:\n\n\"\"\"\n\ndid not terminate " <>
                  "before the stream halted. Parsing will continue on line 2.\n",
              ok: ["", "c", "d"]
            ]

@@ -55,7 +55,7 @@ defmodule CSV do
       iex> |> Enum.take(2)
       [
         ok: [\"a\",\"b\",\"c\"],
-        error: "Escape sequence started on line 2:\\n\\n\\"d,e,f\\n^\\n\\n\
+        error: "Escape sequence started on line 2:\\n\\n\\"d,e,f\\n\\n\
   did not terminate before the stream halted. Parsing will continue on line 3.\\n"
       ]
 

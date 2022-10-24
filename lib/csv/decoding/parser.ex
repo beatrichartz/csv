@@ -270,7 +270,7 @@ defmodule CSV.Decoding.Parser do
          _,
          _
        ) do
-    {(rows ++ [{:error, error_module, construct_arguments.(:none)}])
+    {(rows ++ [{:error, error_module, construct_arguments.([])}])
      |> add_stream_halted_to_errors, {[], "", {:open, 0, 1}, ""}}
   end
 
@@ -323,16 +323,12 @@ defmodule CSV.Decoding.Parser do
           rows,
           {[], "",
            {:errored, field_start_position, StrayQuoteError,
-            fn s ->
+            fn arguments ->
               [
                 line: line,
-                sequence_position: token_position + token_length,
-                sequence:
-                  case s do
-                    :none -> sequence
-                    _ -> s
-                  end
+                sequence: sequence
               ]
+              |> Keyword.merge(arguments)
             end, line}},
           tokens,
           escape_max_lines,
@@ -484,11 +480,10 @@ defmodule CSV.Decoding.Parser do
           rows,
           {[], partial_field,
            {:errored, field_start_position, StrayQuoteError,
-            fn sequence ->
+            fn arguments ->
               [
                 line: line,
-                sequence_position: previous_token_position + 2 - field_start_position,
-                sequence: @escape <> sequence
+                sequence: @escape <> Keyword.get(arguments, :sequence, sequence)
               ]
             end, escape_start_line}},
           [{token_position, token_length} | tokens],
@@ -587,7 +582,12 @@ defmodule CSV.Decoding.Parser do
            [
              {:error, error_module,
               construct_arguments.(
-                binary_part(sequence, field_start_position, token_position - field_start_position)
+                sequence:
+                  binary_part(
+                    sequence,
+                    field_start_position,
+                    token_position - field_start_position
+                  )
               )}
            ], {[], "", {:open, 0, line + 1}, leftover_sequence, :reparse}}
 
