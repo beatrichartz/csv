@@ -226,7 +226,7 @@ defmodule CSV.Decoding.Parser do
          {rows,
           {fields, partial_field, {:escape_closing, previous_token_position, _, _, line},
            {_, sequence}}},
-         escape_character,
+         _,
          _,
          _
        ) do
@@ -246,7 +246,7 @@ defmodule CSV.Decoding.Parser do
   end
 
   defp parse_to_end(
-         {rows, {fields, partial_field, {:escaped, _, _, _} = parse_state, {_, sequence}}},
+         {rows, {fields, partial_field, {:escaped, _, _, line} = parse_state, {_, sequence}}},
          escape_character,
          token_pattern,
          field_transform
@@ -255,7 +255,18 @@ defmodule CSV.Decoding.Parser do
 
     case tokens do
       [] ->
-        {rows, empty_transform_state()}
+        {rows
+         |> add_error(EscapeSequenceError,
+           line: line,
+           escape_sequence_start:
+             escape_character <>
+               :binary.replace(
+                 partial_field,
+                 escape_character,
+                 escape_character <> escape_character
+               ) <> sequence,
+           stream_halted: true
+         ), empty_transform_state()}
 
       _ ->
         parse_byte_sequence(
