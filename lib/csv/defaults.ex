@@ -15,7 +15,7 @@ defmodule CSV.Defaults do
       @escape_max_lines 10
       @replacement nil
       @force_escaping false
-      @trim_fields false
+      @strip_fields false
       @escape_formulas false
       @unescape_formulas false
       @escape_formula_start ["=", "-", "+", "@"]
