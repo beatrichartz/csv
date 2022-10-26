@@ -49,6 +49,12 @@ The main goal for 3.x has been to streamline the library API and leverage binary
 #### Upgrading should require few to no changes in most cases:
 
 - **Parallelism has been removed**, alongside its options `:num_workers` and `:worker_work_ratio`. You can safely remove them.
+- `CSV` now expects line breaks to be present in the data. If you used to parse strings by applying `String.split/2` before 
+  passing it to decode, you can do the same now feeding in
+  the string as a single item of a list:
+  ```elixir
+  ["a,b,c\nd,e,f"] |> CSV.decode()
+  ```
 - **`StrayQuoteError` is now `StrayEscapeCharacterError`**. If you catch this error in your code, you need to rename it.
 - **The `:strip_fields` option needs to be replaced** with the `:field_transform` option:
   ```elixir
