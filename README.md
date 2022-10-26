@@ -50,7 +50,7 @@ The main goal for 3.x has been to streamline the library API and leverage binary
 
 - **Parallelism has been removed**, alongside its options `:num_workers` and `:worker_work_ratio`. You can safely remove them.
 - **`StrayQuoteError` is now `StrayEscapeCharacterError`**. If you catch this error in your code, you need to rename it.
-- **The `:trim_fields` option needs to be replaced** with the `:field_transform` option:
+- **The `:strip_fields` option needs to be replaced** with the `:field_transform` option:
   ```elixir
   File.stream!("data.csv") |> CSV.decode(field_transform: &String.trim/1)
   ```
