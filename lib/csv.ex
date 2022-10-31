@@ -34,7 +34,7 @@ defmodule CSV do
   * `:validate_row_length` – When set to `true`, will take the first row of
       the csv or its headers and validate that following rows are of the same 
       length. Defaults to `false`.
-  * `:unescape_formulas    – When set to `true`, will remove formula escaping 
+  * `:unescape_formulas`   – When set to `true`, will remove formula escaping 
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
   ## Examples
@@ -157,7 +157,7 @@ defmodule CSV do
   * `:validate_row_length` – When set to `true`, will take the first row of
       the csv or its headers and validate that following rows are of the same 
       length. Will raise an error if validation fails. Defaults to `false`.
-  * `:unescape_formulas    – When set to `true`, will remove formula escaping 
+  * `:unescape_formulas`   – When set to `true`, will remove formula escaping 
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
   ## Examples
@@ -221,8 +221,8 @@ defmodule CSV do
       [[\"a\", \"b\"], [\"c\", \"d\"]]
 
   Replace invalid codepoints:
-      
-      iex> \"../test/fixtures/broken-encoding.csv\"
+
+      iex> "../test/fixtures/broken-encoding.csv"
       ...> |> Path.expand(__DIR__)
       ...> |> File.stream!()
       ...> |> CSV.decode!(field_transform: fn field ->
@@ -236,7 +236,7 @@ defmodule CSV do
       ...>   end
       ...> end)
       ...> |> Enum.take(2)
-      [[\"a\", \"b\", \"c\", \"?_?\"], [\"ಠ_ಠ\"]]
+      [["a", "b", "c", "?_?"], ["ಠ_ಠ"]]
 
   """
 
