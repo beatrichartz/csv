@@ -23,7 +23,7 @@ defmodule CSV.Decoding.Parser do
       each field and can apply transformations. Defaults to identity function.
       This function will get called for every field and therefore should return 
       quickly.
-  * `:unescape_formulas    – When set to `true`, will remove formula escaping 
+  * `:unescape_formulas`   – When set to `true`, will remove formula escaping 
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
   ## Examples
