@@ -21,9 +21,9 @@ defmodule CSV do
       Must be a codepoint (syntax: ? + (your separator)).
   * `:escape_character`    – The escape character token to use, defaults to `?"`.
       Must be a codepoint (syntax: ? + (your escape character)).
-  * `:field_transform`     – A function with arity 1 that will get called with 
+  * `:field_transform`     – A function with arity 1 that will get called with
       each field and can apply transformations. Defaults to identity function.
-      This function will get called for every field and therefore should return 
+      This function will get called for every field and therefore should return
       quickly.
   * `:headers`             – When set to `true`, will take the first row of
       the csv and use it as header values.
@@ -32,9 +32,9 @@ defmodule CSV do
       When set to anything but `false`, the resulting rows in the matrix will
       be maps instead of lists.
   * `:validate_row_length` – When set to `true`, will take the first row of
-      the csv or its headers and validate that following rows are of the same 
+      the csv or its headers and validate that following rows are of the same
       length. Defaults to `false`.
-  * `:unescape_formulas`   – When set to `true`, will remove formula escaping 
+  * `:unescape_formulas`   – When set to `true`, will remove formula escaping
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
   ## Examples
@@ -144,9 +144,9 @@ defmodule CSV do
       Must be a codepoint (syntax: ? + (your separator)).
   * `:escape_character`    – The escape character token to use, defaults to `?"`.
       Must be a codepoint (syntax: ? + (your escape character)).
-  * `:field_transform`     – A function with arity 1 that will get called with 
+  * `:field_transform`     – A function with arity 1 that will get called with
       each field and can apply transformations. Defaults to identity function.
-      This function will get called for every field and therefore should return 
+      This function will get called for every field and therefore should return
       quickly.
   * `:headers`             – When set to `true`, will take the first row of
       the csv and use it as header values.
@@ -155,9 +155,9 @@ defmodule CSV do
       When set to anything but `false`, the resulting rows in the matrix will
       be maps instead of lists.
   * `:validate_row_length` – When set to `true`, will take the first row of
-      the csv or its headers and validate that following rows are of the same 
+      the csv or its headers and validate that following rows are of the same
       length. Will raise an error if validation fails. Defaults to `false`.
-  * `:unescape_formulas`   – When set to `true`, will remove formula escaping 
+  * `:unescape_formulas`   – When set to `true`, will remove formula escaping
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
   ## Examples
@@ -325,6 +325,7 @@ defmodule CSV do
   @type encode_options ::
           {:separator, char()}
           | {:escape_character, char()}
+          | {:headers, [String.t() | atom()] | boolean()}
           | {:delimiter, String.t()}
           | {:force_escaping, boolean()}
           | {:escape_formulas, boolean()}
