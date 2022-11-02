@@ -44,7 +44,7 @@ defmodule CSV.Mixfile do
       {:benchfella, ">= 0.0.0", only: :bench},
       {:eflame, "~> 1.0", only: :bench},
       {:nimble_csv, ">= 0.0.0", only: :bench},
-      {:ex_doc, ">= 0.0.0", only: :docs},
+      {:ex_doc, ">= 0.0.0", only: :docs, runtime: false},
       {:inch_ex, "~> 0.5", only: :docs},
       {:earmark, "~> 1.4", only: :docs}
     ]
