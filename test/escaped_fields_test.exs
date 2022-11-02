@@ -16,6 +16,27 @@ defmodule EscapedFieldsTest do
     assert result == [["", "e"]]
   end
 
+  test "parses escape sequences on the last line without a newline" do
+    stream = ["a,\"b\"\n", "c,\"d\""] |> to_stream
+    result = CSV.decode!(stream) |> Enum.take(2)
+
+    assert result == [["a", "b"], ["c", "d"]]
+  end
+
+  test "parses escape sequences on the last line without a newline in a byte stream" do
+    stream = "a,\"b\"\nc,\"d\"" |> to_byte_stream(2)
+    result = CSV.decode!(stream) |> Enum.take(2)
+
+    assert result == [["a", "b"], ["c", "d"]]
+  end
+
+  test "parses escape sequences on the last line without a newline and applies field transforms" do
+    stream = ["a,\"b\"\n", "c,\"d    \""] |> to_stream
+    result = CSV.decode!(stream, field_transform: &String.trim/1) |> Enum.take(2)
+
+    assert result == [["a", "b"], ["c", "d"]]
+  end
+
   test "collects rows with fields spanning multiple lines" do
     stream = ["a,\"be", "c,d\ne,f\"", "g,h", "i,j", "k,l"] |> to_line_stream
     result = CSV.decode!(stream) |> Enum.take(2)

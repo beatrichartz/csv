@@ -224,15 +224,23 @@ defmodule CSV.Decoding.Parser do
 
   defp parse_to_end(
          {rows,
-          {fields, partial_field, {:escape_closing, previous_token_position, _, _, line},
+          {fields, partial_field,
+           {:escape_closing, previous_token_position, field_start_position, _, line},
            {_, sequence}}},
          _,
          _,
-         _
+         field_transform
        ) do
     case byte_size(sequence) - 1 do
       ^previous_token_position ->
-        {rows |> add_row(fields ++ [partial_field]) |> add_stream_halted_to_errors,
+        new_field =
+          field_transform.(
+            sequence,
+            partial_field,
+            {field_start_position, byte_size(sequence) - 1 - field_start_position}
+          )
+
+        {rows |> add_row(fields ++ [new_field]) |> add_stream_halted_to_errors,
          empty_transform_state()}
 
       _ ->
