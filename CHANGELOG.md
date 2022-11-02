@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.0.2 (2022-10-25)
+- Ensure that escaped fields as the last field on the last line without a newline are included in the results
+
 ## 3.0.1 (2022-10-25)
 - Ensure that stray escape quotes and unterminated escape sequences on a last line without a newline produce errors
 
