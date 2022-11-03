@@ -4,7 +4,7 @@ defmodule CSV.Decoding.Decoder do
   @moduledoc ~S"""
   The Decoder CSV module sends lines of delimited values from a stream to the
   parser and converts rows coming from the CSV parser module to a consumable
-  stream. 
+  stream.
   """
   alias CSV.Decoding.Parser
   alias CSV.RowLengthError
@@ -22,9 +22,9 @@ defmodule CSV.Decoding.Decoder do
       Must be a codepoint (syntax: ? + (your separator)).
   * `:escape_character`    – The escape character token to use, defaults to `?"`.
       Must be a codepoint (syntax: ? + (your escape character)).
-  * `:field_transform`     – A function with arity 1 that will get called with 
+  * `:field_transform`     – A function with arity 1 that will get called with
       each field and can apply transformations. Defaults to identity function.
-      This function will get called for every field and therefore should return 
+      This function will get called for every field and therefore should return
       quickly.
   * `:headers`             – When set to `true`, will take the first row of
       the csv and use it as header values.
@@ -33,9 +33,9 @@ defmodule CSV.Decoding.Decoder do
       When set to anything but `false`, the resulting rows in the matrix will
       be maps instead of lists.
   * `:validate_row_length` – When set to `true`, will take the first row of
-      the csv or its headers and validate that following rows are of the same 
+      the csv or its headers and validate that following rows are of the same
       length. Defaults to `false`.
-  * `:escape_formulas`      – When set to `true`, will remove formula escaping 
+  * `:escape_formulas`      – When set to `true`, will remove formula escaping
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
   ## Examples
@@ -82,7 +82,7 @@ defmodule CSV.Decoding.Decoder do
       [ok: [\"a\", \"b\"], ok: [\"d\", \"e\"]]
 
   Replace invalid codepoints:
-      
+
       iex> \"../../../test/fixtures/broken-encoding.csv\"
       ...> |> Path.expand(__DIR__)
       ...> |> File.stream!()
@@ -147,13 +147,8 @@ defmodule CSV.Decoding.Decoder do
       ]
 
   """
-  @type decode_options ::
-          {:unescape_formulas, boolean()}
-          | {:headers, [String.t() | atom()] | boolean()}
-          | {:validate_row_length, boolean()}
-          | {:separator, char}
-          | {:escape_character, char}
-          | {:field_transform, (String.t() -> String.t())}
+  @type decode_options :: CSV.decode_options()
+
   @spec decode(Enumerable.t(), [decode_options()]) :: Enumerable.t()
   def decode(stream, options \\ []) do
     options = options |> with_defaults

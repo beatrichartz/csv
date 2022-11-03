@@ -126,6 +126,7 @@ defmodule CSV do
           | {:headers, [String.t() | atom()] | boolean()}
           | {:unescape_formulas, boolean()}
           | {:validate_row_length, boolean()}
+          | {:escape_character, char}
 
   @spec decode(Enumerable.t(), [decode_options()]) :: Enumerable.t()
   def decode(stream, options \\ []) do
@@ -283,11 +284,19 @@ defmodule CSV do
     Must be a codepoint (syntax: ? + (your escape character)).
     * `:delimiter`              – The delimiter token to use, defaults to `\\r\\n`.
     Must be a string.
-    * `:force_escaping          – When set to `true`, will escape fields even if
+    * `:force_escaping`          – When set to `true`, will escape fields even if
     they do not contain characters that require escaping
-    * `:escape_formulas         – When set to `true`, will escape formulas
+    * `:escape_formulas`         – When set to `true`, will escape formulas
     to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
-
+    * `:headers`
+        * When set to `false` (default), will use the raw inputs as elements.  When set to anything but `false`, all elements in the input stream are assumed to be maps.
+        * When set to `true`, uses the keys of the first map as the first
+    element in the stream. All subsequent elements are the values of the maps.
+        * When set to a list, will use the given list as the first element
+        in the stream and order all subsequent elements using that list.
+        * When set to a keyword list, will use the keys of the
+        keyword list to match the keys of the data, and the values of the
+        keyword list to be the values in the first row of the output.
   ## Examples
 
   Convert a stream of rows with fields into a stream of lines:
@@ -320,12 +329,16 @@ defmodule CSV do
       iex> |> CSV.encode(escape_formulas: true)
       iex> |> Enum.take(2)
       [\"\\\"'@a\\\",\\\"'=b\\\"\\r\\n\", \"\\\"'-c\\\",\\\"'+d\\\"\\r\\n\"]
-  """
 
+  Convert a stream of rows renaming the headers by passing in a keyword list
+
+      iex> [%{a: "value!"}] |> CSV.encode(headers: [a: "x", b: "y"])
+      ["x,y\\r\\n", "value!,\\r\\n"]
+  """
   @type encode_options ::
           {:separator, char()}
           | {:escape_character, char()}
-          | {:headers, [String.t() | atom()] | boolean()}
+          | {:headers, [String.t() | atom()] | Keyword.t() | boolean()}
           | {:delimiter, String.t()}
           | {:force_escaping, boolean()}
           | {:escape_formulas, boolean()}
