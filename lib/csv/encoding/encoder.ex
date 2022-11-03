@@ -52,15 +52,7 @@ defmodule CSV.Encoding.Encoder do
       [\"\\\"a\\nb\\\"\\t\\\"\\tc\\\"\\n\", \"de\\t\\\"\\tf\\\"\\\"\\\"\\n\"]
   """
 
-  @type encode_options ::
-          {:separator, char()}
-          | {:escape_character, char()}
-          | {:headers, [String.t() | atom()] | boolean()}
-          | {:delimiter, String.t()}
-          | {:force_escaping, boolean()}
-          | {:escape_formulas, boolean()}
-
-  @spec encode(Enumerable.t(), [encode_options()]) :: Enumerable.t()
+  @spec encode(Enumerable.t(), [CSV.encode_options()]) :: Enumerable.t()
   def encode(stream, options \\ []) do
     headers = options |> Keyword.get(:headers, false)
 
