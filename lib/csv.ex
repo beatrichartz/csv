@@ -332,7 +332,9 @@ defmodule CSV do
 
   Convert a stream of rows renaming the headers by passing in a keyword list
 
-      iex> [%{a: "value!"}] |> CSV.encode(headers: [a: "x", b: "y"])
+      iex> [%{a: "value!"}]
+      ...> |> CSV.encode(headers: [a: "x", b: "y"])
+      ...> |> Enum.to_list()
       ["x,y\\r\\n", "value!,\\r\\n"]
   """
   @type encode_options ::
