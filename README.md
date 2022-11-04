@@ -1,6 +1,6 @@
 # CSV [![Build Status](https://github.com/beatrichartz/csv/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/beatrichartz/csv) [![Coverage Status](https://coveralls.io/repos/github/beatrichartz/csv/badge.svg?branch=main)](https://coveralls.io/github/beatrichartz/csv?branch=main) [![Inline docs](http://inch-ci.org/github/beatrichartz/csv.svg?branch=main)](http://inch-ci.org/github/beatrichartz/csv) [![Hex pm](http://img.shields.io/hexpm/v/csv.svg?style=flat)](https://hex.pm/packages/csv) [![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/csv/) [![License](https://img.shields.io/hexpm/l/csv.svg)](https://github.com/beatrichartz/csv/blob/main/LICENSE) [![Downloads](https://img.shields.io/hexpm/dw/csv.svg?style=flat)](https://hex.pm/packages/csv)
 
-[RFC 4180](http://tools.ietf.org/html/rfc4180) compliant CSV parsing and encoding for Elixir.
+[RFC 4180](http://tools.ietf.org/html/rfc4180) compliant, composable CSV parsing and encoding for Elixir.
 
 ## Installation
 
@@ -30,9 +30,9 @@ In strict mode using `CSV.decode!` the library will raise an exception when it e
 operation.
 
 ## Performance
-Parallelism has been replaced by a single process binary matching parser with better performance in version 3.x. 
-This library is able to parse about half a million rows of a moderately complex CSV file per second in a single process, 
-ensuring that parsing will unlikely become a bottleneck.
+This library uses fast binary matching and is able to parse about half a million rows of a moderately complex CSV file 
+per second in a single process on a small cloud instance spec (2vCPU, 2GB Memory). CSV parsing will unlikely become a 
+bottleneck in your data pipeline.
 
 If you are reading from a large file, `CSV` will perform best when streaming with `:read_ahead` in byte mode:
 
@@ -92,6 +92,9 @@ The main goal for 3.x has been to streamline the library API and leverage binary
 * Elixir `1.5.0` is required for all versions above `2.5.0`.
 * Elixir `1.1.0` is required for all versions above `1.1.5`.
 
+## Design Goals
+This library aims to to solve concerns related to csv parsing in data pipelines, following the UNIX philosophy.
+
 ## Usage
 `CSV` can decode and encode from and to a stream of bytes or lines.
 
@@ -102,7 +105,11 @@ Do this to decode data:
 ````elixir
 # Decode file line by line
 File.stream!("data.csv")
-|> CSV.decode()
+  |> CSV.decode()
+
+# Decode a UTF-16 file with BOM
+File.stream!([:trim_bom, encoding: {:utf16, :little}])
+  |> CSV.decode()
 
 # Decode file in chunks of 1000 bytes
 File.stream!("data.csv", [], 1000) 

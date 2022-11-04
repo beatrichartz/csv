@@ -57,6 +57,24 @@ defmodule CSV do
       ...> |> Enum.take(2)
       [ok: [\"a\", \"b\"], ok: [\"d\", \"e\"]]
 
+  Read from an UTF-16 encoded file with a Byte Order Mark (BOM):
+
+      iex> \"../test/fixtures/utf16-little-with-bom.csv\"
+      ...> |> Path.expand(__DIR__)
+      ...> |> File.stream!([:trim_bom, encoding: {:utf16, :little}])
+      ...> |> CSV.decode()
+      ...> |> Enum.take(3)
+      [ok: [\"a\", \"b\", \"c\"], ok: [\"1\", \"2\", \"3\"], ok: [\"4\", \"5\", \"ʤ\"]]
+
+  Read from an UTF-16 big endian encoded file with a Byte Order Mark (BOM):
+
+      iex> \"../test/fixtures/utf16-big-with-bom.csv\"
+      ...> |> Path.expand(__DIR__)
+      ...> |> File.stream!([:trim_bom, encoding: {:utf16, :big}])
+      ...> |> CSV.decode()
+      ...> |> Enum.take(3)
+      [ok: [\"a\", \"b\", \"c\"], ok: [\"1\", \"2\", \"3\"], ok: [\"4\", \"5\", \"ʤ\"]]
+
   Errors will show up as error tuples:
 
       iex> \"../test/fixtures/docs/escape-errors.csv\"
@@ -180,6 +198,24 @@ defmodule CSV do
       ...> |> CSV.decode!()
       ...> |> Enum.take(2)
       [[\"a\", \"b\"], [\"d\", \"e\"]]
+
+  Read from an UTF-16 encoded file with a Byte Order Mark (BOM):
+
+      iex> \"../test/fixtures/utf16-little-with-bom.csv\"
+      ...> |> Path.expand(__DIR__)
+      ...> |> File.stream!([:trim_bom, encoding: {:utf16, :little}])
+      ...> |> CSV.decode!()
+      ...> |> Enum.take(3)
+      [[\"a\", \"b\", \"c\"], [\"1\", \"2\", \"3\"], [\"4\", \"5\", \"ʤ\"]]
+
+  Read from an UTF-16 big endian encoded file with a Byte Order Mark (BOM):
+
+      iex> \"../test/fixtures/utf16-big-with-bom.csv\"
+      ...> |> Path.expand(__DIR__)
+      ...> |> File.stream!([:trim_bom, encoding: {:utf16, :big}])
+      ...> |> CSV.decode!()
+      ...> |> Enum.take(3)
+      [[\"a\", \"b\", \"c\"], [\"1\", \"2\", \"3\"], [\"4\", \"5\", \"ʤ\"]]
 
   Map an existing stream of lines separated by a token to a stream of rows
   with a header row:
