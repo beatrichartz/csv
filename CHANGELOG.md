@@ -1,7 +1,12 @@
 # Changelog
 
+## 3.0.3 (2022-11-04)
+- Ensure that reparsing of lines with stray escape characters does not produce duplicate error output [closes #119](https://github.com/beatrichartz/csv/issues/119)
+- Deduplication of type specs [in #118](https://github.com/beatrichartz/csv/pull/118) contributed by [@joseph-lozano](https://github.com/joseph-lozano)
+- Documentation fixes and improvements contributed by [@jamesvl](https://github.com/jamesvl) in [#115](https://github.com/beatrichartz/csv/pull/115)
+
 ## 3.0.2 (2022-11-03)
-- Ensure that escaped fields as the last field on the last line without a newline are included in the results
+- Ensure that escaped fields as the last field on the last line without a newline are included in the results - [fixes #117](https://github.com/beatrichartz/csv/issues/117) raised by [@superhawk610](https://github.com/superhawk610)
 
 ## 3.0.1 (2022-10-25)
 - Ensure that stray escape quotes and unterminated escape sequences on a last line without a newline produce errors
