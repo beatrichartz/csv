@@ -601,7 +601,10 @@ defmodule CSV.Decoding.Parser do
        ) do
     case binary_part(sequence, token_position, token_length) do
       @newline ->
-        {first_newline_position, _} = :binary.match(sequence, @newline)
+        {first_newline_position, _} =
+          :binary.match(sequence, @newline,
+            scope: {field_start_position, byte_size(sequence) - field_start_position}
+          )
 
         leftover_sequence =
           binary_part(

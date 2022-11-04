@@ -288,6 +288,79 @@ defmodule DecodingTests.ParserExceptionsTest do
            ]
   end
 
+  test "raises errors for escape sequences and stray escape characters without duplicating" do
+    stream =
+      [
+        "Jerry,31,comedian",
+        "Elaine,28,\"unknwon \"\"",
+        "Elaine,29,\"unknwon \"\"",
+        "Elaine,30,\"unknwon \"\"",
+        "Kramer,40,kramerica",
+        "George,34,architect \"vandalay\" ind",
+        "Newman,37,\"postal, worker\""
+      ]
+      |> to_line_stream
+
+    result = stream |> Parser.parse() |> Enum.to_list()
+
+    assert result == [
+             {:ok, ["Jerry", "31", "comedian"]},
+             {:error, StrayEscapeCharacterError,
+              [
+                line: 3,
+                sequence: "\"\nElaine,29,\"unknwon \"\""
+              ]},
+             {:error, StrayEscapeCharacterError,
+              [
+                line: 4,
+                sequence: "\"\nElaine,30,\"unknwon \"\""
+              ]},
+             {:error, StrayEscapeCharacterError,
+              [
+                line: 6,
+                sequence: "\"\nKramer,40,kramerica\nGeorge,34,architect \"vandalay\" ind"
+              ]},
+             {:ok, ["Kramer", "40", "kramerica"]},
+             {:error, StrayEscapeCharacterError,
+              [line: 6, sequence: "architect \"vandalay\" ind"]},
+             {:ok, ["Newman", "37", "postal, worker"]}
+           ]
+  end
+
+  test "raises errors for escape sequences and stray escape characters without duplicating in byte mode" do
+    1..25
+    |> Enum.each(fn size ->
+      stream =
+        "Jerry,31,comedian\nElaine,28,\"unknwon \"\"\nElaine,29,\"unknwon \"\"\nElaine,30,\"unknwon \"\"\nKramer,40,kramerica\nGeorge,34,architect \"vandalay\" ind\nNewman,37,\"postal, worker\"\n"
+        |> to_byte_stream(size)
+
+      result = stream |> Parser.parse() |> Enum.to_list()
+
+      assert result == [
+               {:ok, ["Jerry", "31", "comedian"]},
+               {:error, StrayEscapeCharacterError,
+                [
+                  line: 3,
+                  sequence: "\"\nElaine,29,\"unknwon \"\""
+                ]},
+               {:error, StrayEscapeCharacterError,
+                [
+                  line: 4,
+                  sequence: "\"\nElaine,30,\"unknwon \"\""
+                ]},
+               {:error, StrayEscapeCharacterError,
+                [
+                  line: 6,
+                  sequence: "\"\nKramer,40,kramerica\nGeorge,34,architect \"vandalay\" ind"
+                ]},
+               {:ok, ["Kramer", "40", "kramerica"]},
+               {:error, StrayEscapeCharacterError,
+                [line: 6, sequence: "architect \"vandalay\" ind"]},
+               {:ok, ["Newman", "37", "postal, worker"]}
+             ]
+    end)
+  end
+
   test "includes an error for repeated escape sequences that do not terminate before the end of the file and parses following lines with no newline at the end for a byte stream" do
     1..25
     |> Enum.each(fn size ->
