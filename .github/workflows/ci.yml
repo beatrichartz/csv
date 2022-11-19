@@ -26,8 +26,6 @@ jobs:
             otp-version: 23.3.4
           - elixir-version: '1.10'
             otp-version: 22.3.4
-          - elixir-version: '1.10'
-            otp-version: 22.3.4
           - elixir-version: 1.9
             otp-version: 22.3.4
           - elixir-version: 1.8
@@ -90,8 +88,6 @@ jobs:
             otp-version: 23.3.4
           - elixir-version: 1.11
             otp-version: 23.3.4
-          - elixir-version: '1.10'
-            otp-version: 22.3.4
           - elixir-version: '1.10'
             otp-version: 22.3.4
           - elixir-version: 1.9
