@@ -106,10 +106,7 @@ defmodule CSV.Encoding.Encoder do
     delimiter =
       options |> Keyword.get(:delimiter, <<@carriage_return::utf8>> <> <<@newline::utf8>>)
 
-    encoded =
-      row
-      |> Enum.map(&encode_cell(&1, options))
-      |> Enum.join(<<separator::utf8>>)
+    encoded = Enum.map_join(row, <<separator::utf8>>, &encode_cell(&1, options))
 
     encoded <> delimiter
   end

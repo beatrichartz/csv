@@ -67,17 +67,15 @@ defimpl CSV.Encode, for: BitString do
         patterns
       end
 
-    cond do
-      force_escaping || String.contains?(data, patterns) ->
-        escape <>
-          (data
-           |> String.replace(
-             escape,
-             escape <> escape
-           )) <> escape
-
-      true ->
-        data
+    if force_escaping || String.contains?(data, patterns) do
+      escape <>
+        (data
+         |> String.replace(
+           escape,
+           escape <> escape
+         )) <> escape
+    else
+      data
     end
   end
 end

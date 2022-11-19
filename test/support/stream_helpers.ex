@@ -1,4 +1,6 @@
 defmodule TestSupport.StreamHelpers do
+  @moduledoc "Helpers for creating streams in tests"
+
   def to_stream(list) when is_list(list) do
     list |> Stream.map(& &1)
   end
