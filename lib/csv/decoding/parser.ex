@@ -47,7 +47,9 @@ defmodule CSV.Decoding.Parser do
   """
   @type parse_options ::
           {:unescape_formulas, boolean()}
+          | {:escape_max_lines, integer()}
           | {:separator, char}
+          | {:escape_character, char}
           | {:field_transform, (String.t() -> String.t())}
 
   @spec parse(Enumerable.t(), [parse_options()]) :: Enumerable.t()

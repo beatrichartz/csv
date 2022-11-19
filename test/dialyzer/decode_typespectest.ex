@@ -1,5 +1,5 @@
-defmodule DialyzerTypetest do
-  @moduledoc "This is a module to test type definitions"
+defmodule DecodeTypespectest do
+  @moduledoc "Test decoding typespecs"
 
   def test_decode_option_escape_character do
     ["dummy,input"] |> CSV.decode(escape_character: ?.) |> Enum.to_list()
@@ -31,33 +31,5 @@ defmodule DialyzerTypetest do
 
   def test_decode_option_headers_atom_list do
     ["dummy,input"] |> CSV.decode(headers: [:a, :b]) |> Enum.to_list()
-  end
-
-  def test_encode_option_separator do
-    ["dummy", "input"] |> CSV.encode(separator: true) |> Enum.to_list()
-  end
-
-  def test_encode_option_escape_character do
-    ["dummy", "input"] |> CSV.encode(escape_character: ?") |> Enum.to_list()
-  end
-
-  def test_encode_option_escape_formulas do
-    ["dummy", "input"] |> CSV.encode(escape_formulas: true) |> Enum.to_list()
-  end
-
-  def test_encode_option_force_escaping do
-    ["dummy", "input"] |> CSV.encode(force_escaping: true) |> Enum.to_list()
-  end
-
-  def test_encode_option_headers_list do
-    ["dummy", "input"] |> CSV.encode(headers: ["a", "b"]) |> Enum.to_list()
-  end
-
-  def test_encode_option_headers_atom_list do
-    ["dummy", "input"] |> CSV.encode(headers: [:a, :b]) |> Enum.to_list()
-  end
-
-  def test_encode_option_headers_keyword_list do
-    [%{a: "value!", b: "value!"}] |> CSV.encode(headers: [a: "x", b: "y"]) |> Enum.to_list()
   end
 end
