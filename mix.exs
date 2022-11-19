@@ -17,13 +17,19 @@ defmodule CSV.Mixfile do
       description: "CSV Decoding and Encoding for Elixir",
       elixirc_paths: elixirc_paths(),
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [coveralls: :test, "coveralls.detail": :test, "coveralls.post": :test]
+      preferred_cli_env: [coveralls: :test, "coveralls.detail": :test, "coveralls.post": :test],
+      dialyzer: [
+        plt_add_apps: [:mnesia],
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
+        flags: [:unmatched_returns, :error_handling, :no_opaque, :underspecs],
+        paths: ["_build/test/lib/csv/ebin"]
+      ]
     ]
   end
 
   defp elixirc_paths do
     if Mix.env() == :test do
-      ["lib", "test/support"]
+      ["lib", "test/support", "test/dialyzer"]
     else
       ["lib"]
     end
@@ -39,7 +45,7 @@ defmodule CSV.Mixfile do
 
   defp deps do
     [
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.14", only: :test},
       {:benchfella, ">= 0.0.0", only: :bench},
       {:eflame, "~> 1.0", only: :bench},

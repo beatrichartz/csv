@@ -15,3 +15,5 @@ erl_crash.dump
 mix.lock
 csv-*.tar
 .idea
+/priv/plts/*.plt
+/priv/plts/*.plt.hash
