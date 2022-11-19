@@ -1,4 +1,4 @@
-# CSV [![Build Status](https://github.com/beatrichartz/csv/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/beatrichartz/csv) [![Coverage Status](https://coveralls.io/repos/github/beatrichartz/csv/badge.svg?branch=main)](https://coveralls.io/github/beatrichartz/csv?branch=main) [![Inline docs](http://inch-ci.org/github/beatrichartz/csv.svg?branch=main)](http://inch-ci.org/github/beatrichartz/csv) [![Hex pm](http://img.shields.io/hexpm/v/csv.svg?style=flat)](https://hex.pm/packages/csv) [![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/csv/) [![License](https://img.shields.io/hexpm/l/csv.svg)](https://github.com/beatrichartz/csv/blob/main/LICENSE) [![Downloads](https://img.shields.io/hexpm/dw/csv.svg?style=flat)](https://hex.pm/packages/csv)
+# CSV [![Build Status](https://github.com/beatrichartz/csv/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/beatrichartz/csv) [![Coverage Status](https://coveralls.io/repos/github/beatrichartz/csv/badge.svg?branch=main)](https://coveralls.io/github/beatrichartz/csv?branch=main) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/2b1154889a3f4d1681bf40a89834271c)](https://www.codacy.com/gh/beatrichartz/csv/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=beatrichartz/csv&amp;utm_campaign=Badge_Grade) [![Hex pm](http://img.shields.io/hexpm/v/csv.svg?style=flat)](https://hex.pm/packages/csv) [![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/csv/) [![License](https://img.shields.io/hexpm/l/csv.svg)](https://github.com/beatrichartz/csv/blob/main/LICENSE) [![Downloads](https://img.shields.io/hexpm/dw/csv.svg?style=flat)](https://hex.pm/packages/csv)
 
 [RFC 4180](http://tools.ietf.org/html/rfc4180) compliant, composable CSV parsing and encoding for Elixir.
 
@@ -46,7 +46,7 @@ byte size according to your environment.
 ## Upgrading from 2.x
 The main goal for 3.x has been to streamline the library API and leverage binary matching. 
 
-#### Upgrading should require few to no changes in most cases:
+#### Upgrading should require few to no changes in most cases
 
 - **Parallelism has been removed**, alongside its options `:num_workers` and `:worker_work_ratio`. You can safely remove them.
 - `CSV` now expects line breaks to be present in the data. If you used to parse strings by applying `String.split/2` before 
@@ -93,7 +93,9 @@ The main goal for 3.x has been to streamline the library API and leverage binary
 * Elixir `1.1.0` is required for all versions above `1.1.5`.
 
 ## Design Goals
-This library aims to to solve concerns related to csv parsing in data pipelines, following the UNIX philosophy.
+This library aims to to solve concerns related to csv parsing in data pipelines, following the UNIX philosophy:
+It consumes streams or enumerables, producing streams of lists, maps or tuples depending on configuration. This simplifies
+ using it in data pipelines, where CSV encoding or decoding is only one of the processing steps.
 
 ## Usage
 `CSV` can decode and encode from and to a stream of bytes or lines.
