@@ -30,8 +30,6 @@ jobs:
             otp-version: 22.3.4
           - elixir-version: 1.8
             otp-version: 21.3.8
-          - elixir-version: 1.7
-            otp-version: 21.3.8
     steps:
     - uses: actions/checkout@v3
     - name: Set up Elixir
