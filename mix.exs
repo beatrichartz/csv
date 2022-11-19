@@ -16,10 +16,7 @@ defmodule CSV.Mixfile do
       source_url: @source_url,
       description: "CSV Decoding and Encoding for Elixir",
       elixirc_paths: elixirc_paths(),
-      test_coverage: [
-        tool: ExCoveralls,
-        ignore_modules: [DialyzerTypetest, TestSupport.StreamHelpers]
-      ],
+      test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [coveralls: :test, "coveralls.detail": :test, "coveralls.post": :test],
       dialyzer: [
         plt_add_apps: [:mnesia],
