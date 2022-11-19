@@ -49,7 +49,7 @@ defmodule CSV.Mixfile do
   defp deps do
     [
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:excoveralls, "~> 0.14", only: :test},
+      {:excoveralls, "~> 0.15", only: :test},
       {:benchfella, ">= 0.0.0", only: :bench},
       {:eflame, "~> 1.0", only: :bench},
       {:nimble_csv, ">= 0.0.0", only: :bench},
