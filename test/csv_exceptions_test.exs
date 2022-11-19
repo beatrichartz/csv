@@ -4,7 +4,7 @@ defmodule CSVExceptionsTest do
 
   alias CSV.RowLengthError
 
-  test "decodes in normal mode emitting errors with rows" do
+  test "decodes in normal mode emitting errors with row lengths when configured" do
     stream = ~w(a,be a c,d) |> to_line_stream
     result = CSV.decode(stream, validate_row_length: true) |> Enum.to_list()
 
@@ -13,6 +13,19 @@ defmodule CSVExceptionsTest do
              error:
                "Row 2 has length 1 instead of expected length 2\n\n" <>
                  "You are seeing this error because :validate_row_length has been set to true\n",
+             ok: ~w(c d)
+           ]
+  end
+
+  test "decodes in normal mode not overriding errors with a row length error when configured" do
+    stream = ~w(a,be a" c,d) |> to_line_stream
+    result = CSV.decode(stream, validate_row_length: true) |> Enum.to_list()
+
+    assert result == [
+             ok: ~w(a be),
+             error:
+               "Stray escape character on line 2:\n\na\"\n\n" <>
+                 "This error often happens when the wrong separator or escape character has been applied.\n",
              ok: ~w(c d)
            ]
   end
