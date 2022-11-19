@@ -119,12 +119,10 @@ File.stream!("data.csv", [], 1000)
 
 # Decode a csv formatted string
 ["long,csv,string\\nwith,multiple,lines"] 
-  |> Stream.map(&(&1)) 
   |> CSV.decode()
 
 # Decode a list of arbitrarily chunked csv data
 ["list,", "of,arbitrarily", "\\nchun", "ked,csv,data\\n"] 
-  |> Stream.map(&(&1)) 
   |> CSV.decode()
 ````
 
