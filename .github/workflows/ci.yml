@@ -1,4 +1,4 @@
-name: CSV Analyze & Build
+name: CSV Build
 
 on:
   push:
