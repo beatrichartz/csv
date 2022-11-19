@@ -144,7 +144,8 @@ defmodule CSV do
           | {:headers, [String.t() | atom()] | boolean()}
           | {:unescape_formulas, boolean()}
           | {:validate_row_length, boolean()}
-          | {:escape_character, char}
+          | {:escape_character, char()}
+          | {:escape_max_lines, integer()}
 
   @spec decode(Enumerable.t(), [decode_options()]) :: Enumerable.t()
   def decode(stream, options \\ []) do
@@ -376,7 +377,7 @@ defmodule CSV do
   @type encode_options ::
           {:separator, char()}
           | {:escape_character, char()}
-          | {:headers, [String.t() | atom()] | Keyword.t() | boolean()}
+          | {:headers, [String.t() | atom()] | Keyword.t()}
           | {:delimiter, String.t()}
           | {:force_escaping, boolean()}
           | {:escape_formulas, boolean()}
