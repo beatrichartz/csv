@@ -22,6 +22,8 @@ defmodule CSV.Decoding.Decoder do
       Must be a codepoint (syntax: ? + (your separator)).
   * `:escape_character`    – The escape character token to use, defaults to `?"`.
       Must be a codepoint (syntax: ? + (your escape character)).
+  * `:escape_max_lines`    – The number of lines an escape sequence is allowed 
+      to span, defaults to 10.
   * `:field_transform`     – A function with arity 1 that will get called with
       each field and can apply transformations. Defaults to identity function.
       This function will get called for every field and therefore should return

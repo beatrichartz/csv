@@ -21,6 +21,8 @@ defmodule CSV do
       Must be a codepoint (syntax: ? + (your separator)).
   * `:escape_character`    – The escape character token to use, defaults to `?"`.
       Must be a codepoint (syntax: ? + (your escape character)).
+  * `:escape_max_lines`    – The number of lines an escape sequence is allowed 
+      to span, defaults to 10.
   * `:field_transform`     – A function with arity 1 that will get called with
       each field and can apply transformations. Defaults to identity function.
       This function will get called for every field and therefore should return
@@ -367,6 +369,13 @@ defmodule CSV do
       iex> |> Enum.take(2)
       [\"\\\"'@a\\\",\\\"'=b\\\"\\r\\n\", \"\\\"'-c\\\",\\\"'+d\\\"\\r\\n\"]
 
+  Convert a stream of row maps
+
+      iex> [%{header1: "header1 value1", header2: "header2 value1"}]
+      ...> |> CSV.encode(headers: true)
+      ...> |> Enum.to_list()
+      ["header1,header2\\r\\n", "header1 value1,header2 value1\\r\\n"]
+
   Convert a stream of rows renaming the headers by passing in a keyword list
 
       iex> [%{a: "value!"}]
@@ -377,7 +386,7 @@ defmodule CSV do
   @type encode_options ::
           {:separator, char()}
           | {:escape_character, char()}
-          | {:headers, [String.t() | atom()] | Keyword.t()}
+          | {:headers, [String.t() | atom()] | Keyword.t() | boolean()}
           | {:delimiter, String.t()}
           | {:force_escaping, boolean()}
           | {:escape_formulas, boolean()}

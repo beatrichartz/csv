@@ -17,6 +17,10 @@ defmodule EncodeTypespectest do
     ["dummy", "input"] |> CSV.encode(force_escaping: true) |> Enum.to_list()
   end
 
+  def test_encode_option_headers_true do
+    [%{dummy: "input"}, ${dummy: "value"}] |> CSV.encode(headers: true) |> Enum.to_list()
+  end
+
   def test_encode_option_headers_list do
     ["dummy", "input"] |> CSV.encode(headers: ["a", "b"]) |> Enum.to_list()
   end
