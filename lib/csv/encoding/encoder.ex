@@ -20,13 +20,15 @@ defmodule CSV.Encoding.Encoder do
     * `:escape_character` – The escape character to use, defaults to `?"`.
       Must be a codepoint (syntax: ? + your escape character).
     * `:delimiter`        – The delimiter token to use, defaults to `\"\\r\\n\"`.
-    * `:headers`          – When set to `true`, uses the keys of the first map as
-      the first element in the stream. All subsequent elements are the values
-      of the maps. When set to a list, will use the given list as the first
-      element in the stream and order all subsequent elements using that list.
-      When set to `false` (default), will use the raw inputs as elements.
-      When set to anything but `false`, all elements in the input stream are
-      assumed to be maps.
+    * `:headers`
+        * When set to `false` (default), will use the raw inputs as elements.  When set to anything but `false`, all elements in the input stream are assumed to be maps.
+        * When set to `true`, uses the keys of the first map as the first
+    element in the stream. All subsequent elements are the values of the maps.
+        * When set to a list, will use the given list as the first element
+        in the stream and order all subsequent elements using that list.
+        * When set to a keyword list, will use the keys of the
+        keyword list to match the keys of the data, and the values of the
+        keyword list to be the values in the first row of the output.
     * `:escape_formulas`   – Escape formulas to prevent
       [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
