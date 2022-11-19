@@ -1,0 +1,1 @@
+%{configs: [%{strict: true}]}
