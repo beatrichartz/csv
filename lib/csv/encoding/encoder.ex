@@ -1,5 +1,6 @@
 defmodule CSV.Encoding.Encoder do
   use CSV.Defaults
+  alias CSV.Encode
 
   @moduledoc ~S"""
   The Encoder CSV module takes a table stream and transforms it into RFC 4180
@@ -112,6 +113,6 @@ defmodule CSV.Encoding.Encoder do
   end
 
   defp encode_cell(cell, options) do
-    CSV.Encode.encode(cell, options)
+    Encode.encode(cell, options)
   end
 end
