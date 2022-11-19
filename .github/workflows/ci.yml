@@ -116,7 +116,13 @@ jobs:
         mix deps.get
         mix compile
     - name: Run tests with coverage
+      if: matrix.environment.elixir-version == '1.14'
       run: mix coveralls.github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        MIX_ENV: test
+    - name: Run tests
+      if: matrix.environment.elixir-version != '1.14'
+      run: mix test
+      env:
         MIX_ENV: test
