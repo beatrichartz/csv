@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.0.4 (2022-11-19)
+- Add missing `escape_max_lines` to decode options typespec [closes #120](https://github.com/beatrichartz/csv/issues/120)
+
 ## 3.0.3 (2022-11-04)
 - Ensure that reparsing of lines with stray escape characters does not produce duplicate error output [closes #119](https://github.com/beatrichartz/csv/issues/119)
 - Deduplication of type specs [in #118](https://github.com/beatrichartz/csv/pull/118) contributed by [@joseph-lozano](https://github.com/joseph-lozano)
