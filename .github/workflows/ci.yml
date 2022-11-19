@@ -12,7 +12,7 @@ permissions:
 jobs:
   analyze:
     runs-on: ubuntu-20.04
-    name: Build and Test on Elixir ${{matrix.environment.elixir-version}} / OTP ${{matrix.environment.otp-version}}
+    name: Run Dialyzer on ${{matrix.environment.elixir-version}} / OTP ${{matrix.environment.otp-version}}
     strategy:
       matrix:
         environment:
