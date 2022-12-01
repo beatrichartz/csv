@@ -39,7 +39,8 @@ defmodule CSV.Mixfile do
     [
       maintainers: ["Beat Richartz"],
       licenses: ["MIT"],
-      links: %{GitHub: @source_url}
+      links: %{GitHub: @source_url},
+      files: ~w(lib .formatter.exs mix.exs README.md LICENSE CHANGELOG.md src),
     ]
   end
 
