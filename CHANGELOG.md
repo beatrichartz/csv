@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.0.5 (2022-12-03)
+- Exclude dialyzer files from library package [contributed in [#121](https://github.com/beatrichartz/csv/pull/121) by [@milmazz](https://github.com/milmazz)
+
 ## 3.0.4 (2022-11-19)
 - Add missing `escape_max_lines` to decode options typespec [closes #120](https://github.com/beatrichartz/csv/issues/120)
 
