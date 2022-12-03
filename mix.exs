@@ -6,7 +6,7 @@ defmodule CSV.Mixfile do
   def project do
     [
       app: :csv,
-      version: "3.0.4",
+      version: "3.0.5",
       elixir: "~> 1.5",
       deps: deps(),
       package: package(),
@@ -40,7 +40,7 @@ defmodule CSV.Mixfile do
       maintainers: ["Beat Richartz"],
       licenses: ["MIT"],
       links: %{GitHub: @source_url},
-      files: ~w(lib .formatter.exs mix.exs README.md LICENSE CHANGELOG.md src),
+      files: ~w(lib .formatter.exs mix.exs README.md LICENSE CHANGELOG.md)
     ]
   end
 
