@@ -56,4 +56,13 @@ defmodule ExceptionsTest do
     assert exception.message ==
              "Stray escape character on line 1:\n\nTHIS\n\nThis error often happens when the wrong separator or escape character has been applied.\n"
   end
+
+  test "exception messaging about stray escape character errors can be redacted" do
+    exception = StrayEscapeCharacterError.exception(line: 1, sequence: "sensitive", redact: true)
+
+    assert exception.message ==
+             "Stray escape character on line 1:\n\n[redacted]\n\nThis error often happens when the wrong separator or escape character has been applied.\n"
+
+    refute exception.message =~ "sensitive"
+  end
 end
