@@ -19,11 +19,11 @@ defmodule CSV.Decoding.Parser do
 
   * `:separator`           – The separator token to use, defaults to `?,`.
       Must be a codepoint (syntax: ? + (your separator)).
-  * `:field_transform`     – A function with arity 1 that will get called with 
+  * `:field_transform`     – A function with arity 1 that will get called with
       each field and can apply transformations. Defaults to identity function.
-      This function will get called for every field and therefore should return 
+      This function will get called for every field and therefore should return
       quickly.
-  * `:unescape_formulas`   – When set to `true`, will remove formula escaping 
+  * `:unescape_formulas`   – When set to `true`, will remove formula escaping
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
   ## Examples
@@ -64,12 +64,13 @@ defmodule CSV.Decoding.Parser do
     escape = get_escape(options)
     token_pattern = create_token_pattern(options)
     field_transform = create_field_transform(options)
+    redact_exception = get_redact_exception(options)
 
     stream
     |> Stream.concat([:stream_halted])
     |> Stream.transform(
       &empty_transform_state/0,
-      create_row_transform({escape, escape_max_lines}, token_pattern, field_transform),
+      create_row_transform({escape, escape_max_lines}, token_pattern, field_transform, redact_exception),
       fn _ -> :ok end
     )
   end
@@ -152,6 +153,10 @@ defmodule CSV.Decoding.Parser do
     options |> Keyword.get(:escape_max_lines, @escape_max_lines)
   end
 
+  defp get_redact_exception(options) do
+    options |> Keyword.get(:redact_exception, false)
+  end
+
   defp get_escape(options) do
     <<options |> Keyword.get(:escape_character, @escape_character)::utf8>>
   end
@@ -159,7 +164,8 @@ defmodule CSV.Decoding.Parser do
   defp create_row_transform(
          {escape_character, _} = escape,
          token_pattern,
-         field_transform
+         field_transform,
+         redact_exception
        ) do
     fn
       :stream_halted, {fields, partial_field, parse_state, sequence} ->
@@ -167,7 +173,8 @@ defmodule CSV.Decoding.Parser do
           {[], {fields, partial_field, parse_state, sequence}},
           escape_character,
           token_pattern,
-          field_transform
+          field_transform,
+          redact_exception
         )
 
       sequence, {fields, partial_field, parse_state, {leftover_state, leftover_sequence}} ->
@@ -185,13 +192,14 @@ defmodule CSV.Decoding.Parser do
           {fields, partial_field, parse_state},
           :binary.matches(full_sequence, token_pattern, matches_arguments),
           escape,
-          field_transform
+          field_transform,
+          redact_exception
         )
     end
   end
 
-  @compile {:inline, parse_to_end: 4}
-  defp parse_to_end({rows, {[], _, _, {_, ""}} = parse_state}, _, _, _) do
+  @compile {:inline, parse_to_end: 5}
+  defp parse_to_end({rows, {[], _, _, {_, ""}} = parse_state}, _, _, _, _) do
     {rows |> add_stream_halted_to_errors, parse_state}
   end
 
@@ -199,7 +207,8 @@ defmodule CSV.Decoding.Parser do
          {rows, {fields, partial_field, {:open, _, _} = parse_state, {_, sequence}}},
          escape_character,
          token_pattern,
-         field_transform
+         field_transform,
+         redact_exception
        ) do
     tokens = :binary.matches(sequence, token_pattern)
 
@@ -218,9 +227,10 @@ defmodule CSV.Decoding.Parser do
           {fields, partial_field, parse_state},
           tokens,
           {escape_character, :binary.matches(sequence, @newline) |> Enum.count()},
-          field_transform
+          field_transform,
+          redact_exception
         )
-        |> parse_to_end(escape_character, token_pattern, field_transform)
+        |> parse_to_end(escape_character, token_pattern, field_transform, redact_exception)
     end
   end
 
@@ -231,7 +241,8 @@ defmodule CSV.Decoding.Parser do
            {_, sequence}}},
          _,
          _,
-         field_transform
+         field_transform,
+         redact_exception
        ) do
     case byte_size(sequence) - 1 do
       ^previous_token_position ->
@@ -250,7 +261,8 @@ defmodule CSV.Decoding.Parser do
          |> add_error(StrayEscapeCharacterError,
            line: line,
            sequence: sequence,
-           stream_halted: true
+           stream_halted: true,
+           redact: redact_exception
          ), empty_transform_state()}
     end
   end
@@ -259,7 +271,8 @@ defmodule CSV.Decoding.Parser do
          {rows, {fields, partial_field, {:escaped, _, _, line} = parse_state, {_, sequence}}},
          escape_character,
          token_pattern,
-         field_transform
+         field_transform,
+         redact_exception
        ) do
     tokens = :binary.matches(sequence, token_pattern)
 
@@ -285,14 +298,16 @@ defmodule CSV.Decoding.Parser do
           {fields, partial_field, parse_state},
           tokens,
           {escape_character, :binary.matches(sequence, @newline) |> Enum.count()},
-          field_transform
+          field_transform,
+          redact_exception
         )
-        |> parse_to_end(escape_character, token_pattern, field_transform)
+        |> parse_to_end(escape_character, token_pattern, field_transform, redact_exception)
     end
   end
 
   defp parse_to_end(
          {rows, {[], _, {:errored, _, error_module, construct_arguments, _}, _}},
+         _,
          _,
          _,
          _
@@ -330,14 +345,15 @@ defmodule CSV.Decoding.Parser do
     end)
   end
 
-  @compile {:inline, parse_byte_sequence: 6}
+  @compile {:inline, parse_byte_sequence: 7}
   defp parse_byte_sequence(
          sequence,
          rows,
          {fields, partial_field, {:open, field_start_position, line}},
          [{token_position, token_length} | tokens],
          {escape, escape_max_lines},
-         field_transform
+         field_transform,
+         redact_exception
        ) do
     case binary_part(sequence, token_position, token_length) do
       ^escape when field_start_position == token_position ->
@@ -347,7 +363,8 @@ defmodule CSV.Decoding.Parser do
           {fields, partial_field, {:escaped, token_position + token_length, line, line}},
           tokens,
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
 
       ^escape ->
@@ -359,13 +376,15 @@ defmodule CSV.Decoding.Parser do
             fn arguments ->
               [
                 line: line,
-                sequence: sequence
+                sequence: sequence,
+                redact: redact_exception
               ]
               |> Keyword.merge(arguments)
             end, line}},
           tokens,
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
 
       @newline ->
@@ -382,7 +401,8 @@ defmodule CSV.Decoding.Parser do
           {[], "", {:open, token_position + token_length, line + 1}},
           tokens,
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
 
       @carriage_return ->
@@ -399,7 +419,8 @@ defmodule CSV.Decoding.Parser do
           {[], "", {:row_closing, token_position + token_length, line}},
           tokens,
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
 
       _ ->
@@ -416,7 +437,8 @@ defmodule CSV.Decoding.Parser do
           {fields ++ [new_field], "", {:open, token_position + token_length, line}},
           tokens,
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
     end
   end
@@ -427,7 +449,8 @@ defmodule CSV.Decoding.Parser do
          {fields, partial_field, {:escaped, field_start_position, escape_start_line, line}},
          [{token_position, token_length} | tokens],
          {escape, escape_max_lines},
-         field_transform
+         field_transform,
+         redact_exception
        ) do
     case binary_part(sequence, token_position, token_length) do
       ^escape ->
@@ -438,7 +461,8 @@ defmodule CSV.Decoding.Parser do
            {:escape_closing, token_position, field_start_position, escape_start_line, line}},
           tokens,
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
 
       @newline when escape_start_line + escape_max_lines == line ->
@@ -472,7 +496,8 @@ defmodule CSV.Decoding.Parser do
           {fields, partial_field, {:escaped, field_start_position, escape_start_line, line + 1}},
           tokens,
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
 
       @carriage_return ->
@@ -482,7 +507,8 @@ defmodule CSV.Decoding.Parser do
           {fields, partial_field, {:escaped, field_start_position, escape_start_line, line}},
           tokens,
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
 
       _ ->
@@ -492,7 +518,8 @@ defmodule CSV.Decoding.Parser do
           {fields, partial_field, {:escaped, field_start_position, escape_start_line, line}},
           tokens,
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
     end
   end
@@ -505,7 +532,8 @@ defmodule CSV.Decoding.Parser do
            line}},
          [{token_position, token_length} | tokens],
          {escape, escape_max_lines},
-         field_transform
+         field_transform,
+         redact_exception
        ) do
     case binary_part(sequence, token_position, token_length) do
       _ when previous_token_position + 1 != token_position ->
@@ -517,12 +545,14 @@ defmodule CSV.Decoding.Parser do
             fn arguments ->
               [
                 line: line,
-                sequence: escape <> Keyword.get(arguments, :sequence, sequence)
+                sequence: escape <> Keyword.get(arguments, :sequence, sequence),
+                redact: redact_exception
               ]
             end, escape_start_line}},
           [{token_position, token_length} | tokens],
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
 
       ^escape when previous_token_position + 1 == token_position ->
@@ -537,7 +567,8 @@ defmodule CSV.Decoding.Parser do
            ), {:escaped, token_position + token_length, escape_start_line, line}},
           tokens,
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
 
       @carriage_return ->
@@ -554,7 +585,8 @@ defmodule CSV.Decoding.Parser do
           {[], "", {:row_closing, token_position + token_length, line}},
           tokens,
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
 
       @newline ->
@@ -571,7 +603,8 @@ defmodule CSV.Decoding.Parser do
           {[], "", {:open, token_position + token_length, line + 1}},
           tokens,
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
 
       _ ->
@@ -588,7 +621,8 @@ defmodule CSV.Decoding.Parser do
           {fields ++ [new_field], "", {:open, token_position + token_length, line}},
           tokens,
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
     end
   end
@@ -599,7 +633,8 @@ defmodule CSV.Decoding.Parser do
          {_, _, {:errored, field_start_position, error_module, construct_arguments, line}},
          [{token_position, token_length} | tokens],
          {escape, escape_max_lines},
-         field_transform
+         field_transform,
+         redact_exception
        ) do
     case binary_part(sequence, token_position, token_length) do
       @newline ->
@@ -635,7 +670,8 @@ defmodule CSV.Decoding.Parser do
           {[], "", {:errored, field_start_position, error_module, construct_arguments, line}},
           tokens,
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
     end
   end
@@ -646,7 +682,8 @@ defmodule CSV.Decoding.Parser do
          {fields, partial_field, {:row_closing, _, line}},
          [{token_position, token_length} | tokens],
          {escape, escape_max_lines},
-         field_transform
+         field_transform,
+         redact_exception
        ) do
     case binary_part(sequence, token_position, token_length) do
       @newline ->
@@ -656,7 +693,8 @@ defmodule CSV.Decoding.Parser do
           {fields, partial_field, {:open, token_position + token_length, line + 1}},
           tokens,
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
 
       _ ->
@@ -666,7 +704,8 @@ defmodule CSV.Decoding.Parser do
           {fields, partial_field, {:open, 0, line}},
           [{token_position, token_length} | tokens],
           {escape, escape_max_lines},
-          field_transform
+          field_transform,
+          redact_exception
         )
     end
   end
@@ -676,6 +715,7 @@ defmodule CSV.Decoding.Parser do
          rows,
          {fields, partial_field, {:escaped, field_start_position, escape_start_line, line}},
          [],
+         _,
          _,
          _
        ) do
@@ -691,6 +731,7 @@ defmodule CSV.Decoding.Parser do
          rows,
          {_, _, {:errored, field_start_position, error_module, construct_arguments, line}},
          [],
+         _,
          _,
          _
        ) do
@@ -712,6 +753,7 @@ defmodule CSV.Decoding.Parser do
            line}},
          [],
          _,
+         _,
          _
        ) do
     {rows,
@@ -725,6 +767,7 @@ defmodule CSV.Decoding.Parser do
          rows,
          {fields, partial_field, {current_parse_state, field_start_position, line}},
          [],
+         _,
          _,
          _
        ) do

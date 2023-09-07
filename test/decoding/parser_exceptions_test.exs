@@ -41,9 +41,9 @@ defmodule DecodingTests.ParserExceptionsTest do
     errors = stream |> Parser.parse() |> Enum.to_list()
 
     assert errors == [
-             {:error, StrayEscapeCharacterError, [line: 1, sequence: "a\",\"be"]},
-             {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"c,d\n\"e,f\"g\",h"]},
-             {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"e,f\"g\",h"]},
+             {:error, StrayEscapeCharacterError, [line: 1, redact: false, sequence: "a\",\"be"]},
+             {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"c,d\n\"e,f\"g\",h", redact: false]},
+             {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"e,f\"g\",h", redact: false]},
              {:ok, ["j", "k"]}
            ]
   end
@@ -55,9 +55,9 @@ defmodule DecodingTests.ParserExceptionsTest do
       errors = stream |> Parser.parse() |> Enum.to_list()
 
       assert errors == [
-               {:error, StrayEscapeCharacterError, [line: 1, sequence: "a\",\"be"]},
-               {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"c,d\n\"e,f\"g\",h"]},
-               {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"e,f\"g\",h"]},
+               {:error, StrayEscapeCharacterError, [line: 1, redact: false, sequence: "a\",\"be"]},
+               {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"c,d\n\"e,f\"g\",h", redact: false]},
+               {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"e,f\"g\",h", redact: false]},
                {:ok, ["j", "k"]},
                {:ok, ["m", "l"]},
                {:ok, ["o", "p"]}
@@ -70,9 +70,9 @@ defmodule DecodingTests.ParserExceptionsTest do
     errors = stream |> Parser.parse() |> Enum.to_list()
 
     assert errors == [
-             {:error, StrayEscapeCharacterError, [line: 1, sequence: "\"b\"e"]},
-             {:error, StrayEscapeCharacterError, [line: 2, sequence: "\"c,\"d"]},
-             {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"e,f\"g\",h"]},
+             {:error, StrayEscapeCharacterError, [line: 1, sequence: "\"b\"e", redact: false]},
+             {:error, StrayEscapeCharacterError, [line: 2, sequence: "\"c,\"d", redact: false]},
+             {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"e,f\"g\",h", redact: false]},
              {:ok, ["j", "k"]}
            ]
   end
@@ -84,9 +84,9 @@ defmodule DecodingTests.ParserExceptionsTest do
       errors = stream |> Parser.parse() |> Enum.to_list()
 
       assert errors == [
-               {:error, StrayEscapeCharacterError, [line: 1, sequence: "\"b\"e"]},
-               {:error, StrayEscapeCharacterError, [line: 2, sequence: "\"c,\"d"]},
-               {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"e,f\"g\",h"]},
+               {:error, StrayEscapeCharacterError, [line: 1, sequence: "\"b\"e", redact: false]},
+               {:error, StrayEscapeCharacterError, [line: 2, sequence: "\"c,\"d", redact: false]},
+               {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"e,f\"g\",h", redact: false]},
                {:ok, ["j", "k"]}
              ]
     end)
@@ -97,9 +97,9 @@ defmodule DecodingTests.ParserExceptionsTest do
     errors = stream |> Parser.parse() |> Enum.to_list()
 
     assert errors == [
-             {:error, StrayEscapeCharacterError, [line: 1, sequence: "a\",\"be"]},
-             {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"c,,d\n\"e,f\"g\",h"]},
-             {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"e,f\"g\",h"]},
+             {:error, StrayEscapeCharacterError, [line: 1, redact: false, sequence: "a\",\"be"]},
+             {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"c,,d\n\"e,f\"g\",h", redact: false]},
+             {:error, StrayEscapeCharacterError, [line: 3, sequence: "\"e,f\"g\",h", redact: false]},
              {:ok, ["j", "k"]}
            ]
   end
@@ -109,9 +109,9 @@ defmodule DecodingTests.ParserExceptionsTest do
     errors = stream |> Parser.parse() |> Enum.to_list()
 
     assert errors == [
-             {:error, StrayEscapeCharacterError, [line: 1, sequence: "a\",\"be"]},
+             {:error, StrayEscapeCharacterError, [line: 1, redact: false, sequence: "a\",\"be"]},
              {:error, StrayEscapeCharacterError,
-              [line: 2, sequence: "e,fg,hh\"", stream_halted: true]}
+              [line: 2, sequence: "e,fg,hh\"", redact: false, stream_halted: true]}
            ]
   end
 
@@ -122,9 +122,9 @@ defmodule DecodingTests.ParserExceptionsTest do
       errors = stream |> Parser.parse() |> Enum.to_list()
 
       assert errors == [
-               {:error, StrayEscapeCharacterError, [line: 1, sequence: "a\",\"be"]},
+               {:error, StrayEscapeCharacterError, [line: 1, redact: false, sequence: "a\",\"be"]},
                {:error, StrayEscapeCharacterError,
-                [line: 2, sequence: "e,fg,hh\"", stream_halted: true]}
+                [line: 2, sequence: "e,fg,hh\"", redact: false, stream_halted: true]}
              ]
     end)
   end
@@ -135,7 +135,7 @@ defmodule DecodingTests.ParserExceptionsTest do
 
     assert result == [
              {:error, StrayEscapeCharacterError,
-              [line: 3, sequence: "b,c\nd,e\n,f\"\" \"a", stream_halted: true]}
+              [line: 3, sequence: "b,c\nd,e\n,f\"\" \"a", stream_halted: true, redact: false]}
            ]
   end
 
@@ -274,7 +274,8 @@ defmodule DecodingTests.ParserExceptionsTest do
              {:error, StrayEscapeCharacterError,
               [
                 line: 2,
-                sequence: "\"be\nc,\"d\""
+                sequence: "\"be\nc,\"d\"",
+                redact: false
               ]},
              {:ok, ["c", "d"]},
              {:error, EscapeSequenceError,
@@ -308,21 +309,24 @@ defmodule DecodingTests.ParserExceptionsTest do
              {:error, StrayEscapeCharacterError,
               [
                 line: 3,
-                sequence: "\"\nElaine,29,\"unknwon \"\""
+                sequence: "\"\nElaine,29,\"unknwon \"\"",
+                redact: false
               ]},
              {:error, StrayEscapeCharacterError,
               [
                 line: 4,
-                sequence: "\"\nElaine,30,\"unknwon \"\""
+                sequence: "\"\nElaine,30,\"unknwon \"\"",
+                redact: false
               ]},
              {:error, StrayEscapeCharacterError,
               [
                 line: 6,
-                sequence: "\"\nKramer,40,kramerica\nGeorge,34,architect \"vandalay\" ind"
+                sequence: "\"\nKramer,40,kramerica\nGeorge,34,architect \"vandalay\" ind",
+                redact: false
               ]},
              {:ok, ["Kramer", "40", "kramerica"]},
              {:error, StrayEscapeCharacterError,
-              [line: 6, sequence: "architect \"vandalay\" ind"]},
+              [line: 6, redact: false, sequence: "architect \"vandalay\" ind"]},
              {:ok, ["Newman", "37", "postal, worker"]}
            ]
   end
@@ -341,21 +345,24 @@ defmodule DecodingTests.ParserExceptionsTest do
                {:error, StrayEscapeCharacterError,
                 [
                   line: 3,
-                  sequence: "\"\nElaine,29,\"unknwon \"\""
+                  sequence: "\"\nElaine,29,\"unknwon \"\"",
+                  redact: false
                 ]},
                {:error, StrayEscapeCharacterError,
                 [
                   line: 4,
-                  sequence: "\"\nElaine,30,\"unknwon \"\""
+                  sequence: "\"\nElaine,30,\"unknwon \"\"",
+                  redact: false
                 ]},
                {:error, StrayEscapeCharacterError,
                 [
                   line: 6,
-                  sequence: "\"\nKramer,40,kramerica\nGeorge,34,architect \"vandalay\" ind"
+                  sequence: "\"\nKramer,40,kramerica\nGeorge,34,architect \"vandalay\" ind",
+                  redact: false
                 ]},
                {:ok, ["Kramer", "40", "kramerica"]},
                {:error, StrayEscapeCharacterError,
-                [line: 6, sequence: "architect \"vandalay\" ind"]},
+                [line: 6, redact: false, sequence: "architect \"vandalay\" ind"]},
                {:ok, ["Newman", "37", "postal, worker"]}
              ]
     end)
@@ -371,7 +378,8 @@ defmodule DecodingTests.ParserExceptionsTest do
                {:error, StrayEscapeCharacterError,
                 [
                   line: 2,
-                  sequence: "\"be\nc,\"d\""
+                  sequence: "\"be\nc,\"d\"",
+                  redact: false
                 ]},
                {:ok, ["c", "d"]},
                {:error, EscapeSequenceError,
