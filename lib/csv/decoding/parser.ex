@@ -51,6 +51,7 @@ defmodule CSV.Decoding.Parser do
           | {:separator, char}
           | {:escape_character, char}
           | {:field_transform, (String.t() -> String.t())}
+          | {:redact_exception, boolean()}
 
   @spec parse(Enumerable.t(), [parse_options()]) :: Enumerable.t()
   def parse(stream, options \\ []) do

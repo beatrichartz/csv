@@ -38,6 +38,9 @@ defmodule CSV do
       length. Defaults to `false`.
   * `:unescape_formulas`   – When set to `true`, will remove formula escaping
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
+  * `:redact_exception`   – When set to `true`, will remove line data from
+      exception message output. This is to prevent sensitive data leaking in
+      logs
 
   ## Examples
 
@@ -148,6 +151,7 @@ defmodule CSV do
           | {:validate_row_length, boolean()}
           | {:escape_character, char()}
           | {:escape_max_lines, integer()}
+          | {:redact_exception, boolean()}
 
   @spec decode(Enumerable.t(), [decode_options()]) :: Enumerable.t()
   def decode(stream, options \\ []) do
