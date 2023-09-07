@@ -1,6 +1,6 @@
 defmodule CSV.RowLengthError do
   @moduledoc """
-  Raised at runtime when the CSV has rows of variable length 
+  Raised at runtime when the CSV has rows of variable length
   and `validate_row_length` is set to true.
   """
 
@@ -30,10 +30,11 @@ defmodule CSV.StrayEscapeCharacterError do
   def exception(options) do
     line = options |> Keyword.fetch!(:line)
     sequence = options |> Keyword.fetch!(:sequence)
+    redact = options |> Keyword.get(:redact, false)
 
     message =
       "Stray escape character on line #{line}:" <>
-        "\n\n#{sequence}" <>
+        "\n\n#{get_sequence(redact, sequence)}" <>
         "\n\nThis error often happens when the wrong separator or escape character has been applied.\n"
 
     %__MODULE__{
@@ -41,6 +42,9 @@ defmodule CSV.StrayEscapeCharacterError do
       message: message
     }
   end
+
+  defp get_sequence(true, _), do: "[redacted]"
+  defp get_sequence(false, sequence), do: sequence
 end
 
 defmodule CSV.EscapeSequenceError do

@@ -21,7 +21,7 @@ defmodule CSV do
       Must be a codepoint (syntax: ? + (your separator)).
   * `:escape_character`    – The escape character token to use, defaults to `?"`.
       Must be a codepoint (syntax: ? + (your escape character)).
-  * `:escape_max_lines`    – The number of lines an escape sequence is allowed 
+  * `:escape_max_lines`    – The number of lines an escape sequence is allowed
       to span, defaults to 10.
   * `:field_transform`     – A function with arity 1 that will get called with
       each field and can apply transformations. Defaults to identity function.
@@ -38,6 +38,9 @@ defmodule CSV do
       length. Defaults to `false`.
   * `:unescape_formulas`   – When set to `true`, will remove formula escaping
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
+  * `:redact_exception`   – When set to `true`, will remove line data from
+      exception message output. This is to prevent sensitive data leaking in
+      logs
 
   ## Examples
 
@@ -148,6 +151,7 @@ defmodule CSV do
           | {:validate_row_length, boolean()}
           | {:escape_character, char()}
           | {:escape_max_lines, integer()}
+          | {:redact_exception, boolean()}
 
   @spec decode(Enumerable.t(), [decode_options()]) :: Enumerable.t()
   def decode(stream, options \\ []) do
@@ -287,27 +291,29 @@ defmodule CSV do
 
   defp raise_errors!(stream, options) do
     escape_max_lines = options |> Keyword.get(:escape_max_lines, @escape_max_lines)
+    redact_exception = options |> Keyword.get(:redact_exception, false)
 
-    stream |> Stream.map(&yield_or_raise!(&1, escape_max_lines))
+    stream |> Stream.map(&yield_or_raise!(&1, escape_max_lines, redact_exception))
   end
 
-  defp yield_or_raise!({:error, mod, args}, _) do
-    raise mod, args ++ [mode: :strict]
+  defp yield_or_raise!({:error, mod, args}, _, redact_exception) do
+    raise mod, args ++ [mode: :strict, redact: redact_exception]
   end
 
-  defp yield_or_raise!({:ok, row}, _), do: row
+  defp yield_or_raise!({:ok, row}, _, _), do: row
 
   defp inline_errors!(stream, options) do
     escape_max_lines = options |> Keyword.get(:escape_max_lines, @escape_max_lines)
+    redact_exception = options |> Keyword.get(:redact_exception, false)
 
-    stream |> Stream.map(&yield_or_inline!(&1, escape_max_lines))
+    stream |> Stream.map(&yield_or_inline!(&1, escape_max_lines, redact_exception))
   end
 
-  defp yield_or_inline!({:error, mod, args}, _) do
-    {:error, mod.exception(args ++ [mode: :normal]).message}
+  defp yield_or_inline!({:error, mod, args},_, redact_exception) do
+    {:error, mod.exception(args ++ [mode: :normal, redact: redact_exception]).message}
   end
 
-  defp yield_or_inline!(value, _), do: value
+  defp yield_or_inline!(value, _, _), do: value
 
   @doc """
   Encode a table stream into a stream of RFC 4180 compliant CSV lines for
