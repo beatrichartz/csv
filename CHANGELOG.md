@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.0 (2023-09-24)
+- Strict mode: Exception messages of _thrown_ exceptions are now redacted by default to avoid data unintentionally leaking into logs.
+  This behaviour change is not considered to be breaking backwards compatibility since source data presented in exeption messages is
+  not considered part of the `CSV` public API.
+- Option to (un)redact exception messages [contributed in [#122](https://github.com/beatrichartz/csv/pull/124) by [@taylor-redden-papa](https://github.com/taylor-redden-papa)
+
 ## 3.0.5 (2022-12-03)
 - Exclude dialyzer files from library package [contributed in [#121](https://github.com/beatrichartz/csv/pull/121) by [@milmazz](https://github.com/milmazz)
 

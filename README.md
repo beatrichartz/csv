@@ -6,13 +6,13 @@
 
 Add
 ```elixir
-{:csv, "~> 3.0"}
+{:csv, "~> 3.1"}
 ```
 to your deps in `mix.exs` like so:
 
 ```elixir
 defp deps do
-  [{:csv, "~> 3.0"}]
+  [{:csv, "~> 3.1"}]
 end
 ```
 
