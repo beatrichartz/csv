@@ -6,13 +6,13 @@
 
 Add
 ```elixir
-{:csv, "~> 3.1"}
+{:csv, "~> 3.2"}
 ```
 to your deps in `mix.exs` like so:
 
 ```elixir
 defp deps do
-  [{:csv, "~> 3.1"}]
+  [{:csv, "~> 3.2"}]
 end
 ```
 
@@ -142,9 +142,9 @@ occur, aborting the operation:
 File.stream!("data.csv") |> CSV.decode!
 ````
 
-Redact data in exceptions that `decode!` throws to avoid potentially sensitive data showing up in logs:
+Unredact source data in exceptions that `decode!` throws:
 ```elixir
-File.stream!("data.csv") |> CSV.decode!(redact_exception: true)
+File.stream!("data.csv") |> CSV.decode!(unredact_exceptions: true)
 ```
 
 
@@ -175,6 +175,12 @@ Unescape formulas that have been escaped:
 
 ````elixir
 stream |> CSV.decode(unescape_formulas: true)
+````
+
+Redact source data in error tuples producted by decode:
+
+````elixir
+stream |> CSV.decode(redact_errors: true)
 ````
 
 
