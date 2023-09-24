@@ -31,6 +31,19 @@ defmodule CSVExceptionsTest do
            ]
   end
 
+  test "decodes in normal mode redacting error messages when configured" do
+    stream = ~w(a,be a" c,d) |> to_line_stream
+    result = CSV.decode(stream, redact_errors: true) |> Enum.to_list()
+
+    assert result == [
+             ok: ~w(a be),
+             error:
+               "Stray escape character on line 2:\n\n**redacted**\n\n" <>
+                 "This error often happens when the wrong separator or escape character has been applied.\n",
+             ok: ~w(c d)
+           ]
+  end
+
   test "decodes in strict mode raising errors" do
     stream = ~w(a,be a c,d) |> to_line_stream
 

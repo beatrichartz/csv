@@ -38,6 +38,10 @@ defmodule CSV do
       length. Defaults to `false`.
   * `:unescape_formulas`    – When set to `true`, will remove formula escaping
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
+  * `:redact_errors`        – When set to `true`, will redact csv data in
+      message output of errors. This is to address scenarios where errors are
+      propagated in a stream and accidental logging of sensitive data needs
+      to be prevented. Defaults to `false`.
 
   ## Examples
 
@@ -149,7 +153,7 @@ defmodule CSV do
           | {:escape_character, char()}
           | {:escape_max_lines, integer()}
 
-  @spec decode(Enumerable.t(), [decode_options()]) :: Enumerable.t()
+  @spec decode(Enumerable.t(), [decode_options() | {:redact_errors, boolean()}]) :: Enumerable.t()
   def decode(stream, options \\ []) do
     stream |> Decoder.decode(options) |> inline_errors!(options)
   end
@@ -305,15 +309,16 @@ defmodule CSV do
 
   defp inline_errors!(stream, options) do
     escape_max_lines = options |> Keyword.get(:escape_max_lines, @escape_max_lines)
+    redact_errors = options |> Keyword.get(:redact_errors, false)
 
-    stream |> Stream.map(&yield_or_inline!(&1, escape_max_lines))
+    stream |> Stream.map(&yield_or_inline!(&1, escape_max_lines, redact_errors))
   end
 
-  defp yield_or_inline!({:error, mod, args}, _) do
-    {:error, mod.exception(args ++ [mode: :normal, unredact: true]).message}
+  defp yield_or_inline!({:error, mod, args}, _, redact_errors) do
+    {:error, mod.exception(args ++ [mode: :normal, unredact: !redact_errors]).message}
   end
 
-  defp yield_or_inline!(value, _), do: value
+  defp yield_or_inline!(value, _, _), do: value
 
   @doc """
   Encode a table stream into a stream of RFC 4180 compliant CSV lines for
