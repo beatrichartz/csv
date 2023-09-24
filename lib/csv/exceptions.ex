@@ -29,12 +29,12 @@ defmodule CSV.StrayEscapeCharacterError do
 
   def exception(options) do
     line = options |> Keyword.fetch!(:line)
-    sequence = options |> Keyword.fetch!(:sequence)
-    redact = options |> Keyword.get(:redact, false)
+    unredact = options |> Keyword.get(:unredact, false)
+    sequence = options |> Keyword.fetch!(:sequence) |> get_sequence(unredact)
 
     message =
       "Stray escape character on line #{line}:" <>
-        "\n\n#{get_sequence(redact, sequence)}" <>
+        "\n\n#{sequence}" <>
         "\n\nThis error often happens when the wrong separator or escape character has been applied.\n"
 
     %__MODULE__{
@@ -43,8 +43,8 @@ defmodule CSV.StrayEscapeCharacterError do
     }
   end
 
-  defp get_sequence(true, _), do: "[redacted]"
-  defp get_sequence(false, sequence), do: sequence
+  defp get_sequence(_, false), do: "**redacted**"
+  defp get_sequence(sequence, true), do: sequence
 end
 
 defmodule CSV.EscapeSequenceError do
@@ -58,7 +58,11 @@ defmodule CSV.EscapeSequenceError do
   def exception(options) do
     line = options |> Keyword.fetch!(:line)
     stream_halted = options |> Keyword.get(:stream_halted, false)
-    escape_sequence_start = options |> Keyword.fetch!(:escape_sequence_start)
+    unredact = options |> Keyword.get(:unredact, false)
+
+    escape_sequence_start =
+      options |> Keyword.fetch!(:escape_sequence_start) |> get_sequence(unredact)
+
     mode = options |> Keyword.fetch!(:mode)
 
     continues_parsing =
@@ -90,4 +94,7 @@ defmodule CSV.EscapeSequenceError do
       message: message
     }
   end
+
+  defp get_sequence(_, false), do: "**redacted**"
+  defp get_sequence(sequence, true), do: sequence
 end

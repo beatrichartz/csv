@@ -3,6 +3,7 @@ defmodule CSVExceptionsTest do
   import TestSupport.StreamHelpers
 
   alias CSV.RowLengthError
+  alias CSV.StrayEscapeCharacterError
 
   test "decodes in normal mode emitting errors with row lengths when configured" do
     stream = ~w(a,be a c,d) |> to_line_stream
@@ -35,6 +36,30 @@ defmodule CSVExceptionsTest do
 
     assert_raise RowLengthError, fn ->
       CSV.decode!(stream, validate_row_length: true) |> Stream.run()
+    end
+  end
+
+  test "decodes in strict mode redacting error messages" do
+    stream = ~w(a,be a" c,d) |> to_line_stream
+
+    expected_message =
+      "Stray escape character on line 2:\n\n**redacted**\n\n" <>
+        "This error often happens when the wrong separator or escape character has been applied.\n"
+
+    assert_raise StrayEscapeCharacterError, expected_message, fn ->
+      CSV.decode!(stream) |> Stream.run()
+    end
+  end
+
+  test "decodes in strict mode allowing error messages to be unredacted" do
+    stream = ~w(a,be a" c,d) |> to_line_stream
+
+    expected_message =
+      "Stray escape character on line 2:\n\na\"\n\n" <>
+        "This error often happens when the wrong separator or escape character has been applied.\n"
+
+    assert_raise StrayEscapeCharacterError, expected_message, fn ->
+      CSV.decode!(stream, unredact_exceptions: true) |> Stream.run()
     end
   end
 

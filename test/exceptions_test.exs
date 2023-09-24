@@ -25,7 +25,8 @@ defmodule ExceptionsTest do
         mode: :normal,
         stream_halted: true,
         escape_sequence_start: "SEQUENCE START",
-        escape_max_lines: 2
+        escape_max_lines: 2,
+        unredact: true
       )
 
     assert exception.message ==
@@ -39,7 +40,26 @@ defmodule ExceptionsTest do
         line: 1,
         mode: :strict,
         escape_sequence_start: "SEQUENCE START",
-        escape_max_lines: 2
+        escape_max_lines: 2,
+        unredact: false
+      )
+
+    assert exception.message ==
+             "Escape sequence started on line 1:\n\n**redacted**\n\ndid not terminate. " <>
+               "You can use normal mode to continue parsing rows even if single rows have errors.\n\n" <>
+               "Escape sequences are allowed to span up to 2 lines. This threshold avoids " <>
+               "collecting the whole file into memory when an escape sequence does not terminate.\n" <>
+               "You can change it using the escape_max_lines option: https://hexdocs.pm/csv/CSV.html#decode/2\n"
+  end
+
+  test "unredacted exception messaging about unfinished escape sequences" do
+    exception =
+      EscapeSequenceError.exception(
+        line: 1,
+        mode: :strict,
+        escape_sequence_start: "SEQUENCE START",
+        escape_max_lines: 2,
+        unredact: true
       )
 
     assert exception.message ==
@@ -50,18 +70,19 @@ defmodule ExceptionsTest do
                "You can change it using the escape_max_lines option: https://hexdocs.pm/csv/CSV.html#decode/2\n"
   end
 
-  test "exception messaging about stray escape character errors" do
-    exception = StrayEscapeCharacterError.exception(line: 1, sequence: "THIS")
+  test "exception messaging about stray escape character errors shows line when unredacted" do
+    exception = StrayEscapeCharacterError.exception(line: 1, sequence: "THIS", unredact: true)
 
     assert exception.message ==
              "Stray escape character on line 1:\n\nTHIS\n\nThis error often happens when the wrong separator or escape character has been applied.\n"
   end
 
-  test "exception messaging about stray escape character errors can be redacted" do
-    exception = StrayEscapeCharacterError.exception(line: 1, sequence: "sensitive", redact: true)
+  test "exception messaging about stray escape character errors is redacted by default" do
+    exception =
+      StrayEscapeCharacterError.exception(line: 1, sequence: "sensitive", unredact: false)
 
     assert exception.message ==
-             "Stray escape character on line 1:\n\n[redacted]\n\nThis error often happens when the wrong separator or escape character has been applied.\n"
+             "Stray escape character on line 1:\n\n**redacted**\n\nThis error often happens when the wrong separator or escape character has been applied.\n"
 
     refute exception.message =~ "sensitive"
   end

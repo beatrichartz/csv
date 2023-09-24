@@ -142,6 +142,12 @@ occur, aborting the operation:
 File.stream!("data.csv") |> CSV.decode!
 ````
 
+Redact data in exceptions that `decode!` throws to avoid potentially sensitive data showing up in logs:
+```elixir
+File.stream!("data.csv") |> CSV.decode!(redact_exception: true)
+```
+
+
 #### Options
 
 For all available options [check the docs on `decode`](https://hexdocs.pm/csv/CSV.html#decode/2)

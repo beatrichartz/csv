@@ -17,30 +17,27 @@ defmodule CSV do
 
   These are the options:
 
-  * `:separator`           – The separator token to use, defaults to `?,`.
+  * `:separator`            – The separator token to use, defaults to `?,`.
       Must be a codepoint (syntax: ? + (your separator)).
-  * `:escape_character`    – The escape character token to use, defaults to `?"`.
+  * `:escape_character`     – The escape character token to use, defaults to `?"`.
       Must be a codepoint (syntax: ? + (your escape character)).
-  * `:escape_max_lines`    – The number of lines an escape sequence is allowed
+  * `:escape_max_lines`     – The number of lines an escape sequence is allowed
       to span, defaults to 10.
-  * `:field_transform`     – A function with arity 1 that will get called with
+  * `:field_transform`      – A function with arity 1 that will get called with
       each field and can apply transformations. Defaults to identity function.
       This function will get called for every field and therefore should return
       quickly.
-  * `:headers`             – When set to `true`, will take the first row of
+  * `:headers`              – When set to `true`, will take the first row of
       the csv and use it as header values.
       When set to a list, will use the given list as header values.
       When set to `false` (default), will use no header values.
       When set to anything but `false`, the resulting rows in the matrix will
       be maps instead of lists.
-  * `:validate_row_length` – When set to `true`, will take the first row of
+  * `:validate_row_length`  – When set to `true`, will take the first row of
       the csv or its headers and validate that following rows are of the same
       length. Defaults to `false`.
-  * `:unescape_formulas`   – When set to `true`, will remove formula escaping
+  * `:unescape_formulas`    – When set to `true`, will remove formula escaping
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
-  * `:redact_exception`   – When set to `true`, will remove line data from
-      exception message output. This is to prevent sensitive data leaking in
-      logs
 
   ## Examples
 
@@ -151,7 +148,6 @@ defmodule CSV do
           | {:validate_row_length, boolean()}
           | {:escape_character, char()}
           | {:escape_max_lines, integer()}
-          | {:redact_exception, boolean()}
 
   @spec decode(Enumerable.t(), [decode_options()]) :: Enumerable.t()
   def decode(stream, options \\ []) do
@@ -185,6 +181,10 @@ defmodule CSV do
       length. Will raise an error if validation fails. Defaults to `false`.
   * `:unescape_formulas`   – When set to `true`, will remove formula escaping
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
+  * `:unredact_exceptions` – When set to `true`, will show csv data in
+      message output of exceptions thrown. Only use this when using CSV strict 
+      mode in environments and situations where there is no concern with 
+      exception message data leaking in logs. Defaults to `false`.
 
   ## Examples
 
@@ -284,36 +284,36 @@ defmodule CSV do
 
   """
 
-  @spec decode!(Enumerable.t(), [decode_options()]) :: Enumerable.t()
+  @spec decode!(Enumerable.t(), [decode_options() | {:unredact_exceptions, boolean()}]) ::
+          Enumerable.t()
   def decode!(stream, options \\ []) do
     stream |> Decoder.decode(options) |> raise_errors!(options)
   end
 
   defp raise_errors!(stream, options) do
     escape_max_lines = options |> Keyword.get(:escape_max_lines, @escape_max_lines)
-    redact_exception = options |> Keyword.get(:redact_exception, false)
+    unredact_exceptions = options |> Keyword.get(:unredact_exceptions, false)
 
-    stream |> Stream.map(&yield_or_raise!(&1, escape_max_lines, redact_exception))
+    stream |> Stream.map(&yield_or_raise!(&1, escape_max_lines, unredact_exceptions))
   end
 
-  defp yield_or_raise!({:error, mod, args}, _, redact_exception) do
-    raise mod, args ++ [mode: :strict, redact: redact_exception]
+  defp yield_or_raise!({:error, mod, args}, _, unredact_exceptions) do
+    raise mod, args ++ [mode: :strict, unredact: unredact_exceptions]
   end
 
   defp yield_or_raise!({:ok, row}, _, _), do: row
 
   defp inline_errors!(stream, options) do
     escape_max_lines = options |> Keyword.get(:escape_max_lines, @escape_max_lines)
-    redact_exception = options |> Keyword.get(:redact_exception, false)
 
-    stream |> Stream.map(&yield_or_inline!(&1, escape_max_lines, redact_exception))
+    stream |> Stream.map(&yield_or_inline!(&1, escape_max_lines))
   end
 
-  defp yield_or_inline!({:error, mod, args},_, redact_exception) do
-    {:error, mod.exception(args ++ [mode: :normal, redact: redact_exception]).message}
+  defp yield_or_inline!({:error, mod, args}, _) do
+    {:error, mod.exception(args ++ [mode: :normal, unredact: true]).message}
   end
 
-  defp yield_or_inline!(value, _, _), do: value
+  defp yield_or_inline!(value, _), do: value
 
   @doc """
   Encode a table stream into a stream of RFC 4180 compliant CSV lines for
