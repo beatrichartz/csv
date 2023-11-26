@@ -152,8 +152,10 @@ defmodule CSV do
           | {:validate_row_length, boolean()}
           | {:escape_character, char()}
           | {:escape_max_lines, integer()}
+          | ({:redact_errors, boolean()}
+          | {:unredact_exceptions, boolean()})
 
-  @spec decode(Enumerable.t(), [decode_options() | {:redact_errors, boolean()}]) :: Enumerable.t()
+  @spec decode(Enumerable.t(), [decode_options()]) :: Enumerable.t()
   def decode(stream, options \\ []) do
     stream |> Decoder.decode(options) |> inline_errors!(options)
   end
@@ -288,8 +290,7 @@ defmodule CSV do
 
   """
 
-  @spec decode!(Enumerable.t(), [decode_options() | {:unredact_exceptions, boolean()}]) ::
-          Enumerable.t()
+  @spec decode!(Enumerable.t(), [decode_options()]) :: Enumerable.t()
   def decode!(stream, options \\ []) do
     stream |> Decoder.decode(options) |> raise_errors!(options)
   end
