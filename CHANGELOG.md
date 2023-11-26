@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.2.1 (2023-11-26)
+- Correct typespec for decode, reported in [#125](https://github.com/beatrichartz/csv/issues/125) by [@AntoineAugusti](https://github.com/AntoineAugusti)
+
 ## 3.2.0 (2023-09-24)
 - Strict mode: Exception messages of _thrown_ exceptions are now redacted by default to avoid data unintentionally leaking into logs.
   This behaviour change is not considered to be breaking backwards compatibility since source data presented in exeption messages is
