@@ -18,6 +18,7 @@ defmodule CSV.Defaults do
       @escape_formulas false
       @unescape_formulas false
       @escape_formula_start ["=", "-", "+", "@"]
+      @escape_formula_prefix "'"
     end
   end
 end

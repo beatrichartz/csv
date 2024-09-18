@@ -151,14 +151,25 @@ defmodule DecodingTests.ParserTest do
   end
 
   test "removes escaping for formula when unescape_formulas is set to true" do
-    input = [["=1+1", ~S(=1+2";=1+2), ~S(=1+2'" ;,=1+2)], ["-10+7"], ["+10+7"], ["@A1:A10"]]
+    input = [
+      ["=1+1", ~S(=1+2";=1+2), ~S(=1+2'" ;,=1+2)],
+      ["-10+7"],
+      ["+10+7"],
+      ["@A1:A10"],
+      ["X-1"],
+      ["B+1"],
+      ["C=1"]
+    ]
 
     assert encode_decode_loop([input], escape_formulas: true, unescape_formulas: true) == [
              ok: [
                "=1+1=1+2\";=1+2=1+2'\" ;,=1+2",
                "-10+7",
                "+10+7",
-               "@A1:A10"
+               "@A1:A10",
+               "X-1",
+               "B+1",
+               "C=1"
              ]
            ]
   end
