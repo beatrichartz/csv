@@ -37,7 +37,7 @@ defmodule CSV.Decoding.Decoder do
   * `:validate_row_length` – When set to `true`, will take the first row of
       the csv or its headers and validate that following rows are of the same
       length. Defaults to `false`.
-  * `:escape_formulas`      – When set to `true`, will remove formula escaping
+  * `:unescape_formulas`   – When set to `true`, will remove formula escaping
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
   ## Examples

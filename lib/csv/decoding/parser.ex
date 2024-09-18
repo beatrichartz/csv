@@ -88,11 +88,14 @@ defmodule CSV.Decoding.Parser do
     unescape_formulas = options |> Keyword.get(:unescape_formulas, @unescape_formulas)
 
     if unescape_formulas do
-      formula_pattern = :binary.compile_pattern(@escape_formula_start)
+      formula_pattern =
+        @escape_formula_start
+        |> Enum.map(fn char -> @escape_formula_prefix <> char end)
+        |> :binary.compile_pattern()
 
       fn field ->
         case :binary.match(field, formula_pattern) do
-          {1, _} -> binary_part(field, 1, byte_size(field) - 1)
+          {0, _} -> binary_part(field, 1, byte_size(field) - 1)
           _ -> field
         end
       end

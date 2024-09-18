@@ -47,7 +47,7 @@ defimpl CSV.Encode, for: BitString do
 
     data =
       if escape_formulas and String.starts_with?(data, @escape_formula_start) do
-        "'" <> data
+        @escape_formula_prefix <> data
       else
         data
       end
