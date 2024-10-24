@@ -65,6 +65,16 @@ defmodule DecodingTests.ParserExceptionsTest do
     end)
   end
 
+  test "includes an error for rows with unescaped quotes and no newline" do
+    errors = Parser.parse(["a,b\n", "c,\"d,e"]) |> Enum.to_list()
+
+    assert errors == [
+             {:ok, ["a", "b"]},
+             {:error, CSV.StrayEscapeCharacterError,
+             [line: 2, sequence: "d,e", stream_halted: true]}
+           ]
+  end
+
   test "includes an error for rows with unescaped quotes in escape sequences on the same line" do
     stream = ["a,\"b\"e", "\"c,\"d", "\"e,f\"g\",h", "j,k"] |> to_line_stream
     errors = stream |> Parser.parse() |> Enum.to_list()
