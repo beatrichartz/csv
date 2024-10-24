@@ -19,11 +19,11 @@ defmodule CSV.Decoding.Parser do
 
   * `:separator`           – The separator token to use, defaults to `?,`.
       Must be a codepoint (syntax: ? + (your separator)).
-  * `:field_transform`     – A function with arity 1 that will get called with 
+  * `:field_transform`     – A function with arity 1 that will get called with
       each field and can apply transformations. Defaults to identity function.
-      This function will get called for every field and therefore should return 
+      This function will get called for every field and therefore should return
       quickly.
-  * `:unescape_formulas`   – When set to `true`, will remove formula escaping 
+  * `:unescape_formulas`   – When set to `true`, will remove formula escaping
       inserted to prevent [CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
   ## Examples
@@ -167,7 +167,8 @@ defmodule CSV.Decoding.Parser do
           {[], {fields, partial_field, parse_state, sequence}},
           escape_character,
           token_pattern,
-          field_transform
+          field_transform,
+          sequence
         )
 
       sequence, {fields, partial_field, parse_state, {leftover_state, leftover_sequence}} ->
@@ -190,8 +191,8 @@ defmodule CSV.Decoding.Parser do
     end
   end
 
-  @compile {:inline, parse_to_end: 4}
-  defp parse_to_end({rows, {[], _, _, {_, ""}} = parse_state}, _, _, _) do
+  @compile {:inline, parse_to_end: 5}
+  defp parse_to_end({rows, {[], _, _, {_, ""}} = parse_state}, _, _, _, _) do
     {rows |> add_stream_halted_to_errors, parse_state}
   end
 
@@ -199,7 +200,8 @@ defmodule CSV.Decoding.Parser do
          {rows, {fields, partial_field, {:open, _, _} = parse_state, {_, sequence}}},
          escape_character,
          token_pattern,
-         field_transform
+         field_transform,
+         _
        ) do
     tokens = :binary.matches(sequence, token_pattern)
 
@@ -220,7 +222,7 @@ defmodule CSV.Decoding.Parser do
           {escape_character, :binary.matches(sequence, @newline) |> Enum.count()},
           field_transform
         )
-        |> parse_to_end(escape_character, token_pattern, field_transform)
+        |> parse_to_end(escape_character, token_pattern, field_transform, sequence)
     end
   end
 
@@ -231,7 +233,8 @@ defmodule CSV.Decoding.Parser do
            {_, sequence}}},
          _,
          _,
-         field_transform
+         field_transform,
+         _
        ) do
     case byte_size(sequence) - 1 do
       ^previous_token_position ->
@@ -256,10 +259,26 @@ defmodule CSV.Decoding.Parser do
   end
 
   defp parse_to_end(
+    {rows, {_, _, {:escaped, _, _, line}, {_, sequence}}},
+    _,
+    _,
+    _,
+    last_sequence
+  ) when sequence == last_sequence do
+    {rows
+    |> add_error(StrayEscapeCharacterError,
+      line: line,
+      sequence: sequence,
+      stream_halted: true
+    ), empty_transform_state()}
+  end
+
+  defp parse_to_end(
          {rows, {fields, partial_field, {:escaped, _, _, line} = parse_state, {_, sequence}}},
          escape_character,
          token_pattern,
-         field_transform
+         field_transform,
+         _
        ) do
     tokens = :binary.matches(sequence, token_pattern)
 
@@ -287,12 +306,13 @@ defmodule CSV.Decoding.Parser do
           {escape_character, :binary.matches(sequence, @newline) |> Enum.count()},
           field_transform
         )
-        |> parse_to_end(escape_character, token_pattern, field_transform)
+        |> parse_to_end(escape_character, token_pattern, field_transform, sequence)
     end
   end
 
   defp parse_to_end(
          {rows, {[], _, {:errored, _, error_module, construct_arguments, _}, _}},
+         _,
          _,
          _,
          _
