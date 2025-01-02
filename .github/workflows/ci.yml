@@ -39,17 +39,17 @@ jobs:
           - elixir-version: 1.8
             otp-version: 21
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Elixir
       uses: erlef/setup-beam@v1
       with: ${{matrix.environment}}
     - name: Restore dependencies cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: deps/
         key: deps-${{ runner.os }}-${{ matrix.environment.otp-version }}-${{ matrix.environment.elixir-version }}-${{ hashFiles('**/mix.lock') }}
     - name: Restore build cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: _build/test/
         key: build-${{ runner.os }}-${{ matrix.environment.otp-version }}-${{ matrix.environment.elixir-version }}-${{ hashFiles('**/mix.lock') }}
@@ -60,7 +60,7 @@ jobs:
         mix deps.get
         mix compile
     - name: Restore PLT cache
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       id: plt_cache
       with:
         key: |
@@ -109,17 +109,17 @@ jobs:
           - elixir-version: 1.8
             otp-version: 21
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Elixir
       uses: erlef/setup-beam@v1
       with: ${{matrix.environment}}
     - name: Restore dependencies cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: deps/
         key: deps-${{ runner.os }}-${{ matrix.environment.otp-version }}-${{ matrix.environment.elixir-version }}-${{ hashFiles('**/mix.lock') }}
     - name: Restore build cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: _build/test/
         key: build-${{ runner.os }}-${{ matrix.environment.otp-version }}-${{ matrix.environment.elixir-version }}-${{ hashFiles('**/mix.lock') }}
