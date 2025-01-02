@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.2.1 (2025-01-02)
+- Fix parser hanging when no newline finishes an unclosed escape sequence (reported by [@andrewtimberlake](https://github.com/andrewtimberlake) in [#132](https://github.com/beatrichartz/csv/issues/132) and fixed by [@kylewhite21](https://github.com/kylewhite21) in [#133](https://github.com/beatrichartz/csv/pull/133).
+- Fix `:unescape_formulas` removing characters even if they are not prefixing a formula. Fixed in [#131](https://github.com/beatrichartz/csv/pull/131) by [@jgmchan](https://github.com/jgmchan).
+
 ## 3.2.1 (2023-11-26)
 - Correct typespec for decode, reported in [#125](https://github.com/beatrichartz/csv/issues/125) by [@AntoineAugusti](https://github.com/AntoineAugusti)
 
