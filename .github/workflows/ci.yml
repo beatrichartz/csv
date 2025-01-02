@@ -86,28 +86,32 @@ jobs:
     strategy:
       matrix:
         environment:
+          - elixir-version: 1.18
+            otp-version: 27
+          - elixir-version: 1.17
+            otp-version: 26
+          - elixir-version: 1.16
+            otp-version: 25
           - elixir-version: 1.15
-            otp-version: 25.0.4
+            otp-version: 25
           - elixir-version: 1.14
-            otp-version: 25.0.4
+            otp-version: 25
           - elixir-version: 1.13
-            otp-version: 24.3.4
+            otp-version: 24
           - elixir-version: 1.12
-            otp-version: 23.3.4
+            otp-version: 23
           - elixir-version: 1.11
-            otp-version: 23.3.4
+            otp-version: 23
           - elixir-version: '1.10'
-            otp-version: 22.3.4
+            otp-version: 22
           - elixir-version: 1.9
-            otp-version: 22.3.4
+            otp-version: 22
           - elixir-version: 1.8
-            otp-version: 21.3.8
-          - elixir-version: 1.7
-            otp-version: 21.3.8
+            otp-version: 21
     steps:
     - uses: actions/checkout@v3
     - name: Set up Elixir
-      uses: erlef/setup-beam@988e02bfe678367a02564f65ca2e37726dc0268f
+      uses: erlef/setup-beam@v1
       with: ${{matrix.environment}}
     - name: Restore dependencies cache
       uses: actions/cache@v3
@@ -126,13 +130,13 @@ jobs:
         mix deps.get
         mix compile
     - name: Run tests with coverage
-      if: matrix.environment.elixir-version == '1.15'
+      if: matrix.environment.elixir-version == '1.18'
       run: mix coveralls.github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         MIX_ENV: test
     - name: Run tests
-      if: matrix.environment.elixir-version != '1.15'
+      if: matrix.environment.elixir-version != '1.18'
       run: mix test
       env:
         MIX_ENV: test
