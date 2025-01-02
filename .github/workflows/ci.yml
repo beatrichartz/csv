@@ -47,12 +47,12 @@ jobs:
       uses: actions/cache@v4
       with:
         path: deps/
-        key: deps-${{ runner.os }}-${{ matrix.environment.otp-version }}-${{ matrix.environment.elixir-version }}-${{ hashFiles('**/mix.lock') }}
+        key: "deps-${{ runner.os }}-${{ matrix.environment.otp-version }}-${{ matrix.environment.elixir-version }}-${{ hashFiles('**/mix.lock') }}"
     - name: Restore build cache
       uses: actions/cache@v4
       with:
         path: _build/test/
-        key: build-${{ runner.os }}-${{ matrix.environment.otp-version }}-${{ matrix.environment.elixir-version }}-${{ hashFiles('**/mix.lock') }}
+        key: "build-${{ runner.os }}-${{ matrix.environment.otp-version }}-${{ matrix.environment.elixir-version }}-${{ hashFiles('**/mix.lock') }}"
     - name: Install dependencies
       run: |
         mix local.rebar --force
@@ -63,12 +63,9 @@ jobs:
       uses: actions/cache@v4
       id: plt_cache
       with:
-        key: |
-          ${{ runner.os }}-${{ matrix.environment.elixir-version }}-${{ matrix.environment.otp-version }}-plt
-        restore-keys: |
-          ${{ runner.os }}-${{ matrix.environment.elixir-version }}-${{ matrix.environment.otp-version }}-plt
-        path: |
-          priv/plts
+        key: "${{ runner.os }}-${{ matrix.environment.elixir-version }}-${{ matrix.environment.otp-version }}-plt"
+        restore-keys: "${{ runner.os }}-${{ matrix.environment.elixir-version }}-${{ matrix.environment.otp-version }}-plt"
+        path: priv/plts
 
     - name: Create PLTs
       if: steps.plt_cache.outputs.cache-hit != 'true'
@@ -117,12 +114,12 @@ jobs:
       uses: actions/cache@v4
       with:
         path: deps/
-        key: deps-${{ runner.os }}-${{ matrix.environment.otp-version }}-${{ matrix.environment.elixir-version }}-${{ hashFiles('**/mix.lock') }}
+        key: "deps-${{ runner.os }}-${{ matrix.environment.otp-version }}-${{ matrix.environment.elixir-version }}-${{ hashFiles('**/mix.lock') }}"
     - name: Restore build cache
       uses: actions/cache@v4
       with:
         path: _build/test/
-        key: build-${{ runner.os }}-${{ matrix.environment.otp-version }}-${{ matrix.environment.elixir-version }}-${{ hashFiles('**/mix.lock') }}
+        key: "build-${{ runner.os }}-${{ matrix.environment.otp-version }}-${{ matrix.environment.elixir-version }}-${{ hashFiles('**/mix.lock') }}"
     - name: Install dependencies
       run: |
         mix local.rebar --force
